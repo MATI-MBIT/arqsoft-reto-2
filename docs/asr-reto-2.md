@@ -1,3 +1,8 @@
+---
+title: ASRs de disponibilidad y seguridad
+nav_order: 2
+---
+
 # ASRs de disponibilidad y seguridad
 
 Alcance: los cuatro escenarios que el equipo acordó en la reunión del 18 de septiembre —dos de seguridad (suplantación y elevación de privilegios) y dos de disponibilidad (detección y reparación de la cadena que sigue a un pedido)— reescritos como escenarios de seis partes en el espacio del problema. Todo lo que en la reunión se dijo en términos de solución (gestor de sesión, huella del dispositivo, réplicas de lectura, registros de la base de datos, tabla de usuarios activos, cola de reintentos, equipo de soporte) sale de las seis partes y entra en la fila "cómo se cumpliría", como hipótesis que ADD confirmará o cambiará.
