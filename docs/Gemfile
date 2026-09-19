@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.4"
+
+# Tema de documentación (wiki) con buscador y navegación lateral.
+gem "just-the-docs", "0.12.0"
+
+group :jekyll_plugins do
+  # Publica cualquier .md aunque no tenga front matter.
+  gem "jekyll-optional-front-matter", "~> 0.3"
+  # Si la página no declara title, lo toma del primer encabezado.
+  gem "jekyll-titles-from-headings", "~> 0.5"
+  # Convierte enlaces relativos entre .md en enlaces web válidos.
+  gem "jekyll-relative-links", "~> 0.7"
+  gem "jekyll-seo-tag", "~> 2.8"
+  gem "jekyll-sitemap", "~> 1.4"
+end
+
+# Dependencias que dejaron de venir por defecto en Ruby 3.x
+gem "webrick", "~> 1.8"
+gem "csv", "~> 3.3"
+gem "base64", "~> 0.2"
+gem "bigdecimal", "~> 3.1"

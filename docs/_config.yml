@@ -1,0 +1,107 @@
+# ---------------------------------------------------------------------------
+# Sitio Jekyll de la wiki. Se publica con GitHub Pages desde la carpeta /docs
+# mediante el workflow .github/workflows/pages.yml
+# ---------------------------------------------------------------------------
+
+title: Arqsoft Reto 2
+description: Wiki de documentación del reto 2 de Arquitectura de Software.
+lang: es-CO
+
+# URL pública del sitio. El workflow sobrescribe baseurl con --baseurl,
+# estos valores sirven para el render local y para los metadatos SEO.
+url: https://mati-mbit.github.io
+baseurl: /arqsoft-reto-2
+
+theme: just-the-docs
+
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-titles-from-headings
+  - jekyll-relative-links
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Todo .md nuevo queda publicado sin necesidad de front matter.
+optional_front_matter:
+  remove_originals: true
+
+relative_links:
+  enabled: true
+  collections: false
+
+titles_from_headings:
+  enabled: true
+  strip_title: true
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# --- Tema -----------------------------------------------------------------
+
+color_scheme: light
+heading_anchors: true
+
+search_enabled: true
+search:
+  heading_level: 3
+  previews: 3
+  rel_url: true
+  button: true
+  focus_shortcut_key: k
+
+aux_links:
+  "Repositorio en GitHub":
+    - https://github.com/MATI-MBIT/arqsoft-reto-2
+aux_links_new_tab: true
+
+back_to_top: true
+back_to_top_text: "Volver arriba"
+
+nav_sort: case_insensitive
+
+footer_content: >-
+  Arquitectura de Software · Reto 2 ·
+  <a href="https://github.com/MATI-MBIT/arqsoft-reto-2">MATI-MBIT/arqsoft-reto-2</a>
+
+gh_edit_link: true
+gh_edit_link_text: "Editar esta página en GitHub"
+gh_edit_repository: https://github.com/MATI-MBIT/arqsoft-reto-2
+gh_edit_branch: main
+gh_edit_source: docs
+gh_edit_view_mode: edit
+
+# Diagramas ```mermaid``` renderizados en el navegador.
+mermaid:
+  version: "11.4.1"
+
+callouts_level: quiet
+callouts:
+  nota:
+    title: Nota
+    color: blue
+  importante:
+    title: Importante
+    color: yellow
+  advertencia:
+    title: Advertencia
+    color: red
+  tip:
+    title: Tip
+    color: green
+
+# --- Build ----------------------------------------------------------------
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
