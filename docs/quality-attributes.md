@@ -1,13 +1,14 @@
 ---
 title: ASRs de disponibilidad y seguridad
 nav_order: 2
+helix_section: "Requirements & Quality → Quality Scenarios"
 ---
 
 # ASRs de disponibilidad y seguridad
 
 Alcance: los cuatro escenarios que el equipo acordó en la reunión del 18 de septiembre —dos de seguridad (suplantación y elevación de privilegios) y dos de disponibilidad (detección y reparación de la cadena que sigue a un pedido)— reescritos como escenarios de seis partes en el espacio del problema. Todo lo que en la reunión se dijo en términos de solución (gestor de sesión, huella del dispositivo, réplicas de lectura, registros de la base de datos, tabla de usuarios activos, cola de reintentos, equipo de soporte) sale de las seis partes y entra en la fila "cómo se cumpliría", como hipótesis que ADD confirmará o cambiará.
 
-Vocabulario: el enunciado habla de **pedido**; en la reunión dijimos "compra" y "orden de compra". Aquí se usa pedido. La cadena que sigue al pedido tiene tres etapas, tal como las describimos: **facturación** (factura o documento de cobro diferido), **descargue de inventario** y **validación de despacho**; su cierre habilita a logística.
+Vocabulario: el enunciado habla de **pedido**; en la reunión dijimos "compra" y "orden de compra". Aquí se usa pedido. La cadena que sigue al pedido tiene tres etapas, tal como las describimos: **facturación** (factura o documento de cobro diferido), **descargue de inventario** y **validación de despacho**; su cierre habilita a logística. El resto de los términos está en el [glosario](glossary.md).
 
 ## 1. Los ASRs
 
@@ -17,6 +18,24 @@ Vocabulario: el enunciado habla de **pedido**; en la reunión dijimos "compra" y
 | ASR-2 | Seguridad · reacción | Ante una escritura ya ejecutada por un actor cuyo permiso solo cubre consulta, bloquear al actor, cerrar su sesión y revertir la escritura en ≤ 5 s; escrituras posteriores del mismo actor = 0 | A | Alta | Medio | Reunión (ACR2) · STRIDE (E) |
 | ASR-3 | Disponibilidad · detección | Detectar en ≤ 30 s que la cadena de un pedido confirmado quedó detenida en facturación, inventario o despacho sin señalar error, con ≤ 1 falsa alarma por hora | A | Alta | Alto | Reunión (ACR4) |
 | ASR-4 | Disponibilidad · reparación | Reanudar la cadena detenida desde la etapa que falló, sin duplicar factura, descargue ni orden de despacho, en ≤ 5 min; lo que no se reanuda se entrega a una persona con el estado exacto | A | Alta | Alto | Reunión (ACR3) |
+
+## 1b. De qué historia cuelga cada escenario
+
+Un escenario de calidad no vive solo: se ata a la historia de usuario cuyo actor
+lo sufre o lo recibe. Esa historia aporta la fuente, el estímulo y la respuesta;
+la ficha de abajo aporta el ambiente y la medida.
+
+| ASR | Historia | Actor | Por qué esa y no otra |
+|---|---|---|---|
+| ASR-1 | [HU-01](requirements.md) — Inicio de sesión desde el dispositivo suministrado | Vendedor | Es la historia donde la sesión se abre, que es el instante desde el que corren los 2 s |
+| ASR-2 | [HU-13](requirements.md) — Reacción ante la escritura indebida | Área de seguridad | Es la única historia cuyo estímulo es una escritura ya ejecutada |
+| ASR-3 | [HU-03](requirements.md) — Creación del pedido en la tienda | Vendedor | La cadena arranca al confirmarse el pedido, y desde ahí se mide que se detuvo |
+| ASR-4 | [HU-14](requirements.md) — Recepción del pedido escalado | Responsable del pedido escalado | Es donde aterriza la segunda mitad de la respuesta: lo que no se reanuda va a una persona |
+
+Las demás historias del árbol no cargan escenario propio. HU-09, HU-10 y HU-15
+recorren la misma cadena que HU-03 y HU-14, y HU-12 recibe el aviso que HU-01
+dispara: en los cuatro casos la medida ya está fijada por la historia a la que
+se atan.
 
 ## 2. Ambientes
 

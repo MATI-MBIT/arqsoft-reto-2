@@ -29,8 +29,6 @@ Contenido…
 Sin front matter la página también se publica: el título se toma del primer
 encabezado `#` del documento.
 
-Más detalles en [Guía de publicación](guia-de-publicacion.md).
-
 ## Contenido
 
 Las páginas aparecen en el menú lateral. Usa el buscador (`Ctrl` + `K` o
