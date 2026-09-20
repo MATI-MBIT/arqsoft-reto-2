@@ -123,9 +123,15 @@ desplegable de stakeholders, no texto libre.
 cargan atributo, prioridad, artefacto, ambiente, TPS y medida, y la medida son
 deslizadores fijos.
 
-**ASR-4 no cabe.** Su medida de 5 minutos excede el techo de 60 000 ms del campo
-de tiempo. Tampoco hay dónde poner «cero duplicados» ni «≤ 1 falsa alarma por
-hora» de ASR-3. `[PREGUNTA]` Cuál de las tres salidas del recorrido se toma.
+**Los cuatro ASR caben ahora.** ASR-4 se replanteó de 5 min a **5 s** el
+2026-09-19, por decisión de Nicolás, y con eso entra en el techo de 60 000 ms.
+La consecuencia de diseño es real: a 5 s no hay espacio para reintentar con
+espera creciente, así que lo que no reanude a la primera va a una persona.
+
+Lo que sigue sin tener dónde ir son las medidas que no son de tiempo: «cero
+facturas o descargues duplicados» de ASR-4 y «≤ 1 falsa alarma por hora» de
+ASR-3 no tienen campo en el formulario, y viven solo en
+`docs/quality-attributes.md`.
 
 **El TPS deja de ser opcional.** Helix pide un número de transacciones por
 segundo. Es la pregunta abierta que arrastran las cuatro fichas.
@@ -219,7 +225,8 @@ sirve el clic por identificador de `take_snapshot`, que sí pasa.
 
 ## Convenciones de esta documentación
 
-Notación fijada y que hay que respetar: **7x24x365** · **5,5 min** · el símbolo
+Notación fijada y que hay que respetar: **7x24x365** · **35 s** de presupuesto
+conjunto entre ASR-3 y ASR-4 · el símbolo
 **≤** para los umbrales · **ASR-1** a **ASR-4** · **R-1** en adelante para
 restricciones · **HU-01** en adelante para historias.
 

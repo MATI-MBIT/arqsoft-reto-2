@@ -17,7 +17,7 @@ Vocabulario: el enunciado habla de **pedido**; en la reunión dijimos "compra" y
 | ASR-1 | Seguridad · detección | Detectar en ≤ 2 s que una sesión de vendedor abierta con credenciales correctas la opera un dispositivo que no es el suministrado, y avisar a seguridad | A | Alta | Medio | Reunión (ACR1) · STRIDE (S) |
 | ASR-2 | Seguridad · reacción | Ante una escritura ya ejecutada por un actor cuyo permiso solo cubre consulta, bloquear al actor, cerrar su sesión y revertir la escritura en ≤ 5 s; escrituras posteriores del mismo actor = 0 | A | Alta | Medio | Reunión (ACR2) · STRIDE (E) |
 | ASR-3 | Disponibilidad · detección | Detectar en ≤ 30 s que la cadena de un pedido confirmado quedó detenida en facturación, inventario o despacho sin señalar error, con ≤ 1 falsa alarma por hora | A | Alta | Alto | Reunión (ACR4) |
-| ASR-4 | Disponibilidad · reparación | Reanudar la cadena detenida desde la etapa que falló, sin duplicar factura, descargue ni orden de despacho, en ≤ 5 min; lo que no se reanuda se entrega a una persona con el estado exacto | A | Alta | Alto | Reunión (ACR3) |
+| ASR-4 | Disponibilidad · reparación | Reanudar la cadena detenida desde la etapa que falló, sin duplicar factura, descargue ni orden de despacho, en ≤ 5 s; lo que no se reanuda se entrega a una persona con el estado exacto | A | Alta | Alto | Reunión (ACR3) |
 
 ## 1b. De qué historia cuelga cada escenario
 
@@ -47,7 +47,7 @@ se atan.
 | Dispositivos | Cada vendedor opera desde el dispositivo que CCP le suministró; cambios de dispositivo `[PREGUNTA]` por mes | Igual | Igual |
 | Alcance | Dentro | Dentro | Dentro solo para fallas de software |
 
-Presupuesto compartido: ASR-3 + ASR-4 suman 5,5 min entre que la cadena se detiene y queda reanudada o en manos de una persona. Ese total debe ser menor que el tiempo que el tendero espera antes de ver su pedido "en preparación" (`[PREGUNTA]`).
+Presupuesto compartido: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y queda reanudada o en manos de una persona. Ese total debe ser menor que el tiempo que el tendero espera antes de ver su pedido "en preparación" (`[PREGUNTA]`).
 
 ## 2b. Matriz STRIDE
 
@@ -150,10 +150,10 @@ flowchart LR
 | **Estímulo** | Un pedido señalado como detenido, con una o dos etapas ya completadas y una pendiente |
 | **Artefacto** | La cadena del pedido y sus efectos ya producidos: factura emitida, inventario descargado, orden de despacho |
 | **Ambiente** | A |
-| **Respuesta** | El sistema reanuda la cadena desde la etapa que falló, sin repetir las etapas completadas; si tras los reintentos la etapa sigue fallando, entrega el pedido a una persona con el estado exacto (qué etapa falta y por qué) para que lo termine o lo cancele |
-| **Medida** | Cadena reanudada o entregada a una persona en ≤ 5 min desde la señal (supuesto); facturas, descargues y órdenes de despacho duplicados = 0; pedidos señalados que no llegan ni a logística ni a una persona = 0, en Ambiente A |
-| **Por qué es ASR** | Obliga a que cada etapa sea repetible sin efecto doble y a que el estado de la cadena sobreviva a la falla: la segunda factura o el segundo descargue son fallas de contenido nuevas creadas por la reparación. Cinco minutos permiten reintentar con espera creciente; con 30 s no habría reintento posible y todo iría a una persona, con 50 min el tendero vería el pedido perdido |
-| **Cómo se cumpliría** | Reintento con espera creciente por etapa, idempotencia por identificador de pedido y etapa, y escalamiento a una persona con el registro de la cadena → vistas de concurrencia e información |
+| **Respuesta** | El sistema reanuda la cadena desde la etapa que falló, sin repetir las etapas completadas; si ese intento no la completa, entrega el pedido a una persona con el estado exacto (qué etapa falta y por qué) para que lo termine o lo cancele |
+| **Medida** | Cadena reanudada o entregada a una persona en ≤ 5 s desde la señal; facturas, descargues y órdenes de despacho duplicados = 0; pedidos señalados que no llegan ni a logística ni a una persona = 0, en Ambiente A |
+| **Por qué es ASR** | Obliga a que cada etapa sea repetible sin efecto doble y a que el estado de la cadena sobreviva a la falla: la segunda factura o el segundo descargue son fallas de contenido nuevas creadas por la reparación. Cinco segundos dejan espacio para un intento, no para una cola con espera creciente: lo que no reanude a la primera va a una persona. Con 5 min cabrían varios reintentos y el tendero esperaría sin saber si su pedido avanza; con 200 ms la reanudación no alcanzaría a tocar la etapa de negocio |
+| **Cómo se cumpliría** | Idempotencia por identificador de pedido y etapa, estado de la cadena guardado etapa por etapa, y escalamiento inmediato a una persona cuando el intento de reanudación no completa → vistas de concurrencia e información |
 | **Cómo se verifica** | Encadenar con el experimento de ASR-3: liberar el bloqueo y medir el tiempo hasta logística; mantener el bloqueo y medir el tiempo hasta la entrega a una persona; auditar facturas, descargues y órdenes duplicadas |
 | **Prioridad · Impacto · Origen** | Alta · Alto · Reunión (ACR3) |
 
@@ -164,5 +164,5 @@ flowchart LR
     subgraph AMB["Ambiente A — carga [PREGUNTA]"]
         A["Artefacto<br/>La cadena del pedido y sus efectos ya producidos"]
     end
-    A -- "Respuesta<br/>reanuda desde la etapa fallida o entrega a una persona" --> M["📏 Medida<br/>≤ 5 min, 0 duplicados, 0 pedidos sin destino"]
+    A -- "Respuesta<br/>reanuda desde la etapa fallida o entrega a una persona" --> M["📏 Medida<br/>≤ 5 s, 0 duplicados, 0 pedidos sin destino"]
 ```

@@ -83,9 +83,10 @@ el TPS y la medida.
 | ASR-3 | Availability · Detection | `[PREGUNTA]` |
 | ASR-4 | Availability · Recovery | `[PREGUNTA]` |
 
-**ASR-4 no cabe en el formulario**: su medida de 5 minutos excede el techo de
-60 000 ms del campo de tiempo. Las tres salidas posibles están en
-`helix-recorrido-funcional.md`; falta escoger una.
+Los cuatro caben en el formulario desde que Nicolás replanteó ASR-4 de 5 min a
+5 s, el 2026-09-19. Lo que no cabe son las medidas que no son de tiempo: «cero
+duplicados» y «≤ 1 falsa alarma por hora» viven solo en
+`docs/quality-attributes.md`.
 
 ## Lo que Helix cuenta y hoy vale cero
 
@@ -122,7 +123,7 @@ Primera sincronización completa. Lo que quedó cargado:
 | `Objective` | Los cinco campos: enunciado, dentro, fuera, propósito y glosario |
 | `Constraints` | 9 de negocio (R-1 a R-9) y 2 de tecnología (R-10, R-11) |
 | `Requirements & Quality` | 4 épicas, 10 capacidades y 15 historias, con narrativa y stakeholder |
-| Escenarios de calidad | 3 de 4 |
+| Escenarios de calidad | 4 de 4 |
 
 ### Lo que Helix hace con la narrativa
 
@@ -143,11 +144,13 @@ HU-01 y el desplegable no admite otra cosa. Las seis partes reales viven en
 | ASR-1 | HU-01 | Security · Detection | High | 2 000 ms |
 | ASR-2 | HU-13 | Security · Reaction | High | 5 000 ms |
 | ASR-3 | HU-03 | Availability · Detection | High | 30 000 ms |
-| ASR-4 | HU-14 | Availability · Recovery | — | **Sin cargar** |
+| ASR-4 | HU-14 | Availability · Recovery | High | 5 000 ms |
 
-**ASR-4 sigue sin cargar** porque su medida de 5 minutos excede el techo de
-60 000 ms. Falta que Nicolás escoja entre las tres salidas del recorrido
-funcional.
+**ASR-4 entró tras replantear su medida.** Nicolás la bajó de 5 min a 5 s el
+2026-09-19, y con eso cabe en el campo sin forzar nada. La consecuencia de
+diseño queda anotada en la ficha: a 5 s no hay espacio para una cola de
+reintentos con espera creciente, así que lo que no reanude al primer intento va
+a una persona. El presupuesto conjunto de ASR-3 y ASR-4 pasa de 5,5 min a 35 s.
 
 ### Lo que se dejó deliberadamente sin marcar
 
@@ -166,8 +169,8 @@ en operación normal sigue sin definirse.
 
 ### Lo que el indicador dice hoy
 
-- Atributos de calidad que llegaron a un escenario medible: **5 de 17**
-- Escenarios citados por una decisión o un modelo: **0 de 3**
+- Atributos de calidad que llegaron a un escenario medible: **6 de 17**
+- Escenarios citados por una decisión o un modelo: **0 de 4**
 - Modelos sin dibujar: **5**
 - Contradicciones: **0**
 

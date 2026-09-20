@@ -180,26 +180,18 @@ separado del de detección.
 | ASR-1 | Security · Detection | ≤ 2 s = 2 000 ms | Sí |
 | ASR-2 | Security · Reaction | ≤ 5 s = 5 000 ms | Sí |
 | ASR-3 | Availability · Detection | ≤ 30 s = 30 000 ms | Sí |
-| ASR-4 | Availability · Recovery | ≤ 5 min = 300 000 ms | **No: excede el techo cinco veces** |
+| ASR-4 | Availability · Recovery | ≤ 5 s = 5 000 ms | Sí, tras replantear la medida el 2026-09-19 |
 
-**ASR-4 no cabe en el formulario.** El techo de 60 000 ms lo deja por fuera, y
-además no existe un campo de tiempo de recuperación separado del de detección:
-la pestaña de `Recovery` muestra los mismos tres controles que la de
-`Detection`. Tampoco hay dónde registrar la segunda mitad de su medida, «cero
-facturas o descargues duplicados».
+**ASR-4 no cabía con su medida original de 5 minutos.** Nicolás la replanteó a
+**5 segundos** el 2026-09-19, y con eso entra sin forzar nada. La decisión no fue
+de formato: a 5 s no queda espacio para una cola de reintentos con espera
+creciente, así que todo lo que no reanude al primer intento va a una persona.
 
-Lo mismo pasa con «≤ 1 falsa alarma por hora» de ASR-3: no hay campo.
-
-Hay tres salidas, y hay que escoger una:
-
-1. Partir ASR-4 en dos escenarios, uno de detección dentro del techo y otro de
-   recuperación, y aceptar que el segundo se registra con la medida topada.
-2. Registrar el escenario con 60 000 ms y poner la medida real en el nombre del
-   escenario y en `Environment`.
-3. Dejar la medida completa solo en `docs/quality-attributes.md` y en el
-   experimento, y usar Helix como índice.
-
-`[PREGUNTA]` Cuál de las tres. Es decisión de Nicolás, no de formato.
+Queda una limitación que el cambio no resuelve. La pestaña de `Recovery` muestra
+los mismos tres controles que la de `Detection`, así que no hay un campo de
+tiempo de recuperación propio. Y las medidas que no son de tiempo —«cero
+facturas o descargues duplicados» de ASR-4, «≤ 1 falsa alarma por hora» de
+ASR-3— no tienen dónde registrarse: viven solo en `docs/quality-attributes.md`.
 
 ### El ambiente cuantificado deja de ser opcional
 
