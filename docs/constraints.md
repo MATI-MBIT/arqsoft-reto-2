@@ -57,8 +57,8 @@ conocido contra el cual comparar; el tendero no. Esa asimetría no la resuelve e
 diseño: viene dada por cómo CCP reparte los equipos.
 
 El enunciado no menciona lenguaje, motor de base de datos, nube ni proveedor.
-`[PREGUNTA]` Si existe algún sistema heredado, contrato con terceros o exigencia
-regulatoria por país que condicione el diseño.
+`[PREGUNTA]` ¿Existe algún sistema heredado, contrato con terceros o exigencia
+regulatoria por país que condicione el diseño?
 
 ## Restricciones del proyecto
 
@@ -112,15 +112,15 @@ omisión es deliberada.
 Sin estos números, las condiciones del sistema quedan sin cuantificar y las
 pruebas no replican la operación real.
 
-`[PREGUNTA]` Cuántos pedidos y consultas por minuto en operación normal, sumando
-los cinco países.
+`[PREGUNTA]` ¿Cuántos pedidos y consultas por minuto en operación normal, sumando
+los cinco países?
 
-`[PREGUNTA]` Qué factor multiplica esa carga en hora pico, y cuánto dura la
-ráfaga.
+`[PREGUNTA]` ¿Qué factor multiplica esa carga en hora pico, y cuánto dura la
+ráfaga?
 
-`[PREGUNTA]` Cuántos cambios legítimos de dispositivo ocurren por mes en la
-fuerza de ventas.
+`[PREGUNTA]` ¿Cuántos cambios legítimos de dispositivo ocurren por mes en la
+fuerza de ventas?
 
-`[PREGUNTA]` Cuánto espera el tendero entre que confirma y ve su pedido "en
-preparación". Ese número acota todo lo que el sistema puede tardarse en notar y
+`[PREGUNTA]` ¿Cuánto espera el tendero entre que confirma y ve su pedido "en
+preparación"? Ese número acota todo lo que el sistema puede tardarse en notar y
 arreglar una cadena detenida.
