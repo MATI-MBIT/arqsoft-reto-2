@@ -9,6 +9,7 @@ alcance_atributos: [disponibilidad, seguridad]
 Diez decisiones de arquitectura para los cuatro escenarios de calidad del reto 2: dos de seguridad (ASR-1, ASR-2) y dos de disponibilidad (ASR-3, ASR-4). Todas están en estado **Propuesta**: solo el equipo las pasa a Aceptada. Los productos concretos (Java, Spring, PostgreSQL, RabbitMQ, Redis) y los números de configuración no vienen del enunciado; van marcados `[SUPUESTO]` y tienen su fila en §1.3.
 
 ## 0. Índice
+
 | ADR | Título | Estado | Confianza | Iteración | ASRs | Diagramas |
 |---|---|---|---|---|---|---|
 | ADR-001 | Servicios que se comunican por eventos a través de un bróker durable, con el estado en una base transaccional | Propuesta | Media | 1 | ASR-1, ASR-2, ASR-3, ASR-4 | DG-CMP-001, DG-CMP-002, DG-DEP-001 |
@@ -31,6 +32,7 @@ Restricciones clave: sin ventana de mantenimiento (R-1), dispositivo suministrad
 Las dos exigencias comparten un rasgo: la falla no se anuncia. El atacante entra con credenciales correctas, y la etapa detenida no señala error.
 
 ### 1.2 ASRs
+
 | ASR | Atributo | Fuente | Estímulo | Artefacto | Ambiente | Respuesta | Medida | Prioridad | Impacto |
 |---|---|---|---|---|---|---|---|---|---|
 | ASR-1 | Seguridad | Tercero con las credenciales correctas de un vendedor y un dispositivo distinto al suministrado | Abre sesión con éxito y empieza a operar; arribo esporádico | La sesión del vendedor y el dispositivo suministrado como parte de su identidad | A: operación normal, carga `[PREGUNTA]`, sin fallas | Marca la sesión como abierta desde un dispositivo no reconocido y avisa al área de seguridad con vendedor, dispositivo y hora | Aviso en ≤ 2 s desde la apertura de la sesión, con ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo (supuesto de la ficha), en Ambiente A | Alta | Medio |
@@ -41,6 +43,7 @@ Las dos exigencias comparten un rasgo: la falla no se anuncia. El atacante entra
 Presupuesto conjunto: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y queda reanudada o en manos de una persona.
 
 ### 1.3 Restricciones, concerns y supuestos
+
 | ID | Tipo | Descripción | Origen |
 |---|---|---|---|
 | R-1 | restricción | Operación 7x24x365; no hay ventana de mantenimiento ni noche común a los cinco países | enunciado |
@@ -65,6 +68,7 @@ Presupuesto conjunto: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y 
 | SUP-06 | supuesto | La validación de despacho necesita la factura emitida y el inventario descargado, en el orden que usan el glosario y la página de stakeholders | [SUPUESTO] |
 
 ## 2. Catálogo de elementos
+
 | EL | Nombre | Tipo UML | Estereotipo | Responsabilidad | Estado que posee | Eclosión | Introducido por |
 |---|---|---|---|---|---|---|---|
 | EL-01 | Vendedor | actor | «external» | Abre sesión desde el dispositivo suministrado, consulta y crea pedidos | ninguno | exento («external») | contexto |
@@ -93,6 +97,7 @@ Presupuesto conjunto: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y 
 | EL-24 | Cola de reintentos | queue | «queue» «COTS» | Lleva al Coordinador el pedido señalado; su destino de mensajes fallidos es la Bandeja | pedidos señalados pendientes | exento («COTS») | ADR-006 |
 
 ## 3. Catálogo de conectores
+
 | CN | Desde | Hacia | Tipo | Protocolo o estereotipo | Introducido por |
 |---|---|---|---|---|---|
 | CN-01 | EL-01 | EL-03 | síncrono | interacción de usuario | contexto |
@@ -169,6 +174,7 @@ Construiremos el sistema como servicios que se comunican por eventos a través d
 **Y-statement:** En el contexto de un sistema greenfield que opera 7x24x365, frente a ASR-1, ASR-2, ASR-3 y ASR-4, decidimos servicios comunicados por eventos a través de un bróker durable y descartamos el monolito síncrono y los servicios con llamadas síncronas para lograr que cada control observe sin frenar la operación, aceptando un salto más por evento y el bróker como pieza común.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-1 | Seguridad | Aviso ≤ 2 s | contribuye | primario |
@@ -177,6 +183,7 @@ Construiremos el sistema como servicios que se comunican por eventos a través d
 | ASR-4 | Disponibilidad | Reanudación ≤ 5 s, 0 duplicados | contribuye | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Usar intermediarios (bróker de mensajes) | Modificabilidad · reducir acoplamiento, al servicio de disponibilidad | EL-15 | «tactic:intermediario-mensajes» |
@@ -184,6 +191,7 @@ Construiremos el sistema como servicios que se comunican por eventos a través d
 
 **A3. Alternativas**
 Drivers: ASR-1 (Alta), ASR-2 (Alta), ASR-3 (Alta), ASR-4 (Alta), R-1, R-4, R-12 — fijados antes de evaluar.
+
 | Criterio | Opción A: Servicios con eventos y bróker durable (elegida) | Opción B: Monolito modular síncrono, como el BPMN | Opción C: Servicios con llamadas síncronas REST |
 |---|---|---|---|
 | ASR-1 aviso ≤ 2 s | + verificación fuera del login | − la verificación va dentro del login o en un hilo que muere con él | − la verificación bloquea el login |
@@ -195,6 +203,7 @@ Drivers: ASR-1 (Alta), ASR-2 (Alta), ASR-3 (Alta), ASR-4 (Alta), R-1, R-4, R-12 
 Descartes: B — gana en simplicidad, pero una etapa detenida queda como un hilo bloqueado que nada observa, y eso deja sin punto de medida a ASR-3. C — acopla en el tiempo cada control al camino que vigila, y la falla de un servicio se propaga al que lo llama.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | TO-001a | Trade-off | El bróker entre componentes: disponibilidad ▲ (ASR-3, ASR-4 conservan el pendiente), latencia de los controles ▼ (ASR-1, ASR-2) | El salto por el bróker es de milisegundos frente a los presupuestos de 2 s y 5 s |
@@ -202,6 +211,7 @@ Descartes: B — gana en simplicidad, pero una etapa detenida queda como un hilo
 | NR-001a | No-riesgo | La lectura de inventario es exacta porque no hay réplica | R-4 se mide contra la base primaria |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Prueba de carga | Latencia del salto por el bróker, de la publicación al consumo, con carga de Ambiente A | ≤ 2 s de extremo a extremo en ASR-1 y ≤ 5 s en ASR-2 |
@@ -238,12 +248,14 @@ Usaremos un Coordinador de la cadena que orquesta las tres etapas: les envía el
 **Y-statement:** En el contexto de la cadena de tres etapas que sigue al pedido, frente a ASR-3 y ASR-4, decidimos un Coordinador que orquesta y guarda el estado por pedido y etapa, y descartamos la coreografía y la llamada síncrona encadenada, para lograr un único lugar desde donde detectar y reanudar, aceptando un punto central y dos escrituras más por etapa.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-3 | Disponibilidad | Señal ≤ 30 s con etapa y tiempo | contribuye | primario |
 | ASR-4 | Disponibilidad | Reanudación ≤ 5 s desde la etapa que falló | contribuye | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Orquestación | Integración · gestionar la interacción | EL-16 | «tactic:orquestacion» |
@@ -251,6 +263,7 @@ Usaremos un Coordinador de la cadena que orquesta las tres etapas: les envía el
 
 **A3. Alternativas**
 Drivers: ASR-3 (Alta), ASR-4 (Alta), S-2 — fijados antes de evaluar.
+
 | Criterio | Opción A: Coordinador que orquesta con estado persistido (elegida) | Opción B: Coreografía, cada etapa reacciona al evento de la anterior | Opción C: Llamada síncrona encadenada con timeout, como el BPMN |
 |---|---|---|---|
 | ASR-3 señal ≤ 30 s con etapa | ++ una tabla con etapa y marca de tiempo | − el estado queda repartido entre tres servicios; detectar exige reconstruirlo | − el timeout solo lo ve el hilo que llama |
@@ -260,12 +273,14 @@ Drivers: ASR-3 (Alta), ASR-4 (Alta), S-2 — fijados antes de evaluar.
 Descartes: B — evita el punto central, pero sin dueño del flujo el pedido detenido no tiene quién lo note ni quién lo reanude. C — pierde el estado cuando el hilo caduca, que es justo el caso de ASR-4.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | R-002a | Riesgo | Si el Coordinador cae, ninguna cadena avanza y la reanudación programada se pierde | Una sola instancia; el Monitor recoge en su siguiente barrido la etapa vencida (ADR-004) |
 | NR-002a | No-riesgo | El estado sobrevive a la caída del Coordinador | El estado vive en la base, no en memoria (ADR-001) |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Inyección de fallas | Detener el Coordinador con diez pedidos en curso y reiniciarlo | 0 pedidos sin destino; cada pedido retoma desde su etapa pendiente |
@@ -301,18 +316,21 @@ Adoptaremos etapas consecutivas: el Coordinador envía la facturación, luego el
 **Y-statement:** En el contexto de una cadena orquestada de tres etapas, frente a ASR-3 y ASR-4, decidimos correrlas en orden y descartamos el paralelo con unión del BPMN para lograr una sola etapa pendiente por pedido, aceptando que la cadena dure la suma de las tres.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-4 | Disponibilidad | Reanudación ≤ 5 s con estado exacto | contribuye | primario |
 | ASR-3 | Disponibilidad | ≤ 1 falsa alarma por hora | contribuye | afectado |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Protocolo de comportamiento (orden de las etapas) | Integración · cerrar distancia | EL-16 | «tactic:etapas-consecutivas» |
 
 **A3. Alternativas**
 Drivers: ASR-4 (Alta), ASR-3 (Alta), S-1, SUP-06, C-03 — fijados antes de evaluar.
+
 | Criterio | Opción A: Etapas consecutivas (elegida) | Opción B: Etapas en paralelo con unión, como el BPMN |
 |---|---|---|
 | ASR-4 una etapa pendiente, estado exacto | ++ nunca hay dos pendientes | − dos etapas pueden quedar pendientes a la vez |
@@ -323,6 +341,7 @@ Drivers: ASR-4 (Alta), ASR-3 (Alta), S-1, SUP-06, C-03 — fijados antes de eval
 Descartes: B — gana en duración total, pero deja estados con dos etapas pendientes que ASR-4 no contempla y valida despachos sin factura si SUP-06 es cierto.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | S-003a | Sensibilidad | La duración total de la cadena depende de la suma de las tres etapas | Duración normal de cada etapa `[PREGUNTA]` |
@@ -330,6 +349,7 @@ Descartes: B — gana en duración total, pero deja estados con dos etapas pendi
 | NR-003a | No-riesgo | El orden no cambia el cumplimiento de ASR-3 ni de ASR-4, porque los plazos corren por etapa | SUP-03 |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Experimento | Duración de la cadena completa en serie con carga de Ambiente A, antes de aceptar | Menor que el tiempo de espera del tendero `[PREGUNTA]`; ≤ 35 s de presupuesto conjunto si ocurre una detención |
@@ -365,12 +385,14 @@ Adoptaremos un plazo vencido por pedido y etapa: al enviar cada etapa, el Coordi
 **Y-statement:** En el contexto de una cadena con estado por pedido y etapa, frente a ASR-3, decidimos un plazo por pedido y etapa revisado por barrido, con sondeo de salud de apoyo, y descartamos el latido solo y el temporizador en memoria para lograr detectar la omisión en ≤ 30 s, aceptando un plazo que hay que calibrar y un Monitor como punto único.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-3 | Disponibilidad | Señal ≤ 30 s, ≤ 1 falsa alarma por hora | satisface | primario |
 | ASR-4 | Disponibilidad | Presupuesto conjunto de 35 s | contribuye | afectado |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Excepción / timeout (plazo vencido) | Disponibilidad · detectar | EL-16, EL-17 | «tactic:timeout» |
@@ -379,6 +401,7 @@ Adoptaremos un plazo vencido por pedido y etapa: al enviar cada etapa, el Coordi
 
 **A3. Alternativas**
 Drivers: ASR-3 (Alta), R-1 — fijados antes de evaluar.
+
 | Criterio | Opción A: Plazo por pedido y barrido, con sondeo de apoyo (elegida) | Opción B: Heartbeat solo, como el BPMN | Opción C: Temporizador en memoria del Coordinador, uno por pedido |
 |---|---|---|---|
 | ASR-3 detecta la omisión ≤ 30 s | + plazo + barrido ≤ 30 s | KO la etapa viva responde al latido; el pedido quieto no se ve | + dispara al segundo exacto |
@@ -388,6 +411,7 @@ Drivers: ASR-3 (Alta), R-1 — fijados antes de evaluar.
 Descartes: B — KO: no cumple ASR-3, porque detecta la etapa caída y no el pedido detenido (hallazgo H-1 de DG-CMP v3). C — detecta igual de bien mientras el Coordinador vive, pero pierde todos los plazos si cae.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | S-004a | Sensibilidad | La demora de la señal es el plazo más el periodo del barrido | SUP-02, SUP-03 |
@@ -396,6 +420,7 @@ Descartes: B — KO: no cumple ASR-3, porque detecta la etapa caída y no el ped
 | NR-004a | No-riesgo | Un pedido no se señala dos veces por el mismo intento | Clave única de la señal por pedido, etapa e intento |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Experimento | Medir la duración de cada etapa en operación normal durante una hora, antes de aceptar, para fijar el plazo | p99,9 de cada etapa < 25 s |
@@ -431,17 +456,20 @@ Haremos idempotente cada etapa, es decir, que repetir la misma orden no produzca
 **Y-statement:** En el contexto de etapas que pueden producir su efecto y caer antes de confirmarlo, frente a ASR-4, decidimos una clave única por pedido y etapa en la transacción del efecto y descartamos la consulta previa al Coordinador y la transacción distribuida para lograr cero duplicados, aceptando una disciplina que cada etapa debe cumplir.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-4 | Disponibilidad | Duplicados = 0 | satisface | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Transacciones (idempotencia por clave única) | Disponibilidad · prevenir | EL-18, EL-08, EL-19 | «tactic:idempotencia» |
 
 **A3. Alternativas**
 Drivers: ASR-4 (Alta), R-12 — fijados antes de evaluar.
+
 | Criterio | Opción A: Clave única en la transacción del efecto (elegida) | Opción B: Consultar al Coordinador antes de reenviar | Opción C: Transacción distribuida entre Coordinador y etapa |
 |---|---|---|---|
 | ASR-4 duplicados = 0 | ++ la base rechaza el segundo efecto | KO el Coordinador no sabe del efecto hecho sin confirmar | + atómico entre los dos |
@@ -450,12 +478,14 @@ Drivers: ASR-4 (Alta), R-12 — fijados antes de evaluar.
 Descartes: B — KO: no cumple duplicados = 0 en el caso del efecto producido y no confirmado. C — cumple la atomicidad, pero bloquea la cadena cuando una parte no responde, que es el escenario de ASR-3.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | R-005a | Riesgo | Una etapa que no guarde la fila en la misma transacción duplica sin aviso | Revisión de cada etapa nueva |
 | NR-005a | No-riesgo | La facturación y su fila son atómicas | La factura se emite en la base propia, no en un sistema externo `[PREGUNTA]` |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Inyección de fallas | Matar cada etapa justo después del commit y antes de confirmar; reenviar el comando | 0 facturas, descargues u órdenes duplicados |
@@ -491,11 +521,13 @@ Haremos un solo intento de reanudación: el Coordinador reenvía solo la etapa p
 **Y-statement:** En el contexto de una cadena con etapas idempotentes, frente a ASR-4, decidimos un solo intento de la etapa pendiente seguido de escalamiento, y descartamos los dos reintentos con espera creciente del BPMN y el escalamiento inmediato, para lograr reanudar o entregar en ≤ 5 s, aceptando más pedidos en manos de personas.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-4 | Disponibilidad | ≤ 5 s desde la señal; 0 pedidos sin destino | satisface | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Reintento (un intento, sin espera creciente) | Disponibilidad · recuperar | EL-16, EL-24 | «tactic:reintento-unico» |
@@ -503,6 +535,7 @@ Haremos un solo intento de reanudación: el Coordinador reenvía solo la etapa p
 
 **A3. Alternativas**
 Drivers: ASR-4 (Alta), ASR-3 (Alta, por el presupuesto conjunto de 35 s) — fijados antes de evaluar.
+
 | Criterio | Opción A: Un intento y escalamiento (elegida) | Opción B: Dos reintentos con espera creciente, como el BPMN | Opción C: Escalamiento inmediato, sin intento |
 |---|---|---|---|
 | ASR-4 ≤ 5 s | + 3 s de intento más la publicación | KO dos intentos con espera no caben en 5 s | ++ inmediato |
@@ -512,6 +545,7 @@ Drivers: ASR-4 (Alta), ASR-3 (Alta, por el presupuesto conjunto de 35 s) — fij
 Descartes: B — KO: no cumple los 5 s de ASR-4, y vuelve a Método/pago. C — cumple el tiempo con holgura, pero no intenta reanudar, que es la primera mitad de la respuesta de ASR-4.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | S-006a | Sensibilidad | El cumplimiento de 5 s depende del plazo del intento | SUP-04 |
@@ -519,6 +553,7 @@ Descartes: B — KO: no cumple los 5 s de ASR-4, y vuelve a Método/pago. C — 
 | NR-006a | No-riesgo | Un intento que el Coordinador no alcanza a procesar llega igual a la bandeja | La cola de reintentos envía sus mensajes fallidos a la bandeja |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Inyección de fallas | Liberar el bloqueo tras la señal y medir el tiempo hasta que la cadena avanza | ≤ 5 s desde la señal |
@@ -554,11 +589,13 @@ Incluiremos la huella del dispositivo en la identidad del vendedor: un resumen d
 **Y-statement:** En el contexto de vendedores que operan un dispositivo suministrado, frente a ASR-1, decidimos una huella del dispositivo verificada por evento después de abrir la sesión y descartamos la verificación dentro del inicio de sesión y la revisión por lotes para lograr el aviso en ≤ 2 s sin bloquear al vendedor legítimo, aceptando que el tercero opere hasta que seguridad actúe.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-1 | Seguridad | Aviso ≤ 2 s; ≤ 1 falsa alarma por 100 cambios legítimos | satisface | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Identificar y autenticar actores (dispositivo incluido) | Seguridad · resistir | EL-03, EL-05 | «tactic:autenticar-dispositivo» |
@@ -567,6 +604,7 @@ Incluiremos la huella del dispositivo en la identidad del vendedor: un resumen d
 
 **A3. Alternativas**
 Drivers: ASR-1 (Alta), R-1, R-2 — fijados antes de evaluar. STRIDE: S.
+
 | Criterio | Opción A: Verificación por evento tras abrir la sesión (elegida) | Opción B: Verificación dentro del inicio de sesión | Opción C: Revisión por lotes de las sesiones del día |
 |---|---|---|---|
 | ASR-1 aviso ≤ 2 s | + evento más consulta indexada | ++ el aviso sale antes de abrir | KO horas, no segundos |
@@ -576,6 +614,7 @@ Drivers: ASR-1 (Alta), R-1, R-2 — fijados antes de evaluar. STRIDE: S.
 Descartes: B — cumple con holgura, pero convierte cada falsa alarma en un vendedor bloqueado en la tienda y pone la comparación en el camino crítico del inicio de sesión. C — KO: no cumple los 2 s de ASR-1 y choca con R-1.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | S-007a | Sensibilidad | Las falsas alarmas dependen de qué tan estable sea la huella ante una actualización del sistema operativo | Identificadores del equipo `[PREGUNTA]` |
@@ -583,6 +622,7 @@ Descartes: B — cumple con holgura, pero convierte cada falsa alarma en un vend
 | R-007b | Riesgo | Un atacante que copie la huella pasa la comparación | La huella se calcula en el dispositivo; sin gestión de dispositivos `[PREGUNTA]` |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Experimento | Abrir sesión con la credencial de un vendedor desde un dispositivo de prueba no registrado | Aviso ≤ 2 s desde la apertura |
@@ -618,11 +658,13 @@ Cada escritura en Pedidos e Inventario guardará, en su misma transacción, una 
 **Y-statement:** En el contexto de escrituras que pueden ejecutarse sin permiso, frente a ASR-2, decidimos una bitácora y un outbox en la misma transacción, con detección contra los permisos vigentes, y descartamos el sondeo periódico de la bitácora y la evaluación síncrona antes de responder para lograr que ninguna escritura se escape, aceptando dos filas más por escritura.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-2 | Seguridad | Reacción ≤ 5 s desde la detección; efecto residual = 0 | contribuye | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Detectar intrusiones (escritura contra permiso vigente) | Seguridad · detectar | EL-10 | «tactic:detectar-escritura» |
@@ -630,6 +672,7 @@ Cada escritura en Pedidos e Inventario guardará, en su misma transacción, una 
 
 **A3. Alternativas**
 Drivers: ASR-2 (Alta), R-1, R-7 — fijados antes de evaluar. STRIDE: E.
+
 | Criterio | Opción A: Bitácora y outbox en la transacción, detector por evento (elegida) | Opción B: Sondeo periódico de la bitácora | Opción C: Evaluación síncrona antes de responder la escritura |
 |---|---|---|---|
 | ASR-2 ninguna escritura se escapa | ++ evento atómico con la escritura | + la bitácora es completa | + evalúa todas |
@@ -639,6 +682,7 @@ Drivers: ASR-2 (Alta), R-1, R-7 — fijados antes de evaluar. STRIDE: E.
 Descartes: B — cumple si el sondeo es corto, pero cada segundo del periodo sale de los 5 s y la carga sube con la frecuencia. C — detecta antes, pero convierte la detección en un control preventivo en el camino de cada escritura. La ficha de ASR-2 lo descarta: con ese umbral, el bloqueo iría síncrono en cada escritura.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | S-008a | Sensibilidad | El instante de detección depende del retraso del relevo del outbox | El relevo publica en milisegundos tras el commit |
@@ -646,6 +690,7 @@ Descartes: B — cumple si el sondeo es corto, pero cada segundo del periodo sal
 | NR-008a | No-riesgo | Un permiso recién quitado se ve en la escritura siguiente | El Detector no guarda caché de permisos |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Experimento | Ejecutar una escritura con credencial de solo consulta y medir hasta la detección y la reacción | Reacción ≤ 5 s desde la detección |
@@ -681,11 +726,13 @@ Pondremos una Puerta de entrada de la API delante de todos los servicios. Verifi
 **Y-statement:** En el contexto de sesiones con tokens que se verifican sin consultar a nadie, frente a ASR-2, decidimos una Puerta de entrada que consulta una lista de revocación en cada petición y descartamos los tokens de vida corta y la consulta de la sesión al Gestor en cada petición para lograr cortar la sesión viva en milisegundos, aceptando una consulta por petición y una pieza más en el camino crítico.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-2 | Seguridad | Cierre ≤ 5 s; escrituras posteriores = 0 | satisface | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Revocar acceso | Seguridad · reaccionar | EL-04, EL-12, EL-11 | «tactic:revocar-acceso» |
@@ -693,6 +740,7 @@ Pondremos una Puerta de entrada de la API delante de todos los servicios. Verifi
 
 **A3. Alternativas**
 Drivers: ASR-2 (Alta), R-1 — fijados antes de evaluar. STRIDE: E.
+
 | Criterio | Opción A: Puerta de entrada con lista de revocación (elegida) | Opción B: Tokens de vida corta, sin lista | Opción C: El Gestor de sesión valida cada petición |
 |---|---|---|---|
 | ASR-2 cierre ≤ 5 s | ++ la petición siguiente se rechaza | KO el token sirve hasta que vence, salvo que viva ≤ 5 s | ++ la sesión se consulta en cada petición |
@@ -701,6 +749,7 @@ Drivers: ASR-2 (Alta), R-1 — fijados antes de evaluar. STRIDE: E.
 Descartes: B — KO: no cumple ASR-2 salvo con tokens de ≤ 5 s, que obligan a renovarlos sin parar. C — cumple ASR-2, pero pone un servicio con lógica y base en el camino de cada petición, con más riesgo para R-1 que una consulta a memoria.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | TO-009a | Trade-off | Comportamiento si la lista no responde: rechazar protege ASR-2 y degrada R-1; dejar pasar hace lo contrario | La preferencia del equipo es `[PREGUNTA]` |
@@ -708,6 +757,7 @@ Descartes: B — KO: no cumple ASR-2 salvo con tokens de ≤ 5 s, que obligan a 
 | NR-009a | No-riesgo | La revocación alcanza a todos los servicios | Toda petición de la app pasa por la Puerta de entrada |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Experimento | Revocar una sesión activa y medir el tiempo hasta el primer rechazo | ≤ 5 s desde la detección; 0 escrituras posteriores |
@@ -742,11 +792,13 @@ Revertiremos por compensación: una operación inversa que deshace el efecto de 
 **Y-statement:** En el contexto de escrituras indebidas que conviven con escrituras legítimas posteriores, frente a ASR-2, decidimos una compensación dentro de una reacción ordenada y descartamos restaurar la imagen anterior y retener las escrituras hasta aprobarlas para lograr revertir sin borrar lo ajeno, aceptando una operación inversa por cada escritura.
 
 **A1. ASRs atendidos**
+
 | ASR | Atributo | Medida | Efecto esperado | Rol |
 |---|---|---|---|---|
 | ASR-2 | Seguridad | Reversión ≤ 5 s; efecto residual a los 60 s = 0 | satisface | primario |
 
 **A2. Tácticas**
+
 | Táctica (curso) | Familia | Elemento(s) | Estereotipo en diagrama |
 |---|---|---|---|
 | Rollback por compensación | Disponibilidad · recuperar, al servicio de seguridad | EL-11, EL-07, EL-08 | «tactic:compensacion» |
@@ -754,6 +806,7 @@ Revertiremos por compensación: una operación inversa que deshace el efecto de 
 
 **A3. Alternativas**
 Drivers: ASR-2 (Alta), R-4 — fijados antes de evaluar. STRIDE: E.
+
 | Criterio | Opción A: Compensación semántica (elegida) | Opción B: Restaurar la imagen anterior de la fila | Opción C: Retener la escritura hasta que el Detector la apruebe |
 |---|---|---|---|
 | ASR-2 reversión ≤ 5 s | + una operación inversa | ++ una escritura | ++ no hay nada que revertir |
@@ -762,6 +815,7 @@ Drivers: ASR-2 (Alta), R-4 — fijados antes de evaluar. STRIDE: E.
 Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los descargues legítimos que llegaron después. C — gana en reversión, pero cambia el negocio: ninguna escritura queda firme hasta aprobarse, y la cifra deja de ser la del momento.
 
 **A4. Sensibilidad, trade-offs y riesgos**
+
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | R-010a | Riesgo | Un pedido indebido cuya cadena ya emitió factura o descargue exige compensar también esas etapas | ADR-002 y ADR-003: a lo sumo dos etapas por compensar |
@@ -769,6 +823,7 @@ Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los des
 | NR-010a | No-riesgo | La misma escritura no se compensa dos veces | La Reacción registra cada reacción con clave de escritura |
 
 **A5. Confirmación**
+
 | Tipo | Qué se prueba | Umbral |
 |---|---|---|
 | Experimento | Escritura con credencial de solo consulta seguida de un descargue legítimo del mismo producto | Reversión ≤ 5 s; el descargue legítimo se conserva |
@@ -779,6 +834,7 @@ Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los des
 **A7. Evidencia visual:** DG-SEQ-017, DG-CLS-002 (detalle en §6)
 
 ## 5. Matriz ASR × ADR
+
 | ASR | Prioridad | ADR-001 | ADR-002 | ADR-003 | ADR-004 | ADR-005 | ADR-006 | ADR-007 | ADR-008 | ADR-009 | ADR-010 | Hueco |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | ASR-1 | Alta | C | — | — | — | — | — | S | — | — | — | — |
@@ -787,6 +843,7 @@ Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los des
 | ASR-4 | Alta | C | C | C | C | S | S | — | — | — | — | — |
 
 ## 6. Plan de diagramas
+
 | DG | Tipo | Pregunta que responde | ASR | ADR | Elementos | Conectores | Táctica visible | Precio a anotar | Medida visible | Camino de fallo | Vista R&W |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | DG-CMP-001 | componentes | ¿Qué componentes detectan la suplantación y la escritura indebida, y por dónde se hablan? | ASR-1, ASR-2 | ADR-001, ADR-007, ADR-008, ADR-009, ADR-010 | EL-03, EL-04, EL-05, EL-06, EL-07, EL-08, EL-09, EL-10, EL-11, EL-12, EL-13, EL-15 | CN-03, CN-05, CN-08, CN-09, CN-10, CN-13, CN-15, CN-17, CN-18, CN-19, CN-20, CN-22 | «tactic:intermediario-mensajes», «tactic:autenticar-dispositivo», «tactic:detectar-intrusiones», «tactic:informar», «tactic:detectar-escritura», «tactic:bitacora-escrituras», «tactic:revocar-acceso», «tactic:autorizar-en-borde», «tactic:compensacion» | Consulta a la lista en cada petición; dos filas más por escritura; salto por el bróker | ≤ 2 s (ASR-1); ≤ 5 s (ASR-2) | no aplica | funcional |
