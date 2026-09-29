@@ -61,9 +61,9 @@ pedido "con error", sino la etapa exacta que falta y la razón. Sin ese detalle,
 el escalamiento traslada el problema en vez de resolverlo.
 
 **Facturación, inventario y despacho.** Son áreas del negocio antes que
-componentes de software, y cada una tiene dueño. Ese dueño responde por el efecto
-de su etapa y sufre el efecto duplicado si la reparación sale mal. Por eso entran como stakeholders y no solo como pasos de un
-proceso.
+componentes de software, y cada una tiene dueño. Ese dueño responde por el efecto de su etapa y sufre el
+efecto duplicado si la reparación sale mal. Por eso entran como stakeholders y
+no solo como pasos de un proceso.
 
 | Área | Etapa | Efecto que produce |
 |---|---|---|
@@ -75,8 +75,9 @@ Ninguno de esos tres efectos puede producirse dos veces. Una segunda factura o
 un segundo descargue no son un reintento fallido: son una falla nueva, creada
 por la reparación.
 
-**Logística.** Cierra la cadena y es la prueba de que funcionó. Un pedido que nunca le llega es exactamente lo que el sistema existe
-para evitar. Es distinta de despacho: despacho autoriza, logística transporta.
+**Logística.** Cierra la cadena y es la prueba de que funcionó. Un pedido que
+nunca le llega es exactamente lo que el sistema existe para evitar. Es distinta
+de despacho: despacho autoriza, logística transporta.
 
 ## Quiénes quedan fuera de la lista
 
