@@ -201,13 +201,13 @@ decirlo para que nadie las lea como alcance inventado.
 
 ## Preguntas abiertas
 
-`[PREGUNTA]` Si HU-05 y HU-06 son una sola historia. El enunciado menciona la
+`[PREGUNTA]` ¿HU-05 y HU-06 son una sola historia? El enunciado menciona la
 consulta de la ruta y el cambio de ruta en la misma frase, pero optimizar una
 ruta es un problema distinto a mostrarla.
 
-`[PREGUNTA]` Si los clientes institucionales —grandes superficies, supermercados
-y autoservicios— piden por este mismo canal. El enunciado los nombra como
+`[PREGUNTA]` ¿Si los clientes institucionales —grandes superficies, supermercados
+y autoservicios— piden por este mismo canal? El enunciado los nombra como
 clientes de CCP, pero describe el módulo de la aplicación para tenderos.
 
-`[PREGUNTA]` Qué prioridad lleva cada historia. El equipo no las ha ordenado, y
+`[PREGUNTA]` ¿Qué prioridad lleva cada historia? El equipo no las ha ordenado, y
 sin ese orden no hay forma de decir cuál se construye primero.

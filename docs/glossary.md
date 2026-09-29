@@ -6,19 +6,15 @@ helix_section: "Objective → Glossary"
 
 # Glosario
 
-Los términos del negocio de CCP, como los usa este proyecto. Cuando uno de
-estos términos aparezca en un requisito, en un escenario de calidad o en un
-modelo, significa **esto**, no lo que signifique en otro dominio.
-
 CCP es una comercializadora de productos de consumo masivo que compra a
 fabricantes, almacena y vende a grandes superficies, supermercados,
 autoservicios y tiendas de barrio en cinco países.
 
 ## Actores
 
-**Vendedor.** Empleado de la fuerza de ventas de CCP. Visita tiendas, ofrece
-productos y toma pedidos desde el dispositivo móvil que CCP le entregó. No es un
-cliente: trabaja para CCP.
+**Vendedor.** Empleado de la fuerza de ventas de CCP. Entre sus actividades está
+visitar tiendas, ofrecer productos y tomar pedidos desde el dispositivo móvil que
+CCP le entregó. No es un cliente: trabaja para CCP.
 
 **Tendero.** Dueño o encargado de una tienda de barrio, cliente de CCP. Recibe
 al vendedor y también puede pedir por su cuenta desde la aplicación. Opera un
@@ -29,6 +25,10 @@ enunciado los nombra como compradores de CCP junto a las tiendas.
 
 **Área de seguridad.** Equipo de CCP que recibe los avisos de sesión sospechosa
 y de escritura indebida, y decide qué hacer con ellos.
+
+**Responsable del pedido escalado.** Persona que recibe el pedido escalado y lo
+termina o lo cancela a mano. Recibe la etapa pendiente y el motivo del fallo. El
+área de CCP a la que pertenece sigue sin definirse.
 
 ## El pedido y su cadena
 
@@ -53,6 +53,8 @@ diferencia es la que hace difícil detectarlo.
 
 **Escalamiento.** La entrega de un pedido detenido a una persona, con la etapa
 pendiente identificada y el motivo del fallo, para que lo termine o lo cancele.
+Esa persona es el responsable del pedido escalado; el área a la que pertenece
+sigue sin definirse.
 
 ## Despacho, distribución y logística
 
@@ -72,8 +74,7 @@ autoriza, logística transporta.
 ## Inventario y reserva
 
 **Inventario exacto en tiempo real.** La cifra de existencias en el momento de
-la consulta, no la del cierre anterior ni una estimación. El enunciado lo exige
-de forma literal.
+la consulta, no la del cierre anterior ni una estimación. 
 
 **Reserva.** El apartado de las cantidades de un pedido formalizado, de modo que
 ningún otro vendedor pueda ofrecerlas.
@@ -107,11 +108,8 @@ lugar está sin definir: `[PREGUNTA]`.
 ## Convenciones de este proyecto
 
 **Ambiente.** Las condiciones de operación bajo las cuales se describe y se mide
-el comportamiento del sistema. Este proyecto distingue tres: normal, pico y
-degradado.
-
-**`[PREGUNTA]`.** Marca un dato que el equipo no tiene y que nadie debe inventar.
-Sale de la página cuando alguien lo responda, no antes.
+el comportamiento del sistema. Este proyecto distingue tres: normal (A), pico (B) y
+degradado (C).
 
 ## Notación
 
