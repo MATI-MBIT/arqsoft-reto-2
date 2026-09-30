@@ -54,9 +54,9 @@ Presupuesto conjunto: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y 
 | R-9 | restricción | La suplantación de vendedores y tenderos no puede permitirse | enunciado |
 | R-11 | restricción | El vendedor opera un dispositivo suministrado; el tendero, el suyo | enunciado |
 | R-12 | restricción | Hay que implementar las decisiones y medir que los ASR se cumplen | enunciado |
-| S-1 | supuesto | El proceso espera a que las tres etapas terminen antes de continuar | usuario (reunión del 18 de septiembre) |
-| S-2 | supuesto | El cierre de las tres etapas habilita a logística | usuario (reunión del 18 de septiembre) |
-| S-3 | supuesto | El alcance cubre solo fallas de software; las de infraestructura quedan fuera | usuario (acuerdo del equipo) |
+| S-1 | supuesto | El proceso espera a que las tres etapas terminen antes de continuar | usuario |
+| S-2 | supuesto | El cierre de las tres etapas habilita a logística | usuario |
+| S-3 | supuesto | El alcance cubre solo fallas de software; las de infraestructura quedan fuera | usuario |
 | C-01 | concern | El diagrama BPMN del proceso de ventas mezcla hipótesis de solución (heartbeat, cola de dos reintentos, réplica de lectura, JDBC, gestor de sesión, logs) con hechos del negocio; ninguna de esas hipótesis es restricción | usuario (constraints.md) |
 | C-02 | concern | Cada condición que el diseño se imponga necesita un experimento que la produzca (consecuencia de R-12) | usuario (constraints.md) |
 | C-03 | concern | El tiempo que el tendero espera antes de ver su pedido en preparación acota todo lo que la cadena tarda; hoy es `[PREGUNTA]` | usuario (architecture.md) |
@@ -570,7 +570,7 @@ Descartes: B — KO: no cumple los 5 s de ASR-4, y vuelve a Método/pago. C — 
 #### Contexto
 ASR-1 exige avisar al área de seguridad en ≤ 2 s cuando una sesión de vendedor, abierta con credenciales correctas, la opera un dispositivo que no es el suministrado. Admite ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo. R-2 da algo contra qué comparar: CCP entrega el dispositivo. R-11 deja al tendero sin ese punto de comparación.
 
-El atacante no falla el inicio de sesión: el sistema ve una sesión válida. El acuerdo del equipo deja la reacción en manos del área de seguridad; el sistema llega hasta el aviso. ADR-001 dejó la apertura de sesión como un evento.
+El atacante no falla el inicio de sesión: el sistema ve una sesión válida. La reacción queda en manos del área de seguridad; el sistema llega hasta el aviso. ADR-001 dejó la apertura de sesión como un evento.
 
 ¿Dónde se compara el dispositivo con el registrado, sin bloquear al vendedor legítimo?
 
@@ -618,7 +618,7 @@ Descartes: B — cumple con holgura, pero convierte cada falsa alarma en un vend
 | ID | Tipo | Descripción | Supuesto del que depende |
 |---|---|---|---|
 | S-007a | Sensibilidad | Las falsas alarmas dependen de qué tan estable sea la huella ante una actualización del sistema operativo | Identificadores del equipo `[PREGUNTA]` |
-| R-007a | Riesgo | La suplantación del tendero no tiene señal equivalente | R-11; fuera del alcance acordado |
+| R-007a | Riesgo | La suplantación del tendero no tiene señal equivalente | R-11; fuera del alcance |
 | R-007b | Riesgo | Un atacante que copie la huella pasa la comparación | La huella se calcula en el dispositivo; sin gestión de dispositivos `[PREGUNTA]` |
 
 **A5. Confirmación**
@@ -876,7 +876,7 @@ Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los des
 
 **Riesgos abiertos:** R-001a bróker como punto común de los cuatro caminos. R-002a Coordinador como punto central. R-003a duración en serie frente a la espera del tendero. R-004a Monitor como punto único de falla de ASR-3. R-006a carga manual por detenciones transitorias. R-007a tendero sin señal equivalente. R-007b huella copiable. R-008a detección retrasada si el Gestor de sesión no responde. R-010a pedido indebido con la cadena ya en curso.
 
-**Fuera de alcance:** Seguridad — la suplantación del tendero (R-11), la divulgación entre vendedores (R-6) y la manipulación y el repudio de STRIDE, por acuerdo del equipo. Disponibilidad — las fallas de infraestructura (S-3); la redundancia del bróker, de la base y de la lista de revocación es decisión de infraestructura. Desempeño — fue el atributo del reto 1.
+**Fuera de alcance:** Seguridad — la suplantación del tendero (R-11), la divulgación entre vendedores (R-6) y la manipulación y el repudio de STRIDE. Disponibilidad — las fallas de infraestructura (S-3); la redundancia del bróker, de la base y de la lista de revocación es decisión de infraestructura. Desempeño — fue el atributo del reto 1.
 
 **Cambios que estas decisiones piden a los diagramas v3:** ADR-003 contradice DG-CMP-002 y DG-CST-009 de `DG-CMP-componentes-reto2.md`, que dibujan las etapas en paralelo; si el equipo acepta ADR-003, esos dos diagramas cambian. Las líneas «Diagramas afectados» de las cajas blancas v3 son: ADR-001 → DG-CMP-001, DG-CMP-002 · ADR-002 → DG-CST-009 · ADR-004 → DG-CST-010, DG-SEQ-010, DG-SEQ-012 · ADR-005 y ADR-006 → DG-SEQ-009, DG-CST-011, DG-SEQ-011, DG-CST-012, DG-CST-005 · ADR-007 → DG-CST-002, DG-SEQ-002, DG-CST-003, DG-SEQ-003, DG-CST-008, DG-SEQ-008 · ADR-008 → DG-CST-004, DG-SEQ-004, DG-CST-006, DG-SEQ-006 · ADR-009 → DG-CST-001, DG-SEQ-001 · ADR-010 → DG-CST-005, DG-SEQ-005, DG-CST-007, DG-SEQ-007.
 

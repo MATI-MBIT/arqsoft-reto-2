@@ -26,9 +26,9 @@ tendero puede además pedir por su cuenta, sin esperar a que alguien pase. De ah
 en adelante el pedido recorre tres etapas (facturación, descargue de inventario
 y validación de despacho) antes de llegar a logística.
 
-Las dos exigencias de calidad que abordan los ASR comparten una necesidad:
-**detectar la falla que no se anuncia**. Ninguna de las dos se resuelve atrapando una
-excepción, porque en ninguna de las dos hay excepción que atrapar.
+En los dos atributos de calidad, seguridad y disponibilidad, lo difícil **reconocer situaciones anómalas que el sistema trata como operación
+normal**. En ninguno de los dos casos se lanza una excepción que se pueda
+capturar.
 
 Del lado de la seguridad, el atacante entra con credenciales correctas. El
 sistema ve un inicio de sesión válido, no un intento fallido. Si la identidad
@@ -57,8 +57,8 @@ suplantación y al acceso indebido.
 **El ambiente de operación normal (A).** El trabajo se mide con la carga y el
 patrón de arribo habituales, no en hora pico ni con infraestructura degradada.
 
-**Las fallas de software.** El equipo acordó tomar en cuenta las fallas de
-software. Las de infraestructura —caída de un centro de datos, pérdida de red
+**Las fallas de software.** El alcance cubre las fallas de software. Las de
+infraestructura —caída de un centro de datos, pérdida de red
 entre países— quedan por fuera.
 
 **El camino del pedido hasta logística**, con sus tres etapas, su vigilancia y
@@ -68,8 +68,7 @@ su reparación. El transporte posterior no entra.
 
 **La reacción ante la suplantación.** El sistema llega hasta el aviso al área de
 seguridad. Qué hace esa área con el aviso lo ejecuta ella, por fuera del
-sistema. Fue un acuerdo del equipo en la reunión del 18 de septiembre, no una
-omisión.
+sistema.
 
 **La suplantación del tendero.** El tendero no opera un dispositivo suministrado
 por CCP, así que no hay un equipo conocido contra el cual comparar. Queda
@@ -87,8 +86,8 @@ la consulta de inventario en tiempo real lo roce.
 
 ## Propósito del diseño
 
-Esta arquitectura se diseña para responder una pregunta: **¿cómo se nota una
-falla que nadie reporta?**
+Esta arquitectura se diseña para responder una pregunta: **¿cómo se reconoce
+una situación anómala que el sistema trata como operación normal?**
 
 CCP requiere disponibilidad continua y seguridad frente a la suplantación. El
 trabajo de esta arquitectura es convertirlas en condiciones que se puedan
@@ -107,16 +106,3 @@ de prueba debe ir acompañada de un experimento que la produzca, porque una
 condición que no se puede reproducir en un experimento no permite comprobar el
 sistema construido. Así el diseño y la ejecución son coherentes.
 
-## Preguntas abiertas
-
-`[PREGUNTA]` ¿Cuántos pedidos y consultas por minuto maneja el sistema en
-operación normal, sumando los cinco países? Sin esa cifra no hay forma de
-describir la carga con números ni de montar una prueba que replique la realidad.
-
-`[PREGUNTA]` ¿Cuánto tiempo pasa entre que el tendero confirma y espera ver su
-pedido "en preparación"? Ese número es el techo de todo lo que el sistema puede
-tardarse en notar y arreglar una cadena detenida.
-
-`[PREGUNTA]` ¿Cuántos cambios legítimos de dispositivo ocurren por mes en la
-fuerza de ventas? De ahí sale si vigilar el equipo del vendedor es una carga
-razonable o una fuente constante de avisos inútiles.

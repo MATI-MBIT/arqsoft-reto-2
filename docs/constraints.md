@@ -68,23 +68,23 @@ porque el alcance de lo que hay que entregar depende de ellas.
 | # | Restricción | Tipo | De dónde sale |
 |---|---|---|---|
 | R-12 | No basta diseñar: hay que implementar las decisiones de arquitectura y medir que los requisitos de calidad se cumplen | — | Objetivo del enunciado |
-| R-13 | El alcance son cuatro situaciones de calidad, dos de seguridad y dos de disponibilidad, en el ambiente de operación normal | — | Acuerdo del equipo |
+| R-13 | El alcance son cuatro situaciones de calidad, dos de seguridad y dos de disponibilidad, en el ambiente de operación normal | — | — |
 | R-14 | La arquitectura se entrega en Helix, la herramienta de modelado del curso | — | Curso ARTI4109 |
 
 R-12 tiene una consecuencia que suele pasarse por alto: cada condición que el
 diseño se imponga necesita un experimento que la produzca. Una condición que no
 se puede correr no sirve, por bien redactada que esté.
 
-## Supuestos del equipo
+## Supuestos
 
-No son restricciones: son decisiones que el equipo tomó y que puede revisar. Se
-listan porque el diseño ya se apoya en ellas.
+No son restricciones: son decisiones que se pueden revisar. Se listan porque el
+diseño ya se apoya en ellas.
 
-| # | Supuesto | Estado |
-|---|---|---|
-| S-1 | El proceso espera a que las tres etapas que siguen al pedido confirmado —facturación, descargue de inventario y validación de despacho— terminen antes de continuar | Acordado en la reunión del 18 de septiembre |
-| S-2 | El cierre de las tres etapas es lo que habilita a logística | Acordado en la misma reunión |
-| S-3 | El alcance cubre solo fallas de software. Las de infraestructura quedan fuera | Acordado |
+| # | Supuesto |
+|---|---|
+| S-1 | El proceso espera a que las tres etapas que siguen al pedido confirmado —facturación, descargue de inventario y validación de despacho— terminen antes de continuar |
+| S-2 | El cierre de las tres etapas es lo que habilita a logística |
+| S-3 | El alcance cubre solo fallas de software. Las de infraestructura quedan fuera |
 
 ## Qué del diagrama de ventas no es una restricción
 

@@ -51,8 +51,8 @@ usara el mismo canal del tendero, compartiría con él la falta de un equipo
 conocido para comparar su identidad.
 
 **Área de seguridad.** Es el destinatario de los avisos de seguridad y quien
-decide qué hacer con ellos. El equipo acordó que la reacción ante la
-suplantación la ejecuta esta área por fuera del sistema, así que el aviso es el
+decide qué hacer con ellos. La reacción ante la suplantación la ejecuta esta
+área por fuera del sistema, así que el aviso es el
 producto que recibe, no un trámite intermedio.
 
 **Responsable del pedido escalado.** Aparece solo cuando el sistema no logra
@@ -103,6 +103,4 @@ dice quién es ese alguien en el dominio: un vendedor con permiso recortado, un
 tendero, un tercero interno. Mientras tanto figura en la lista con el nombre del
 glosario, y su rol y su descripción quedan por definir en el equipo.
 
-`[PREGUNTA]` A qué área pertenece el responsable del pedido escalado. En la
-reunión se habló de soporte, pero eso fue una hipótesis de solución, no una
-decisión.
+`[PREGUNTA]` A qué área pertenece el responsable del pedido escalado.
