@@ -89,15 +89,4 @@ fabricantes y el almacenamiento, pero el trabajo de este reto no toca esa área,
 así que no entra como stakeholder.
 
 **Conductor del camión.** El tendero le hace seguimiento a su camión, así que el
-sistema conoce su posición. `[PREGUNTA]` Falta definir si el conductor opera el
-sistema o solo es observado por él.
-
-## Preguntas abiertas
-
-`[PREGUNTA]` Qué rol del negocio ocupa el actor cuyo permiso cubre solo
-consultar. El enunciado exige que nadie vea lo que no le corresponde, pero no
-dice quién es ese alguien en el dominio: un vendedor con permiso recortado, un
-tendero, un tercero interno. Mientras tanto figura en la lista con el nombre del
-glosario, y su rol y su descripción quedan por definir en el equipo.
-
-`[PREGUNTA]` A qué área pertenece el responsable del pedido escalado.
+sistema conoce su posición.
