@@ -6,7 +6,7 @@ alcance_atributos: [disponibilidad, seguridad]
 ---
 # ADRs — CCP, Reto 2
 
-Diez decisiones de arquitectura para los cuatro escenarios de calidad del reto 2: dos de seguridad (ASR-1, ASR-2) y dos de disponibilidad (ASR-3, ASR-4). Todas están en estado **Propuesta**: solo el equipo las pasa a Aceptada. Los productos concretos (Java, Spring, PostgreSQL, RabbitMQ, Redis) y los números de configuración no vienen del enunciado; van marcados `[SUPUESTO]` y tienen su fila en §1.3.
+Diez decisiones de arquitectura para los cuatro escenarios de calidad del reto 2: dos de seguridad (ASR-1, ASR-2) y dos de disponibilidad (ASR-3, ASR-4). Todas están en estado **Propuesta**: solo el equipo las pasa a Aceptada. Los productos concretos (Java, Spring, PostgreSQL, RabbitMQ, Redis) y los números de configuración no vienen del enunciado; van marcados `[SUPUESTO]` y tienen su fila en la sección 1.3.
 
 ## 0. Índice
 
@@ -219,7 +219,7 @@ Descartes: B — gana en simplicidad, pero una etapa detenida queda como un hilo
 
 **A6. Relaciones:** reemplaza: — · refina: — · depende-de: — · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-001, DG-CMP-002, DG-DEP-001 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-001, DG-CMP-002, DG-DEP-001 (detalle en la sección 6)
 
 ### ADR-002: Coordinador de la cadena que orquesta las etapas y guarda el estado de cada pedido por etapa
 
@@ -287,7 +287,7 @@ Descartes: B — evita el punto central, pero sin dueño del flujo el pedido det
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-001 · depende-de: ADR-001 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-002, DG-STM-001, DG-CLS-001 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-002, DG-STM-001, DG-CLS-001 (detalle en la sección 6)
 
 ### ADR-003: Etapas consecutivas en el orden facturación, descargue de inventario y validación de despacho
 
@@ -357,7 +357,7 @@ Descartes: B — gana en duración total, pero deja estados con dos etapas pendi
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-002 · depende-de: ADR-002 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-SEQ-013 (detalle en §6)
+**A7. Evidencia visual:** DG-SEQ-013 (detalle en la sección 6)
 
 ### ADR-004: Plazo vencido por pedido y etapa, encontrado por un barrido periódico, con sondeo de salud como apoyo
 
@@ -429,7 +429,7 @@ Descartes: B — KO: no cumple ASR-3, porque detecta la etapa caída y no el ped
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-002 · depende-de: ADR-002 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-002, DG-SEQ-014, DG-STM-001, DG-DEP-001 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-002, DG-SEQ-014, DG-STM-001, DG-DEP-001 (detalle en la sección 6)
 
 ### ADR-005: Idempotencia por pedido y etapa con clave única en la misma transacción del efecto
 
@@ -493,7 +493,7 @@ Descartes: B — KO: no cumple duplicados = 0 en el caso del efecto producido y 
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-002 · depende-de: ADR-001 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-SEQ-015, DG-CLS-001 (detalle en §6)
+**A7. Evidencia visual:** DG-SEQ-015, DG-CLS-001 (detalle en la sección 6)
 
 ### ADR-006: Un solo intento de reanudación de la etapa pendiente y escalamiento a una persona
 
@@ -561,7 +561,7 @@ Descartes: B — KO: no cumple los 5 s de ASR-4, y vuelve a Método/pago. C — 
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-002 · depende-de: ADR-004, ADR-005 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-002, DG-SEQ-015, DG-STM-001 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-002, DG-SEQ-015, DG-STM-001 (detalle en la sección 6)
 
 ### ADR-007: Huella del dispositivo como parte de la identidad del vendedor, verificada después de abrir la sesión
 
@@ -630,7 +630,7 @@ Descartes: B — cumple con holgura, pero convierte cada falsa alarma en un vend
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-001 · depende-de: ADR-001 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-001, DG-SEQ-016 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-001, DG-SEQ-016 (detalle en la sección 6)
 
 ### ADR-008: Detección de la escritura indebida por un evento que sale en la misma transacción de la escritura
 
@@ -698,7 +698,7 @@ Descartes: B — cumple si el sondeo es corto, pero cada segundo del periodo sal
 
 **A6. Relaciones:** reemplaza: — · refina: ADR-001 · depende-de: ADR-001 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-001, DG-SEQ-017 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-001, DG-SEQ-017 (detalle en la sección 6)
 
 ### ADR-009: Revocación de la sesión en la puerta de entrada, con una lista de revocación consultada en cada petición
 
@@ -765,7 +765,7 @@ Descartes: B — KO: no cumple ASR-2 salvo con tokens de ≤ 5 s, que obligan a 
 
 **A6. Relaciones:** reemplaza: — · refina: — · depende-de: ADR-008 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-CMP-001, DG-SEQ-017, DG-STM-002, DG-DEP-001 (detalle en §6)
+**A7. Evidencia visual:** DG-CMP-001, DG-SEQ-017, DG-STM-002, DG-DEP-001 (detalle en la sección 6)
 
 ### ADR-010: Reversión de la escritura indebida por compensación, dentro de una reacción ordenada de menor a mayor costo
 
@@ -831,7 +831,7 @@ Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los des
 
 **A6. Relaciones:** reemplaza: — · refina: — · depende-de: ADR-008, ADR-009, ADR-002 · conflicto-con: —
 
-**A7. Evidencia visual:** DG-SEQ-017, DG-CLS-002 (detalle en §6)
+**A7. Evidencia visual:** DG-SEQ-017, DG-CLS-002 (detalle en la sección 6)
 
 ## 5. Matriz ASR × ADR
 
