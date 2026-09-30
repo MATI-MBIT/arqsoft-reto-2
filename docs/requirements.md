@@ -166,9 +166,6 @@ para detectar la suplantación de un tendero.
 **Traza:** R-7, que fija que la información de cada tendero solo la conoce quien
 está autorizado.
 
-`[PREGUNTA]` Qué rol del negocio es ese actor de solo consulta. El criterio
-describe la reacción sin haber definido a quién se le reacciona.
-
 ### HU-14 — Recepción del pedido escalado
 
 - El pedido llega con la etapa pendiente identificada y con el motivo del fallo.

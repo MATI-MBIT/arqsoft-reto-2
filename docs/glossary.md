@@ -102,8 +102,9 @@ haciéndose pasar por él. El sistema ve un inicio de sesión válido, no un int
 fallido.
 
 **Actor de solo consulta.** Un actor autenticado cuyo permiso cubre consultar
-—inventario, estado de pedidos— pero no escribir. Qué rol del negocio ocupa ese
-lugar está sin definir: `[PREGUNTA]`.
+—inventario, estado de pedidos— pero no escribir. En CCP es un usuario interno con
+perfil de consulta, como un supervisor comercial o un analista. Vendedores y
+tenderos no lo son, porque crean pedidos.
 
 ## Convenciones de este proyecto
 
