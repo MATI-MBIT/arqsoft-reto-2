@@ -50,7 +50,7 @@ Solo el despliegue nombra productos. Los términos que aparecen en las secuencia
 | **Compensación** | Operación inversa que deshace el efecto de una escritura sin tocar lo que vino después |
 | **Dead-letter** | Destino al que la cola manda un mensaje que no se pudo procesar, en vez de perderlo |
 | **t0 · t_det** | Instante en que se abre la sesión (ASR-1) e instante en que se detecta la escritura indebida (ASR-2). Desde ahí corren las medidas |
-| **p99,9** | La duración que solo el 0,1 % de las ejecuciones supera |
+| **p99** | La duración que solo el 0,1 % de las ejecuciones supera |
 
 ---
 
