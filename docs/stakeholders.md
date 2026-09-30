@@ -92,9 +92,6 @@ así que no entra como stakeholder.
 sistema conoce su posición. `[PREGUNTA]` Falta definir si el conductor opera el
 sistema o solo es observado por él.
 
-**El profesor y el equipo de arquitectura.** Son stakeholders del proyecto, no
-del sistema. Esta página lista solo los segundos.
-
 ## Preguntas abiertas
 
 `[PREGUNTA]` Qué rol del negocio ocupa el actor cuyo permiso cubre solo
