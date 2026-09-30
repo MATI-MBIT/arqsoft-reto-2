@@ -6,7 +6,7 @@ helix_section: "Requirements & Quality → Quality Scenarios"
 
 # ASRs de disponibilidad y seguridad
 
-Alcance: los cuatro escenarios que el equipo acordó en la reunión del 18 de septiembre —dos de seguridad (suplantación y elevación de privilegios) y dos de disponibilidad (detección y reparación de la cadena que sigue a un pedido)— reescritos como escenarios de seis partes en el espacio del problema. Todo lo que en la reunión se dijo en términos de solución (gestor de sesión, huella del dispositivo, réplicas de lectura, registros de la base de datos, tabla de usuarios activos, cola de reintentos, equipo de soporte) sale de las seis partes y entra en la fila "cómo se cumpliría", como hipótesis que ADD confirmará o cambiará.
+Alcance: los cuatro escenarios que el equipo acordó en la reunión del 18 de septiembre —dos de seguridad (suplantación y elevación de privilegios) y dos de disponibilidad (detección y reparación de la cadena que sigue a un pedido)— reescritos como escenarios de seis partes en el espacio del problema. Lo que en la reunión se dijo en términos de solución (gestor de sesión, huella del dispositivo, réplicas de lectura, registros de la base de datos, tabla de usuarios activos, cola de reintentos, equipo de soporte) queda fuera de las seis partes: son hipótesis que las decisiones de arquitectura confirmarán o cambiarán.
 
 Vocabulario: el enunciado habla de **pedido**; en la reunión dijimos "compra" y "orden de compra". Aquí se usa pedido. La cadena que sigue al pedido tiene tres etapas, tal como las describimos: **facturación** (factura o documento de cobro diferido), **descargue de inventario** y **validación de despacho**; su cierre habilita a logística. El resto de los términos está en el [glosario](glossary.md).
 
@@ -41,13 +41,27 @@ se atan.
 
 | Variable | A — normal | B — pico | C — degradado |
 |---|---|---|---|
-| Carga | `[PREGUNTA]` pedidos/min y consultas/min, 5 países | `[PREGUNTA]` factor sobre A | Igual a A |
-| Patrón de arribo | Estocástico, con ráfagas por bodega | Ráfaga, duración `[PREGUNTA]` | Estocástico |
+| Carga | 60 pedidos/min y 600 consultas/min, sumando los cinco países (S-4) | 3 veces la carga de A: 180 pedidos/min y 1 800 consultas/min (S-5) | Igual a A |
+| Equivalente en TPS | 11 (1 pedido y 10 consultas por segundo) | 33 | 11 |
+| Patrón de arribo | Estocástico, con ráfagas por bodega | Ráfaga de 2 h al arrancar la jornada comercial (S-5) | Estocástico |
 | Cadena del pedido | Las tres etapas responden; según la reunión, corren de forma síncrona tras la confirmación | Igual | Una etapa (facturación, inventario o despacho) no responde o no termina |
-| Dispositivos | Cada vendedor opera desde el dispositivo que CCP le suministró; cambios de dispositivo `[PREGUNTA]` por mes | Igual | Igual |
+| Dispositivos | 2 000 vendedores, cada uno con el dispositivo que CCP le suministró; 80 cambios legítimos de dispositivo al mes (S-6) | Igual | Igual |
 | Alcance | Dentro | Dentro | Dentro solo para fallas de software |
 
-Presupuesto compartido: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y queda reanudada o en manos de una persona. Ese total debe ser menor que el tiempo que el tendero espera antes de ver su pedido "en preparación" (`[PREGUNTA]`).
+Presupuesto compartido: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y queda reanudada o en manos de una persona. Ese total cabe en los 60 s que el tendero espera antes de ver su pedido "en preparación" (S-7), y deja 25 s para que la cadena recorra sus tres etapas.
+
+### Supuestos que fijan las cifras
+
+El enunciado no trae cifras de carga ni de tolerancia. El equipo las fija aquí para que los cuatro escenarios se puedan medir y las pruebas repliquen una operación verosímil. Cada supuesto muestra de dónde sale, para que se pueda corregir si el negocio da otro número.
+
+| # | Supuesto | Cómo se obtiene |
+|---|---|---|
+| S-4 | En operación normal entran 60 pedidos y 600 consultas por minuto, sumando los cinco países | 2 000 vendedores repartidos en las 30 bodegas (unos 67 por bodega) visitan 15 tiendas al día y toman un pedido por visita: 30 000 pedidos. Los tenderos que piden por su cuenta suman un 25 % más, unos 37 500 al día. En una jornada comercial de 10 h salen 62 por minuto, que se redondean a 60. Cada pedido arrastra unas diez consultas de inventario, estado y ruta |
+| S-5 | En hora pico la carga se triplica durante 2 h | Las rutas de los vendedores arrancan a la misma hora en cada país, y la primera franja de la mañana concentra las visitas y los pedidos del día |
+| S-6 | La fuerza de ventas hace 80 cambios legítimos de dispositivo al mes | Con 2 000 equipos renovados cada tres años salen unos 56 cambios al mes. Las pérdidas, los robos y los daños, estimados en un 1 % mensual, suman otros 20 |
+| S-7 | El tendero espera como máximo 60 s entre confirmar su pedido y verlo "en preparación" | Es el tiempo que alguien mira la pantalla de una aplicación antes de llamar al vendedor para preguntar qué pasó con su pedido |
+| S-8 | El actor cuyo permiso solo cubre consulta es un usuario interno de CCP con perfil de consulta, por ejemplo un supervisor comercial o un analista | Vendedores y tenderos crean pedidos, así que no son actores de solo consulta. El perfil de consulta ve inventario y estado de pedidos, pero no registra pedidos ni descarga inventario |
+| S-9 | La suplantación del tendero queda fuera de los cuatro escenarios acordados | El tendero opera su propio equipo (R-11), así que el sistema no tiene un dispositivo conocido contra el cual comparar su sesión |
 
 ## 2b. Matriz STRIDE
 
@@ -56,14 +70,14 @@ La reunión fijó dos celdas; las demás se listan con su razón, para que la om
 | STRIDE | Flujo de datos del dominio | Stakeholder (aux.) | Modo | Amb. | Resultado |
 |---|---|---|---|---|---|
 | **S** Suplantación | La sesión del vendedor desde un dispositivo no suministrado | Tercero con credenciales correctas vs. vendedor | Detección | A | **ASR-1** |
-| **S** Suplantación | La sesión del vendedor | Tercero vs. vendedor | Reacción | A | Descartada por acuerdo de la reunión: la reacción la ejecuta el área de seguridad, fuera del sistema. Riesgo anotado en Abierto |
-| **S** Suplantación | La sesión del tendero | Tercero vs. tendero | Detección | A | Descartada: `[PREGUNTA]` el tendero no tiene dispositivo suministrado; la señal de ASR-1 no aplica |
-| **T** Manipulación | El pedido confirmado | Vendedor o tendero | Detección | A | Descartada en esta versión: fuera de los cuatro acordados; ver ASR-S4 (v2) |
-| **R** Repudio | El pedido y la visita | Tendero o vendedor | Evidencia | A | Descartada en esta versión: ver ASR-S6 (v2) |
-| **I** Divulgación | Las ventas de otro vendedor y los datos del tendero | Vendedor | Detección | A | Descartada en esta versión: ver ASR-S3 (v1); el enunciado lo nombra de forma literal, riesgo anotado en Abierto |
-| **D** Denegación | La creación de pedidos | Tercero externo | Detección | B | Descartada: sin cifras de carga |
-| **E** Elevación | El registro del pedido y el descargue de inventario (escritura) por un actor de solo consulta | Actor con permiso de consulta | Detección | A | Absorbida en el estímulo de ASR-2 (la escritura ya detectada); si el profesor pide la detección aparte, se separa |
-| **E** Elevación | El registro del pedido y el descargue de inventario | Actor con permiso de consulta | Reacción | A | **ASR-2** |
+| **S** Suplantación | La sesión del vendedor | Tercero vs. vendedor | Reacción | A | Descartada por acuerdo de la reunión: la reacción la ejecuta el área de seguridad, fuera del sistema. Queda como riesgo del diseño |
+| **S** Suplantación | La sesión del tendero | Tercero vs. tendero | Detección | A | Descartada (S-9): el tendero opera su propio equipo y no hay dispositivo conocido contra el cual comparar |
+| **T** Manipulación | El pedido confirmado | Vendedor o tendero | Detección | A | Descartada: fuera de los cuatro escenarios acordados por el equipo (R-13) |
+| **R** Repudio | El pedido y la visita | Tendero o vendedor | Evidencia | A | Descartada: fuera de los cuatro escenarios acordados por el equipo (R-13) |
+| **I** Divulgación | Las ventas de otro vendedor y los datos del tendero | Vendedor | Detección | A | Descartada: fuera de los cuatro acordados (R-13). El enunciado la exige de forma literal (R-6 y R-7), así que queda como riesgo del diseño |
+| **D** Denegación | La creación de pedidos | Tercero externo | Detección | B | Descartada: fuera de los cuatro acordados (R-13); el ambiente B ya tiene cifras (S-5) si se retoma |
+| **E** Elevación | El registro del pedido y el descargue de inventario (escritura) por un actor de solo consulta | Usuario interno con perfil de consulta (S-8) | Detección | A | Absorbida en el estímulo de ASR-2 (la escritura ya detectada); si el profesor pide la detección aparte, se separa |
+| **E** Elevación | El registro del pedido y el descargue de inventario | Usuario interno con perfil de consulta (S-8) | Reacción | A | **ASR-2** |
 
 ## 3. Fichas
 
@@ -74,19 +88,23 @@ La reunión fijó dos celdas; las demás se listan con su razón, para que la om
 | **Fuente** | Un tercero que tiene las credenciales correctas de un vendedor (robadas, prestadas o adivinadas) y un dispositivo distinto al que CCP suministró |
 | **Estímulo** | Abre sesión con éxito y empieza a operar: consulta inventario, registra visitas o crea pedidos. Arribo esporádico |
 | **Artefacto** | La sesión del vendedor y el dispositivo suministrado por CCP como parte de su identidad |
-| **Ambiente** | A |
+| **Ambiente** | A: 60 pedidos/min y 600 consultas/min, 80 cambios legítimos de dispositivo al mes |
 | **Respuesta** | El sistema marca la sesión como abierta desde un dispositivo no reconocido y avisa al área de seguridad con la identidad del vendedor, el dispositivo y la hora |
-| **Medida** | Aviso emitido en ≤ 2 s desde que la sesión queda abierta, con ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo (supuesto), medido desde la apertura de sesión hasta el aviso, en Ambiente A |
-| **Por qué es ASR** | Convierte el dispositivo suministrado en parte de la identidad del vendedor, no solo la credencial: obliga a que cada sesión conozca desde qué dispositivo se abrió y a que exista un proceso para reconocer un cambio legítimo, porque sin él cada teléfono nuevo es una alarma. Con 20 s bastaría una revisión por lotes de las sesiones del día; con 200 ms la comparación tendría que ir en el camino crítico del inicio de sesión |
-| **Cómo se cumpliría** | Identificar y autenticar al actor incluyendo el dispositivo (huella del dispositivo comparada contra la registrada), con detección de intrusiones por dispositivo no reconocido e informe al área de seguridad → vistas funcional e información |
-| **Cómo se verifica** | Abrir sesión con la credencial de un vendedor desde un dispositivo de prueba no registrado y medir el tiempo hasta el aviso; simular 100 cambios legítimos de dispositivo y contar avisos indebidos |
+| **Medida** | Aviso emitido en ≤ 2 s desde que la sesión queda abierta, con ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo (menos de una al mes con S-6), medido desde la apertura de sesión hasta el aviso, en Ambiente A |
 | **Prioridad · Impacto · Origen** | Alta · Medio · Reunión (ACR1) · STRIDE (S) |
+
+#### Matriz STRIDE del escenario
+
+| STRIDE | Flujo de datos del dominio | Stakeholder (aux.) | Modo | Amb. | Resultado |
+|---|---|---|---|---|---|
+| **S** Suplantación | La sesión del vendedor desde un dispositivo no suministrado | Tercero con credenciales correctas vs. vendedor | Detección | A | **Este escenario** |
+| **S** Suplantación | La sesión del vendedor | Tercero vs. vendedor | Reacción | A | Descartada: la reacción la ejecuta el área de seguridad, fuera del sistema |
 
 ```mermaid
 flowchart LR
     F["🔹 Fuente<br/>Tercero con credenciales correctas y otro dispositivo"]
     F -- "Estímulo<br/>abre sesión con éxito y opera, arribo esporádico" --> A
-    subgraph AMB["Ambiente A — carga [PREGUNTA], sin fallas"]
+    subgraph AMB["Ambiente A — 60 pedidos/min, 600 consultas/min, sin fallas"]
         A["Artefacto<br/>La sesión del vendedor y el dispositivo suministrado"]
     end
     A -- "Respuesta<br/>marca la sesión y avisa a seguridad" --> M["📏 Medida<br/>≤ 2 s desde la apertura, ≤ 1 falsa alarma por 100 cambios legítimos"]
@@ -97,21 +115,25 @@ flowchart LR
 | | |
 |---|---|
 | **Fuente** | El mecanismo de detección de accesos indebidos, a partir de una escritura ya ejecutada |
-| **Estímulo** | Un actor autenticado cuyo permiso cubre solo consultar (inventario, estado de pedidos) registró o modificó un pedido, o descargó inventario, con la sesión aún abierta. Quién es ese actor en el dominio queda por definir: `[PREGUNTA]` |
+| **Estímulo** | Un usuario interno de CCP con perfil de consulta (S-8), autenticado y con la sesión aún abierta, registró o modificó un pedido, o descargó inventario. Arribo esporádico |
 | **Artefacto** | El registro del pedido y el descargue de inventario (las funciones que escriben) y la sesión del actor |
-| **Ambiente** | A |
+| **Ambiente** | A: 60 pedidos/min y 600 consultas/min |
 | **Respuesta** | El sistema bloquea al actor, cierra su sesión, revierte la escritura indebida y avisa a seguridad |
 | **Medida** | Bloqueo, cierre y reversión en ≤ 5 s desde la detección de la escritura; escrituras posteriores del mismo actor = 0; efecto de la escritura indebida que permanece 60 s después de la reacción = 0, en Ambiente A |
-| **Por qué es ASR** | Mide el hecho cumplido: el actor ya escribió. Cinco segundos con reversión obligan a que toda escritura sea reversible después de ejecutada y a que el bloqueo alcance a la sesión viva, no solo al próximo inicio de sesión; con 5 min el actor podría descargar el inventario de una bodega entera, con 500 ms el bloqueo tendría que ir síncrono en cada escritura |
-| **Cómo se cumpliría** | Revocar el acceso y bloquear al actor, con rollback de la escritura; la detección que lo dispara se apoya en el registro de escrituras contrastado con la autorización del actor → vistas funcional e información |
-| **Cómo se verifica** | Ejecutar una escritura con una credencial de solo consulta en un ambiente de prueba, medir el tiempo hasta el bloqueo y verificar que la escritura quedó revertida y la sesión cerrada |
 | **Prioridad · Impacto · Origen** | Alta · Medio · Reunión (ACR2) · STRIDE (E) |
+
+#### Matriz STRIDE del escenario
+
+| STRIDE | Flujo de datos del dominio | Stakeholder (aux.) | Modo | Amb. | Resultado |
+|---|---|---|---|---|---|
+| **E** Elevación | El registro del pedido y el descargue de inventario | Usuario interno con perfil de consulta | Detección | A | Absorbida en el estímulo: el escenario parte de la escritura ya detectada |
+| **E** Elevación | El registro del pedido y el descargue de inventario | Usuario interno con perfil de consulta | Reacción | A | **Este escenario** |
 
 ```mermaid
 flowchart LR
     F["🔹 Fuente<br/>La detección de accesos indebidos"]
-    F -- "Estímulo<br/>escritura ya ejecutada por un actor de solo consulta" --> A
-    subgraph AMB["Ambiente A — carga [PREGUNTA]"]
+    F -- "Estímulo<br/>escritura ya ejecutada por un usuario con perfil de consulta" --> A
+    subgraph AMB["Ambiente A — 60 pedidos/min, 600 consultas/min"]
         A["Artefacto<br/>El registro del pedido, el descargue de inventario y la sesión"]
     end
     A -- "Respuesta<br/>bloquea, cierra sesión, revierte, avisa" --> M["📏 Medida<br/>≤ 5 s, 0 escrituras posteriores, 0 efecto residual a los 60 s"]
@@ -124,19 +146,22 @@ flowchart LR
 | **Fuente** | La propia cadena de tres etapas que sigue al pedido confirmado |
 | **Estímulo** | Una de las etapas —facturación, descargue de inventario o validación de despacho— no responde ni señala error, y el pedido queda esperando de forma indefinida sin pasar a logística. Ocurre bajo carga de Ambiente A |
 | **Artefacto** | La cadena del pedido: facturación, descargue de inventario y validación de despacho |
-| **Ambiente** | A |
+| **Ambiente** | A: 60 pedidos/min, con las tres etapas corriendo de forma síncrona |
 | **Respuesta** | El sistema identifica el pedido detenido, la etapa en que se detuvo y el tiempo transcurrido, y lo señala como fallo de la cadena |
 | **Medida** | Señal en ≤ 30 s desde que la etapa dejó de avanzar (propuesto para la "X" de la reunión), con ≤ 1 falsa alarma por hora, medido desde la confirmación del pedido hasta la señal, en Ambiente A |
-| **Por qué es ASR** | Es la falla de omisión que ningún error delata: el pedido no falló, se quedó esperando. Treinta segundos obligan a que la cadena lleve su propio estado por etapa con marca de tiempo, y a que alguien lo revise sin depender de que el tendero llame; con 5 min el vendedor ya cerró la visita creyendo el pedido en curso, con 3 s las etapas síncronas normales dispararían la alarma |
-| **Cómo se cumpliría** | Excepción por plazo vencido (*timeout*) por etapa y monitor de la cadena que recorre los pedidos en curso → vistas de concurrencia e información |
-| **Cómo se verifica** | Bloquear la validación de despacho en prueba, confirmar diez pedidos y medir el tiempo hasta la señal de cada uno; correr una hora sin bloqueo y contar señales falsas |
 | **Prioridad · Impacto · Origen** | Alta · Alto · Reunión (ACR4) |
+
+#### Matriz STRIDE del escenario
+
+| STRIDE | Flujo de datos del dominio | Stakeholder (aux.) | Modo | Amb. | Resultado |
+|---|---|---|---|---|---|
+| **D** Denegación | La cadena del pedido confirmado | Tendero y vendedor | Detección | A | No aplica: la cadena se detiene por una falla de software, sin adversario. STRIDE clasifica amenazas, y este escenario es de disponibilidad |
 
 ```mermaid
 flowchart LR
     F["🔹 Fuente<br/>La cadena de tres etapas del pedido"]
     F -- "Estímulo<br/>una etapa no responde ni señala error; el pedido espera" --> A
-    subgraph AMB["Ambiente A — carga [PREGUNTA], etapas síncronas"]
+    subgraph AMB["Ambiente A — 60 pedidos/min, etapas síncronas"]
         A["Artefacto<br/>Facturación, descargue de inventario y validación de despacho"]
     end
     A -- "Respuesta<br/>señala el pedido detenido y la etapa" --> M["📏 Medida<br/>≤ 30 s desde que dejó de avanzar, ≤ 1 falsa alarma/h"]
@@ -149,19 +174,22 @@ flowchart LR
 | **Fuente** | El mecanismo de recuperación, a partir de la señal de ASR-3 |
 | **Estímulo** | Un pedido señalado como detenido, con una o dos etapas ya completadas y una pendiente |
 | **Artefacto** | La cadena del pedido y sus efectos ya producidos: factura emitida, inventario descargado, orden de despacho |
-| **Ambiente** | A |
+| **Ambiente** | A: 60 pedidos/min |
 | **Respuesta** | El sistema reanuda la cadena desde la etapa que falló, sin repetir las etapas completadas; si ese intento no la completa, entrega el pedido a una persona con el estado exacto (qué etapa falta y por qué) para que lo termine o lo cancele |
 | **Medida** | Cadena reanudada o entregada a una persona en ≤ 5 s desde la señal; facturas, descargues y órdenes de despacho duplicados = 0; pedidos señalados que no llegan ni a logística ni a una persona = 0, en Ambiente A |
-| **Por qué es ASR** | Obliga a que cada etapa sea repetible sin efecto doble y a que el estado de la cadena sobreviva a la falla: la segunda factura o el segundo descargue son fallas de contenido nuevas creadas por la reparación. Cinco segundos dejan espacio para un intento, no para una cola con espera creciente: lo que no reanude a la primera va a una persona. Con 5 min cabrían varios reintentos y el tendero esperaría sin saber si su pedido avanza; con 200 ms la reanudación no alcanzaría a tocar la etapa de negocio |
-| **Cómo se cumpliría** | Idempotencia por identificador de pedido y etapa, estado de la cadena guardado etapa por etapa, y escalamiento inmediato a una persona cuando el intento de reanudación no completa → vistas de concurrencia e información |
-| **Cómo se verifica** | Encadenar con el experimento de ASR-3: liberar el bloqueo y medir el tiempo hasta logística; mantener el bloqueo y medir el tiempo hasta la entrega a una persona; auditar facturas, descargues y órdenes duplicadas |
 | **Prioridad · Impacto · Origen** | Alta · Alto · Reunión (ACR3) |
+
+#### Matriz STRIDE del escenario
+
+| STRIDE | Flujo de datos del dominio | Stakeholder (aux.) | Modo | Amb. | Resultado |
+|---|---|---|---|---|---|
+| **D** Denegación | La cadena del pedido detenido | Tendero y logística | Reacción | A | No aplica: la reparación responde a una falla de software, sin adversario. STRIDE clasifica amenazas, y este escenario es de disponibilidad |
 
 ```mermaid
 flowchart LR
     F["🔹 Fuente<br/>La recuperación, a partir de la señal de ASR-3"]
     F -- "Estímulo<br/>pedido detenido con etapas completadas y una pendiente" --> A
-    subgraph AMB["Ambiente A — carga [PREGUNTA]"]
+    subgraph AMB["Ambiente A — 60 pedidos/min"]
         A["Artefacto<br/>La cadena del pedido y sus efectos ya producidos"]
     end
     A -- "Respuesta<br/>reanuda desde la etapa fallida o entrega a una persona" --> M["📏 Medida<br/>≤ 5 s, 0 duplicados, 0 pedidos sin destino"]
