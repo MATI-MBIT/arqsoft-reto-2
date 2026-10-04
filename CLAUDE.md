@@ -93,6 +93,10 @@ revocar y Logs quedan en rojo en su diagrama) y que H2 prueba el **heartbeat**
 de forma falseable contra ADR-004. El 2026-10-03 ajustó H2 a **detección y
 reacción**: la reacción es solo enviar el pedido detenido a la cola de
 contingencia (el nodo de contingencia del diagrama); consumirla es de ASR-4.
+Después cambió H1 a **la huella de un dispositivo no registrado**, atada a
+ASR-2 por decisión suya: la sesión cuyo ID de dispositivo no coincide se trata
+como de solo consulta, y su escritura es la indebida. Stack fijado: local, Java
+21 + Spring Boot 3 por micro, PostgreSQL y RabbitMQ en Docker Compose.
 Resultados: pendientes de las corridas.
 
 ### Los ASR
