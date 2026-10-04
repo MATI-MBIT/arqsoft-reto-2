@@ -89,8 +89,9 @@ hipótesis siguen la regla de Darío: la idea de diseño en una frase, el ASR se
 enlaza y no se transcribe, cada hipótesis dice qué la tumba y qué N desconocido
 mide, y las entradas y salidas se cruzan por identificador. Nicolás fijó el
 2026-10-03 que H1 es **solo detección** (matar la sesión, revocar y Logs
-quedan en rojo en su diagrama) y que H2 prueba el **heartbeat**
-de forma falseable contra ADR-004. El 2026-10-03 ajustó H2 a **detección y
+quedan en rojo en su diagrama) y que H2 prueba el **Monitor de la cadena** (EL-17,
+sondeo de salud de las etapas; no se dice «heartbeat» para ser congruente con
+los ADR) de forma falseable contra ADR-004. El 2026-10-03 ajustó H2 a **detección y
 reacción**: la reacción es solo enviar el pedido detenido a la cola de
 contingencia (el nodo de contingencia del diagrama); consumirla es de ASR-4.
 Después cambió H1 a **la huella de un dispositivo no registrado**, y al ver la

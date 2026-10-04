@@ -14,9 +14,9 @@ una tiene su propio alcance:
   y avisa a seguridad cuando no coinciden. Ese aviso es toda la respuesta que el
   escenario le pide al sistema.
 - **H2, de disponibilidad, cubre la detección y la reacción.** Cada etapa que
-  sigue al pedido emite un latido periódico (heartbeat), y el Monitor de la
-  cadena detecta la etapa que deja de latir. La reacción consiste solo en enviar el pedido detenido a una cola de
-  contingencia.
+  sigue al pedido la sondea el Monitor de la cadena cada cierto tiempo, y el
+  Monitor detecta la etapa que deja de responder. La reacción consiste solo en
+  enviar el pedido detenido a una cola de contingencia.
 
 Los escenarios de calidad que cada idea debe cumplir son ASR-1 y ASR-3, y están
 en [ASRs de disponibilidad y seguridad](quality-attributes.md). Las decisiones
@@ -40,8 +40,8 @@ cargarla sea copiar cada sección en su casilla.
 ## El título del experimento
 
 **E01 — Validar la detección del dispositivo no registrado con el micro de
-sesiones, y la detección y el encolado del pedido detenido con el heartbeat de
-las etapas y el Monitor de la cadena.**
+sesiones, y la detección y el encolado del pedido detenido con el Monitor de la
+cadena.**
 
 ## Las hipótesis de diseño
 
@@ -77,14 +77,14 @@ de la cual el aviso empieza a atrasarse. Los 2 000 vendedores abren sesión
 sobre todo al arrancar la jornada, y no sabemos cuánto margen queda por encima
 de esa ráfaga.
 
-### H2 — Disponibilidad: el heartbeat y el Monitor de la cadena detectan el pedido detenido, y el pedido se encola
+### H2 — Disponibilidad: el Monitor de la cadena detecta el pedido detenido, y el pedido se encola
 
-**Si cada etapa emite un latido periódico, el Monitor de la cadena declara
-detenida la etapa que pierde N latidos seguidos y el micro de ventas envía a la
+**Si el Monitor de la cadena sondea cada etapa de forma periódica y declara
+detenida la que no responde N sondeos seguidos, y el micro de ventas envía a la
 cola de contingencia cada pedido pendiente en ella, entonces se cumple ASR-3.**
 
-Por qué la creemos: una etapa que se cae deja de latir, y el Monitor lo nota
-sin depender de ella. El micro de ventas sabe qué pedidos le entregó a esa
+Por qué la creemos: una etapa que se cae deja de responder al sondeo, y el
+Monitor lo nota sin depender de ella. El micro de ventas sabe qué pedidos le entregó a esa
 etapa y cuáles no han vuelto. Con eso arma,
 por cada pedido, un mensaje con el pedido, la etapa y el tiempo transcurrido, y
 lo envía a la cola. Publicar en una cola durable cuesta milisegundos, así que la
@@ -93,16 +93,16 @@ aunque nadie lo atienda todavía.
 
 Lo que la refutaría, cualquiera de dos casos:
 
-- Una etapa que sigue viva y late con normalidad mientras un pedido se queda
+- Una etapa que sigue viva y responde al sondeo mientras un pedido se queda
   congelado dentro de ella. ASR-3 describe justo esa falla, sin señal de error.
-  En [ADR-004](modelos/adrs-ccp-reto2.md) el equipo predijo que el heartbeat no
+  En [ADR-004](modelos/adrs-ccp-reto2.md) el equipo predijo que el sondeo no
   la ve, y por eso eligió un plazo por pedido y etapa. El experimento contrasta
   esa predicción con datos.
 - Un pedido detectado que no llega a la cola, o que llega dos veces. Un
   duplicado haría que la reanudación de ASR-4 repita una etapa.
 
-El número que no conocemos: el menor N de latidos perdidos que no dispara
-falsas alarmas con la variación normal de las etapas. Con un latido cada T
+El número que no conocemos: el menor N de sondeos sin respuesta que no dispara
+falsas alarmas con la variación normal de las etapas. Con un sondeo cada T
 segundos, el pedido llega a la cola cerca de N × T segundos después de la
 falla, y ese producto tiene que caber en los 30 s que da ASR-3.
 
@@ -127,12 +127,12 @@ componente de usuario no válido. Ese componente avisa a seguridad, que es la
 táctica *informar a los actores*. Matar la sesión y revocar al usuario son
 reacciones del área de seguridad, fuera del sistema y fuera del escenario.
 
-**Para H2.** Las tácticas son *heartbeat* y *monitor*, las mismas que nombra
-[ADR-004](modelos/adrs-ccp-reto2.md). Cada etapa emite un latido al Monitor de
-la cadena (EL-17 en el registro de ADR), y el Monitor avisa al micro de ventas
-cuando faltan N latidos seguidos. ADR-004 usa al mismo Monitor para sondear la
-salud de las etapas como apoyo; aquí el latido es el único mecanismo. El micro
-de ventas toma los pedidos que tiene pendientes en esa etapa y reacciona
+**Para H2.** La táctica es *monitor*, la misma que nombra
+[ADR-004](modelos/adrs-ccp-reto2.md). El Monitor de la cadena (EL-17 en el
+registro de ADR) sondea la salud de cada etapa cada T segundos, y avisa al micro
+de ventas cuando una etapa no responde N sondeos seguidos. ADR-004 usa ese
+sondeo solo como apoyo del plazo por pedido; aquí es el único mecanismo. El
+micro de ventas toma los pedidos que tiene pendientes en esa etapa y reacciona
 enviando cada uno a la cola de contingencia, que es el nodo de contingencia del
 diagrama. La cola desacopla la detección de quien atiende el pedido: reanudarlo
 o entregarlo a una persona es materia de ASR-4, y en este prototipo nadie
@@ -171,9 +171,9 @@ flowchart LR
     FAC --> LOG["logística"]
     INV --> LOG
     DES --> LOG
-    FAC -. latido .-> HB["Monitor de la cadena<br/>(Heartbeat en el diagrama del equipo)"]
-    INV -. latido .-> HB
-    DES -. latido .-> HB
+    HB["Monitor de la cadena<br/>(Hearbeat en el diagrama del equipo)"] -. sondeo .-> FAC
+    HB -. sondeo .-> INV
+    HB -. sondeo .-> DES
     HB --> VEN
     VEN -- encola --> NC[["Cola de contingencia<br/>(nodo de contingencia)"]]
     UNV -.-> KILL["matar la sesión"]
@@ -211,7 +211,7 @@ Cinco decisiones de montaje que el diagrama no dice:
 Toda la carga es la del Ambiente A, fijada en el supuesto S-4 de los
 [ASR](quality-attributes.md): 1 pedido y 10 consultas por segundo, con arribo
 aleatorio y no equiespaciado. Cada pedido recorre las tres etapas. Cada etapa
-tarda un tiempo aleatorio, para que el latido y la detección convivan con la
+tarda un tiempo aleatorio, para que el sondeo y la detección convivan con la
 variación normal de la operación.
 
 Cada corrida empieza con un calentamiento de 5 minutos que no entra en ningún
@@ -227,8 +227,8 @@ criterio.
 | S4 — Rampa de aperturas | H1 | Se sube la tasa de aperturas de sesión a 1, 3 y 5 veces la del Ambiente A, con aperturas desde dispositivos no registrados en cada nivel | 10 min por nivel | Exploratoria |
 | D1 — Sin fallas | H2 | Carga normal sin ninguna falla inyectada | 1 h | Con criterio |
 | D2 — Etapa caída | H2 | Se detiene el proceso de una etapa con pedidos en curso | 10 veces por etapa, 30 en total | Con criterio |
-| D3 — Etapa viva, pedido congelado | H2 | La etapa sigue latiendo, pero un pedido se queda congelado dentro de ella, sin respuesta | 10 veces por etapa, 30 en total | Con criterio: es la fase que puede refutar H2 |
-| D4 — Combinaciones de T y N | H2 | Se combina un latido cada 1, 2 y 5 s con 1, 2, 3 y 5 latidos perdidos | 12 combinaciones, D1 y D2 en cada una | Exploratoria |
+| D3 — Etapa viva, pedido congelado | H2 | La etapa sigue respondiendo al sondeo, pero un pedido se queda congelado dentro de ella, sin respuesta | 10 veces por etapa, 30 en total | Con criterio: es la fase que puede refutar H2 |
+| D4 — Combinaciones de T y N | H2 | Se combina un sondeo cada 1, 2 y 5 s con 1, 2, 3 y 5 sondeos sin respuesta | 12 combinaciones, D1 y D2 en cada una | Exploratoria |
 
 Las cifras de repeticiones y duraciones son propuesta del diseño, no salen del
 enunciado.
@@ -272,7 +272,7 @@ medir las diferencias de tiempo no exige sincronizar relojes.
   pedidos perdidos y cero duplicados.
 
 Si D2 y D1 pasan y D3 falla, H2 queda refutada para la falla que describe ASR-3,
-aunque el heartbeat detecte bien las caídas.
+aunque el Monitor detecte bien las caídas.
 
 ### Limitaciones declaradas
 
@@ -301,7 +301,7 @@ aunque el heartbeat detecte bien las caídas.
 | Pieza | Qué se usa | Para qué |
 |---|---|---|
 | Micros | Java 21 y Spring Boot 3, un proceso por micro, con Spring Web para las llamadas entre ellos | Que el inyector pueda detener cada etapa por separado |
-| Latido y Monitor | Una tarea programada (`@Scheduled`) en cada etapa que envía su latido cada T segundos, y el Monitor de la cadena como un micro aparte que cuenta los latidos perdidos | Variar T y N en D4 sin tocar código |
+| Monitor de la cadena | Un micro aparte con una tarea programada (`@Scheduled`) que sondea un punto de salud de cada etapa cada T segundos y cuenta los sondeos sin respuesta | Variar T y N en D4 sin tocar código |
 | SIMULADOR-DB | PostgreSQL en Docker Compose | Usuarios, ID de dispositivo registrado y estado de cada pedido por etapa |
 | Cola de contingencia | RabbitMQ en Docker Compose, con una cola durable, confirmación de publicación y Spring AMQP | Medir cero pedidos perdidos y cero duplicados |
 | Carga | k6, con arribo aleatorio, como en el reto 1 | Reproducir el Ambiente A |
@@ -314,7 +314,7 @@ aparte, como en el reto 1?
 **Architecture elements involved.** Incluidos: simulador de sesiones, micro de
 sesiones, SIMULADOR-DB, usuario no válido, receptor del SMS de seguridad, micro
 de ventas, facturación, descargue de inventario, validación de despacho,
-Monitor de la cadena (Heartbeat en el diagrama), logística y cola de contingencia (nodo de contingencia). Simulado:
+Monitor de la cadena (Hearbeat en el diagrama), logística y cola de contingencia (nodo de contingencia). Simulado:
 micro Onboarding. Fuera: matar la sesión, usuarios revocados y Logs.
 
 **Estimated effort.** [PREGUNTA] ¿Cuántas personas y cuántos días? El trabajo se
@@ -356,8 +356,8 @@ resultado no se acomoda después a la decisión.
 | H1 falla en S2: más de 1 aviso por cada 100 cambios legítimos | Revisar el camino de registro previo del equipo nuevo, que ADR-007 dejó con dueño abierto |
 | H1 falla en S3: avisa por equipos recién registrados | Revisar cuándo ve el micro de sesiones el registro nuevo, antes de cualquier otro cambio |
 | H1 se atrasa en S4 por debajo de 3 veces la tasa del Ambiente A | Declarar la tasa medida como límite del diseño y llevarla a la decisión sobre cuántas instancias del micro de sesiones correr |
-| H2 se sostiene en D1, D2 y D3 | Adoptar el heartbeat con el Monitor de la cadena como mecanismo de detección de ASR-3, con la cola de contingencia como reacción, y reabrir ADR-004 |
-| H2 pasa D1 y D2 pero falla D3 | Confirmar ADR-004: el plazo por pedido y etapa es el mecanismo, y el heartbeat queda como apoyo para las caídas de etapas enteras |
-| H2 falla D2: no detecta ni la etapa caída en ≤ 30 s | Buscar en D4 una combinación de T y N que quepa; si ninguna cabe sin falsas alarmas, adoptar ADR-004 sin el heartbeat de apoyo |
+| H2 se sostiene en D1, D2 y D3 | Adoptar el sondeo del Monitor de la cadena como mecanismo de detección de ASR-3, con la cola de contingencia como reacción, y reabrir ADR-004 |
+| H2 pasa D1 y D2 pero falla D3 | Confirmar ADR-004: el plazo por pedido y etapa es el mecanismo, y el sondeo del Monitor queda como apoyo para las caídas de etapas enteras |
+| H2 falla D2: no detecta ni la etapa caída en ≤ 30 s | Buscar en D4 una combinación de T y N que quepa; si ninguna cabe sin falsas alarmas, adoptar ADR-004 sin el sondeo de apoyo |
 | H2 detecta a tiempo pero pierde o duplica pedidos en la cola | Hacer la publicación idempotente con la clave de pedido, etapa e intento (NR-004a), y repetir D2 |
 | H2 falla D1: más falsas alarmas de las admitidas | Subir N con el resultado de D4, y verificar que N × T siga cabiendo en los 30 s |
