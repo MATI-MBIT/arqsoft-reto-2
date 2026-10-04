@@ -93,12 +93,18 @@ quedan en rojo en su diagrama) y que H2 prueba el **Monitor de la cadena** (EL-1
 sondeo de salud de las etapas; no se dice «heartbeat» para ser congruente con
 los ADR) de forma falseable contra ADR-004. El 2026-10-03 ajustó H2 a **detección y
 reacción**: la reacción es solo enviar el pedido detenido a la cola de
-contingencia (el nodo de contingencia del diagrama); consumirla es de ASR-4.
+reintentos (EL-24; el nodo de contingencia del diagrama); consumirla es de
+ASR-4. El 2026-10-03 se alineó con los ADR: encola el Monitor (CN-36), y el
+micro de ventas hace de Coordinador (EL-16) y solo le dice qué pedidos tiene
+pendientes por etapa.
 Después cambió H1 a **la huella de un dispositivo no registrado**, y al ver la
 tabla de escenarios cayó en cuenta de que eso es **ASR-1**, no ASR-2: H1 quedó
 atada a ASR-1 y HU-01, con ADR-007 como la decisión que valida. ASR-2 no entra
 al experimento. Stack fijado: local, Java
-21 + Spring Boot 3 por micro, PostgreSQL y RabbitMQ en Docker Compose.
+21 + Spring Boot 3 por micro, PostgreSQL y RabbitMQ en Docker Compose;
+Prometheus y Grafana para ver la corrida, y una tabla de eventos por
+identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
+72 horas-persona.
 Resultados: pendientes de las corridas.
 
 ### Los ASR
