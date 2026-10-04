@@ -13,10 +13,10 @@ una tiene su propio alcance:
   sesiones compara la huella del dispositivo con la registrada para el vendedor,
   y avisa a seguridad cuando no coinciden. Ese aviso es toda la respuesta que el
   escenario le pide al sistema.
-- **H2, de disponibilidad, cubre la detección y la reacción.** Cada etapa que
-  sigue al pedido la sondea el Monitor de la cadena cada cierto tiempo, y el
-  Monitor detecta la etapa que deja de responder. La reacción consiste solo en
-  enviar el pedido detenido a una cola de contingencia.
+- **H2, de disponibilidad, cubre la detección y la reacción.** El Monitor de
+  la cadena sondea cada cierto tiempo las etapas que siguen al pedido y detecta
+  la que deja de responder. La reacción consiste solo en enviar el pedido
+  detenido a una cola de contingencia.
 
 Los escenarios de calidad que cada idea debe cumplir son ASR-1 y ASR-3, y están
 en [ASRs de disponibilidad y seguridad](quality-attributes.md). Las decisiones
@@ -49,15 +49,18 @@ bloquea el inicio de sesión.**
 Fundamento: CCP le entrega el dispositivo a cada vendedor, de modo que el
 sistema tiene contra qué comparar aunque las credenciales sean correctas. La
 comparación corre después de abrir la sesión, así que no frena al vendedor
-legítimo. En el prototipo, el micro Onboarding registra el equipo nuevo de un
-cambio legítimo antes de que se use, y por eso no dispara el aviso. [PREGUNTA]
-¿Quién lo registra en la operación real? ADR-007 lo dejó abierto.
+legítimo.
+
+El cambio legítimo de dispositivo no dispara el aviso porque se registra antes
+del primer uso: en el prototipo, el micro Onboarding registra el dispositivo
+nuevo. [PREGUNTA] ¿Quién lo registra en la operación real? ADR-007 lo dejó
+abierto.
 
 Lo que la refutaría, cualquiera de tres casos:
 
 - Una sesión abierta desde un dispositivo no registrado que no produce aviso, o
   que lo produce fuera de plazo.
-- Avisos disparados por equipos nuevos ya registrados en más de uno de cada 100
+- Avisos disparados por dispositivos nuevos ya registrados en más de uno de cada 100
   cambios legítimos.
 - Un aviso que llega sin el vendedor, el dispositivo o la hora, que es lo que
   seguridad necesita para actuar.
@@ -67,7 +70,7 @@ de la cual el aviso empieza a atrasarse. Los 2 000 vendedores abren sesión
 sobre todo al arrancar la jornada, y no sabemos cuánto margen queda por encima
 de esa ráfaga.
 
-### H2 — Disponibilidad: el Monitor de la cadena detecta el pedido detenido, y el pedido se encola
+### H2 — Disponibilidad: el Monitor de la cadena detecta el pedido detenido y el micro de ventas lo encola
 
 **Si el Monitor de la cadena sondea cada etapa y el micro de ventas encola los
 pedidos de la etapa que no responde N sondeos seguidos, entonces todo pedido
@@ -123,23 +126,30 @@ el atributo y la historia de usuario a la que está atado.
 **Para H1.** La táctica es *detectar intrusiones*, con la huella del
 dispositivo como parte de la identidad del vendedor. Es la decisión de
 [ADR-007](modelos/adrs-ccp-reto2.md), con la comparación dentro del micro de
-sesiones, como la dibuja el diagrama. El micro lee la huella registrada de la
-base en cada apertura, sin caché, y entrega la sesión que no coincide al
-componente de usuario no válido. Ese componente avisa a seguridad, que es la
-táctica *informar a los actores*. Matar la sesión y revocar al usuario son
+sesiones, como la dibuja el diagrama del equipo en la sección del prototipo. El
+micro lee la huella registrada de la base en cada apertura, sin caché, y
+entrega la sesión que no coincide al componente de usuario no válido.
+
+Ese componente avisa a seguridad, que es la táctica *informar a los actores*.
+Matar la sesión y revocar al usuario son
 reacciones del área de seguridad, fuera del sistema y fuera del escenario.
 
 **Para H2.** La táctica es *monitor*, la misma que nombra
 [ADR-004](modelos/adrs-ccp-reto2.md). El Monitor de la cadena (EL-17 en el
-registro de ADR) sondea la salud de cada etapa cada T segundos, y avisa al micro
-de ventas cuando una etapa no responde N sondeos seguidos. ADR-004 usa ese
-sondeo solo como apoyo del plazo por pedido; aquí es el único mecanismo. El
-micro de ventas toma los pedidos que tiene pendientes en esa etapa y reacciona
-enviando cada uno a la cola de contingencia, que es el nodo de contingencia del
-diagrama. La cola desacopla la detección de quien atiende el pedido: reanudarlo
-o entregarlo a una persona es materia de ASR-4, y en este prototipo nadie
-consume la cola. Cada mensaje lleva como clave el pedido, la etapa y el intento,
-para que el mismo pedido no entre dos veces.
+registro de ADR) sondea la salud de cada etapa cada T segundos. Cuando una etapa
+no responde N sondeos seguidos, el Monitor avisa al micro de ventas. ADR-004 usa ese
+sondeo solo como apoyo del plazo por pedido; aquí es el único mecanismo.
+
+La reacción la hace el micro de ventas, como en el diagrama del equipo. En el
+registro de ADR es el Monitor quien encola el pedido señalado (CN-36). El
+prototipo lo deja en el micro de ventas porque es quien sabe qué pedidos tiene
+pendientes cada etapa.
+
+El micro de ventas toma los suyos en la etapa detenida y envía cada uno a la
+cola de contingencia, que es el nodo de contingencia del diagrama. Cada mensaje lleva como clave el pedido, la etapa y
+el intento, para que el mismo pedido no entre dos veces. La cola separa la
+detección de quien atiende el pedido: reanudarlo o entregarlo a una persona le
+toca a ASR-4, y en este prototipo nadie consume la cola.
 
 **Las alternativas contra las que se compara cada hipótesis:**
 
@@ -196,7 +206,7 @@ Cinco decisiones de montaje que el diagrama no dice:
 - **La huella es el ID de dispositivo que ya guarda la base.** El simulador
   envía el ID del dispositivo al abrir la sesión. Un dispositivo no registrado
   es uno cuyo ID no coincide con el registrado para ese vendedor. Un cambio
-  legítimo de equipo se simula registrando el ID nuevo con el micro Onboarding.
+  legítimo de dispositivo se simula registrando el ID nuevo con el micro Onboarding.
 - **El SMS de seguridad lo recibe un receptor simulado** que anota la hora de
   llegada de cada aviso. Un proveedor real sumaría su propia demora, que ningún
   componente del diseño controla.
@@ -212,7 +222,7 @@ Cinco decisiones de montaje que el diagrama no dice:
 
 Toda la carga es la del Ambiente A, fijada en el supuesto S-4 de los
 [ASR](quality-attributes.md): 1 pedido y 10 consultas por segundo, con arribo
-aleatorio y no equiespaciado. Cada pedido recorre las tres etapas. Cada etapa
+aleatorio. Cada pedido recorre las tres etapas. Cada etapa
 tarda un tiempo aleatorio, para que el sondeo y la detección convivan con la
 variación normal de la operación.
 
@@ -224,16 +234,16 @@ criterio.
 | Fase | Hipótesis | Qué se hace | Duración o repeticiones | Tipo |
 |---|---|---|---|---|
 | S1 — Sesión desde un dispositivo no registrado | H1 | Se abre una sesión con las credenciales correctas de un vendedor y un ID de dispositivo distinto al registrado, y la sesión opera | 50 aperturas en momentos aleatorios dentro de 30 min de carga normal | Con criterio |
-| S2 — Cambio legítimo de dispositivo | H1 | Se registra el equipo nuevo de un vendedor, y ese vendedor abre sesión desde él | 100 cambios, para medir la tasa por cada 100 que fija el escenario | Con criterio |
-| S3 — Registro y apertura casi simultáneos | H1 | El vendedor abre sesión desde el equipo nuevo menos de 1 s después de registrarlo | 20 repeticiones | Con criterio |
+| S2 — Cambio legítimo de dispositivo | H1 | Se registra el dispositivo nuevo de un vendedor, y ese vendedor abre sesión desde él | 100 cambios, para medir la tasa por cada 100 que fija el escenario | Con criterio |
+| S3 — Registro y apertura casi simultáneos | H1 | El vendedor abre sesión desde el dispositivo nuevo menos de 1 s después de registrarlo | 20 repeticiones | Con criterio |
 | S4 — Rampa de aperturas | H1 | Se sube la tasa de aperturas de sesión a 1, 3 y 5 veces la del Ambiente A, con aperturas desde dispositivos no registrados en cada nivel | 10 min por nivel | Exploratoria |
 | D1 — Sin fallas | H2 | Carga normal sin ninguna falla inyectada | 1 h | Con criterio |
 | D2 — Etapa caída | H2 | Se detiene el proceso de una etapa con pedidos en curso | 10 veces por etapa, 30 en total | Con criterio |
 | D3 — Etapa viva, pedido congelado | H2 | La etapa sigue respondiendo al sondeo, pero un pedido se queda congelado dentro de ella, sin respuesta | 10 veces por etapa, 30 en total | Con criterio: es la fase que puede refutar H2 |
 | D4 — Combinaciones de T y N | H2 | Se combina un sondeo cada 1, 2 y 5 s con 1, 2, 3 y 5 sondeos sin respuesta | 12 combinaciones, D1 y D2 en cada una | Exploratoria |
 
-Las cifras de repeticiones y duraciones son propuesta del diseño, no salen del
-enunciado.
+Las cifras de repeticiones y duraciones son una propuesta del equipo; no salen
+del enunciado.
 
 ### Qué se mide y cómo se cruzan entradas y salidas
 
@@ -247,11 +257,11 @@ hay que mostrar a qué entrada corresponde cada salida.
 | H1 | El micro de sesiones registra la apertura de la sesión | El receptor recibe el aviso | Identificador de la sesión |
 | H2 | El inyector detiene la etapa (D2) o congela el pedido (D3) | El bróker confirma el mensaje del pedido en la cola | Identificador del pedido y nombre de la etapa |
 
-Para H2, un mensaje en la cola es **falsa alarma** cuando nombra un pedido que
-llegó a logística o una etapa que nunca se detuvo.
-
 Todos los componentes corren en la misma máquina y leen el mismo reloj, así que
 medir las diferencias de tiempo no exige sincronizar relojes.
+
+Para H2, un mensaje en la cola es **falsa alarma** cuando nombra un pedido que
+llegó a logística o una etapa que nunca se detuvo.
 
 ### Los criterios de éxito
 
@@ -286,11 +296,11 @@ aunque el Monitor detecte bien las caídas.
 - La huella es un ID que el simulador envía. Quien copie el ID de un dispositivo
   registrado pasa la comparación, el mismo riesgo que el equipo anotó en ADR-007
   (R-007b).
-- Nadie consume la cola de contingencia: reanudar el pedido o entregarlo a una
-  persona es de ASR-4. La caída del bróker es una falla de infraestructura y
-  queda fuera por S-3.
 - Solo se inyectan fallas de software, por el supuesto S-3. Las caídas de
   máquina, red o base quedan fuera.
+- Nadie consume la cola de contingencia: reanudar el pedido o entregarlo a una
+  persona es de ASR-4. La caída del bróker es una falla de infraestructura y
+  queda fuera por el mismo supuesto.
 - El Monitor de la cadena es un solo proceso. Si cae, nadie detecta nada: es el
   mismo riesgo que el equipo anotó en ADR-004 (R-004a).
 - Una hora de D1 solo distingue entre cero, una y varias falsas alarmas.
@@ -316,8 +326,9 @@ aparte, como en el reto 1?
 **Architecture elements involved.** Incluidos: simulador de sesiones, micro de
 sesiones, SIMULADOR-DB, usuario no válido, receptor del SMS de seguridad, micro
 de ventas, facturación, descargue de inventario, validación de despacho,
-Monitor de la cadena (Hearbeat en el diagrama), logística y cola de contingencia (nodo de contingencia). Simulado:
-micro Onboarding. Fuera: matar la sesión, usuarios revocados y Logs.
+Monitor de la cadena (Hearbeat en el diagrama), logística y cola de contingencia
+(nodo de contingencia). Simulado: micro Onboarding. Fuera: matar la sesión,
+usuarios revocados y Logs.
 
 **Estimated effort.** [PREGUNTA] ¿Cuántas personas y cuántos días? El trabajo se
 divide en cinco frentes:
@@ -355,8 +366,8 @@ resultado no se acomoda después a la decisión.
 |---|---|
 | H1 se sostiene en S1, S2 y S3 | Aceptar ADR-007, con la comparación dentro del micro de sesiones |
 | H1 falla en S1: hay aperturas sin aviso o con aviso fuera de los 2 s | Sacar la comparación del micro de sesiones a un verificador que consume cada apertura como evento, como lo plantea ADR-007 |
-| H1 falla en S2: más de 1 aviso por cada 100 cambios legítimos | Revisar el camino de registro previo del equipo nuevo, que ADR-007 dejó con dueño abierto |
-| H1 falla en S3: avisa por equipos recién registrados | Revisar cuándo ve el micro de sesiones el registro nuevo, antes de cualquier otro cambio |
+| H1 falla en S2: más de 1 aviso por cada 100 cambios legítimos | Revisar el camino de registro previo del dispositivo nuevo, que ADR-007 dejó sin dueño |
+| H1 falla en S3: avisa por dispositivos recién registrados | Revisar primero cuándo ve el micro de sesiones el registro nuevo, antes de tocar otra pieza |
 | H1 se atrasa en S4 por debajo de 3 veces la tasa del Ambiente A | Declarar la tasa medida como límite del diseño y llevarla a la decisión sobre cuántas instancias del micro de sesiones correr |
 | H2 se sostiene en D1, D2 y D3 | Adoptar el sondeo del Monitor de la cadena como mecanismo de detección de ASR-3, con la cola de contingencia como reacción, y reabrir ADR-004 |
 | H2 pasa D1 y D2 pero falla D3 | Confirmar ADR-004: el plazo por pedido y etapa es el mecanismo, y el sondeo del Monitor queda como apoyo para las caídas de etapas enteras |
