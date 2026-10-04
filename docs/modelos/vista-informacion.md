@@ -8,7 +8,7 @@ Esta página dibuja los datos que sostienen las tácticas y el ciclo de vida de 
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta. La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md). Las partes que son dueñas de cada dato están en la [vista de componentes](vista-componentes.md).
 
-**Fuente: draw.io.** El original es [drawio/vista-informacion.drawio](drawio/vista-informacion.drawio), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
+**Fuente: draw.io.** El original es [vista-informacion.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-informacion.drawio), que se abre en draw.io web ([descargar](drawio/vista-informacion.drawio)), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
 
 ## Cómo leer esta página
 

@@ -6,7 +6,7 @@ title: Diagramas de arquitectura — Reto 2 CCP (v7)
 
 Versión 7 del 3 de octubre de 2026. Dibuja las diez decisiones de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) en cuatro vistas: componentes, concurrencia, información y despliegue. Tiene diez diagramas, entre uno y tres por vista, y cada ASR tiene un diagrama de estructura, uno de comportamiento con su medida y uno de datos.
 
-**Fuente: draw.io.** Desde esta versión, el original de cada diagrama es un archivo draw.io por vista, en [drawio/](drawio/). Las imágenes de `png-v7/` se exportan de esos archivos, y el bloque Mermaid que acompaña cada imagen es una copia. Un cambio se hace primero en el draw.io, se exporta la imagen y después se copia al Mermaid.
+**Fuente: draw.io.** Desde esta versión, el original de cada diagrama es un archivo draw.io por vista, en [drawio/](https://github.com/MATI-MBIT/arqsoft-reto-2/tree/main/docs/modelos/drawio). Los enlaces de la tabla los abren en draw.io web. Las imágenes de `png-v7/` se exportan de esos archivos, y el bloque Mermaid que acompaña cada imagen es una copia. Un cambio se hace primero en el draw.io, se exporta la imagen y después se copia al Mermaid.
 
 **Estado: propuesta.** Los diez ADR están en estado Propuesta, así que cada diagrama también lo está. Lo que aparece dibujado sin un ADR que lo respalde está marcado **propuesta** en el texto y listado en los huecos.
 
@@ -14,10 +14,10 @@ Versión 7 del 3 de octubre de 2026. Dibuja las diez decisiones de [adrs-ccp-ret
 
 | Vista | Qué responde | Diagramas | Archivo draw.io | Página |
 |---|---|---|---|---|
-| **Componentes** | Qué componentes hay, por dónde se hablan y cómo funcionan por dentro los que sostienen cada ASR | DG-CMP-001 panorama · DG-CMP-002 seguridad · DG-CMP-003 cadena del pedido | [vista-componentes.drawio](drawio/vista-componentes.drawio) | [vista-componentes.md](vista-componentes.md) |
-| **Concurrencia** | Qué procesos e hilos ejecutan cada paso, qué estado comparten y cómo se cumple cada medida en el tiempo | DG-SEQ-001 ASR-1 · DG-SEQ-002 ASR-2 · DG-SEQ-003 ASR-3 y ASR-4 | [vista-concurrencia.drawio](drawio/vista-concurrencia.drawio) | [vista-concurrencia.md](vista-concurrencia.md) |
-| **Información** | Qué datos sostienen cada táctica, en qué base viven y por qué estados pasa la etapa | DG-CLS-001 cadena · DG-CLS-002 seguridad · DG-STM-001 estados de la etapa | [vista-informacion.drawio](drawio/vista-informacion.drawio) | [vista-informacion.md](vista-informacion.md) |
-| **Despliegue** | Dónde corre cada componente, con qué tecnología y qué queda como instancia única | DG-DEP-001 | [vista-despliegue.drawio](drawio/vista-despliegue.drawio) | [vista-despliegue.md](vista-despliegue.md) |
+| **Componentes** | Qué componentes hay, por dónde se hablan y cómo funcionan por dentro los que sostienen cada ASR | DG-CMP-001 panorama · DG-CMP-002 seguridad · DG-CMP-003 cadena del pedido | [vista-componentes.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-componentes.drawio) | [vista-componentes.md](vista-componentes.md) |
+| **Concurrencia** | Qué procesos e hilos ejecutan cada paso, qué estado comparten y cómo se cumple cada medida en el tiempo | DG-SEQ-001 ASR-1 · DG-SEQ-002 ASR-2 · DG-SEQ-003 ASR-3 y ASR-4 | [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio) | [vista-concurrencia.md](vista-concurrencia.md) |
+| **Información** | Qué datos sostienen cada táctica, en qué base viven y por qué estados pasa la etapa | DG-CLS-001 cadena · DG-CLS-002 seguridad · DG-STM-001 estados de la etapa | [vista-informacion.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-informacion.drawio) | [vista-informacion.md](vista-informacion.md) |
+| **Despliegue** | Dónde corre cada componente, con qué tecnología y qué queda como instancia única | DG-DEP-001 | [vista-despliegue.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-despliegue.drawio) | [vista-despliegue.md](vista-despliegue.md) |
 
 Cada página se sostiene sola: trae su leyenda, su propósito y los enlaces a las demás.
 

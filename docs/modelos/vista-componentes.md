@@ -8,7 +8,7 @@ Esta página dibuja qué componentes tiene el sistema, por dónde se hablan y c�
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta, así que cada diagrama también lo está. La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md).
 
-**Fuente: draw.io.** El original de los tres diagramas es [drawio/vista-componentes.drawio](drawio/vista-componentes.drawio), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia: un cambio se hace primero en el draw.io y después se copia al Mermaid.
+**Fuente: draw.io.** El original de los tres diagramas es [vista-componentes.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-componentes.drawio), que se abre en draw.io web ([descargar](drawio/vista-componentes.drawio)), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia: un cambio se hace primero en el draw.io y después se copia al Mermaid.
 
 ## Cómo leer esta página
 

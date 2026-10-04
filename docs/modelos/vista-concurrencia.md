@@ -8,7 +8,7 @@ Esta página dibuja qué corre al mismo tiempo, por qué colas pasa el trabajo y
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta. La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md). Los componentes y las partes que aparecen aquí son los de la [vista de componentes](vista-componentes.md), con el mismo nombre.
 
-**Fuente: draw.io.** El original es [drawio/vista-concurrencia.drawio](drawio/vista-concurrencia.drawio), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
+**Fuente: draw.io.** El original es [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio), que se abre en draw.io web ([descargar](drawio/vista-concurrencia.drawio)), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
 
 ## Cómo leer esta página
 

@@ -8,7 +8,7 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta. La pila (Java 21 y Spring Boot 3, PostgreSQL, RabbitMQ y Redis) es el supuesto SUP-01 de ese documento: ningún producto viene del enunciado. La portada de los diagramas está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md).
 
-**Fuente: draw.io.** El original es [drawio/vista-despliegue.drawio](drawio/vista-despliegue.drawio). La imagen se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
+**Fuente: draw.io.** El original es [vista-despliegue.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-despliegue.drawio), que se abre en draw.io web ([descargar](drawio/vista-despliegue.drawio)). La imagen se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
 
 ## Leyenda
 
