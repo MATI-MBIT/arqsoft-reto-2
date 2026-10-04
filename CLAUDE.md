@@ -52,6 +52,7 @@ consume, y por eso los nombres de archivo son los del paquete.
 | `docs/requirements.md` | `Requirements & Quality` | Insumo |
 | `docs/glossary.md` | `Objective → Glossary` | Insumo |
 | `docs/quality-attributes.md` | escenarios colgados de las historias | **Producto de los insumos** |
+| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-2, H2 sobre ASR-3) | Validación de decisiones |
 
 ---
 
@@ -78,7 +79,18 @@ historias dicen **qué** tiene que ocurrir, nunca **en cuánto tiempo**. El umbr
 aparece por primera vez en el escenario de calidad.
 
 Para verificar antes de entregar: `grep -c ASR docs/*.md` debe dar cero en todo
-salvo `quality-attributes.md`.
+salvo `quality-attributes.md` y `experiments.md`, que va después de los ASR.
+
+### El experimento E01
+
+`docs/experiments.md` espeja el formulario `Experiments` de Helix (pestañas
+`Planning` y `Results & analysis`, leídas el 2026-10-03 del E01 del reto 1). Las
+hipótesis siguen la regla de Darío: la idea de diseño en una frase, el ASR se
+enlaza y no se transcribe, cada hipótesis dice qué la tumba y qué N desconocido
+mide, y las entradas y salidas se cruzan por identificador. Nicolás fijó el
+2026-10-03 que H1 cubre ASR-2 **solo hasta la detección** (matar la sesión,
+revocar y Logs quedan en rojo en su diagrama) y que H2 prueba el **heartbeat**
+de forma falseable contra ADR-004. Resultados: pendientes de las corridas.
 
 ### Los ASR
 
