@@ -439,5 +439,3 @@ Las copias Mermaid se validaron con la skill `diagramar-uml-arquitectura` 1.3.0,
 | Grado (AP-28) | En DG-CON-001, el bróker tiene 13 conexiones y la Reacción 6; el lint bloquea desde 5 |
 
 **Por qué se dejan los errores de tamaño y de grado.** Esta vista profundiza la de componentes: repite sus componentes y les agrega el proceso, los hilos, los temas y las colas. Un diagrama que muestra todo eso por camino no cabe en 20 elementos sin partirse, y la vista tiene un tope de tres diagramas. El grado del bróker es su papel: todos los procesos asíncronos le publican o le desencolan. El lint pide sacar el bróker del diagrama lógico, y esta vista existe justamente para mostrarlo.
-
-**Cómo se generó el `.drawio`.** El emisor de la skill no dibuja hilos dentro de un proceso ni conserva la disposición de la vista de componentes. Por eso el `.drawio` se escribió con un generador propio que parte de las coordenadas de DG-CMP-001 a 003 y usa los estilos de la lista blanca de la skill. El lint cuenta cruces de aristas con los puntos de quiebre del archivo; en la imagen, los cruces que quedan se dibujan con un arco.
