@@ -1,4 +1,4 @@
-<!-- Visor de diagramas Mermaid: botón «Ampliar» y pantalla completa con zoom y arrastre. -->
+<!-- Visor de diagramas Mermaid y de las imágenes de diagramas: botón «Ampliar» y pantalla completa con zoom y arrastre. -->
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.2/dist/svg-pan-zoom.min.js" defer></script>
 <style>
   .mmd-wrap { position: relative; padding-top: 2.4rem !important; }
@@ -24,6 +24,8 @@
   }
   .mmd-stage { flex: 1; min-height: 0; }
   .mmd-stage svg { width: 100%; height: 100%; max-width: none !important; }
+  .img-wrap { position: relative; display: block; padding-top: 2.4rem; border: 1px solid #eaecef; border-radius: 4px; }
+  .img-wrap img { display: block; cursor: zoom-in; }
 </style>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -66,6 +68,37 @@
       });
     }
 
+    // Envuelve una imagen en un SVG para usar el mismo visor.
+    function svgDeImagen(img) {
+      var ns = "http://www.w3.org/2000/svg";
+      var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      var svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+      var im = document.createElementNS(ns, "image");
+      im.setAttribute("href", img.currentSrc || img.src);
+      im.setAttribute("width", w);
+      im.setAttribute("height", h);
+      svg.appendChild(im);
+      return svg;
+    }
+
+    function prepararImagen(img) {
+      if (img.dataset.mmdListo || img.closest(".mmd-overlay")) return;
+      img.dataset.mmdListo = "1";
+      var wrap = document.createElement("span");
+      wrap.className = "img-wrap";
+      img.parentNode.insertBefore(wrap, img);
+      wrap.appendChild(img);
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "mmd-btn";
+      btn.textContent = "Ampliar";
+      var ver = function () { abrir(svgDeImagen(img)); };
+      btn.addEventListener("click", ver);
+      img.addEventListener("click", ver);
+      wrap.appendChild(btn);
+    }
+
     function preparar(code) {
       var svg = code.querySelector("svg");
       var pre = code.closest("pre") || code;
@@ -81,7 +114,10 @@
     }
 
     // Mermaid dibuja los SVG después de cargar la página: se espera a que aparezcan.
-    function revisar() { document.querySelectorAll(".language-mermaid").forEach(preparar); }
+    function revisar() {
+      document.querySelectorAll(".language-mermaid").forEach(preparar);
+      document.querySelectorAll('.main-content img[src*="png-v"]').forEach(prepararImagen);
+    }
     new MutationObserver(revisar).observe(document.body, { childList: true, subtree: true });
     revisar();
   });
