@@ -146,7 +146,7 @@ classDiagram
 
 **Qué muestra:** que la huella se guarda en dos lugares con dueños distintos: la sesión lleva la huella con la que se abrió y el registro lleva la huella vigente del vendedor. También muestra por qué la bitácora guarda la cantidad descontada y no solo la cifra final: sumarla conserva los descargues legítimos que llegaron después. · **Decisión que refleja:** ADR-007 (huella), ADR-008 (bitácora y outbox), ADR-009 (revocación) y ADR-010 (bloqueo, reacción y compensación). · **Qué no muestra:** los identificadores del equipo que forman la huella, que siguen sin definir, ni el pedido y la existencia, que estas decisiones no cambian.
 
-**Los estados de la sesión y del actor.** La v6 los dibujaba en su propia máquina de estados. En la v7 viven como atributos: `Actor.estado` pasa de ACTIVO a BLOQUEADO cuando la Reacción lo bloquea, y una `Revocacion` con el `jti` corta la sesión viva hasta que la clave vence. El orden, revocar antes de bloquear, está en DG-SEQ-002.
+**Los estados de la sesión y del actor.** La v6 los dibujaba en su propia máquina de estados. En la v7 viven como atributos: `Actor.estado` pasa de ACTIVO a BLOQUEADO cuando la Reacción lo bloquea, y una `Revocacion` con el `jti` corta la sesión viva hasta que la clave vence. El orden, revocar antes de bloquear, está en la caja blanca de la Reacción, en DG-CMP-002.
 
 **La bitácora frente al catálogo.** El registro de auditoría del curso (SEG-18) pide una traza separada, que solo crece y que queda fuera del alcance del atacante. Esta bitácora solo crece, pero vive en la misma base del servicio que el actor escribió. Cumple lo que ASR-2 necesita, que es el estado anterior para compensar, y no cumple la separación, que queda en los huecos de la portada.
 

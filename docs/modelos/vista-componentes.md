@@ -161,7 +161,7 @@ flowchart LR
 | ASR-1 | Verificador de dispositivo | Compara la huella y decide el aviso. De él dependen la medida de 2 s y las falsas alarmas, y su ControladorRegistro es el camino del cambio legítimo de equipo |
 | ASR-2 | Reacción ante acceso indebido | Ejecuta la respuesta completa de ASR-2. El orden de sus cuatro pasos es lo que hace que la revocación llegue antes que la compensación |
 
-Los demás quedan como caja negra. El Gestor de sesión fija t0 y el Detector fija t_det, pero ninguno tiene una decisión interna que el diagrama de secuencia DG-SEQ-001 o DG-SEQ-002 no muestre ya.
+Los demás quedan como caja negra. El Gestor de sesión fija t0 y el Detector fija t_det, y ninguno tiene una decisión interna propia: los hilos que hacen ese trabajo están en DG-CON-002, en la vista de concurrencia.
 
 | Parte | Componente | Rol | Responsabilidad |
 |---|---|---|---|

@@ -15,7 +15,7 @@ Versión 7 del 3 de octubre de 2026. Dibuja las diez decisiones de [adrs-ccp-ret
 | Vista | Qué responde | Diagramas | Archivo draw.io | Página |
 |---|---|---|---|---|
 | **Componentes** | Qué componentes hay, por dónde se hablan y cómo funcionan por dentro los que sostienen cada ASR | DG-CMP-001 panorama · DG-CMP-002 seguridad · DG-CMP-003 cadena del pedido | [vista-componentes.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-componentes.drawio) | [vista-componentes.md](vista-componentes.md) |
-| **Concurrencia** | Qué procesos e hilos ejecutan cada paso, qué estado comparten y cómo se cumple cada medida en el tiempo | DG-SEQ-001 ASR-1 · DG-SEQ-002 ASR-2 · DG-SEQ-003 ASR-3 y ASR-4 | [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio) | [vista-concurrencia.md](vista-concurrencia.md) |
+| **Concurrencia** | Qué hilos y colas corren a la vez, qué estado comparten y cómo se sincronizan | DG-CON-001 cadena del pedido · DG-CON-002 seguridad · DG-SEQ-003 carrera sobre la fila (complemento) | [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio) | [vista-concurrencia.md](vista-concurrencia.md) |
 | **Información** | Qué datos sostienen cada táctica, en qué base viven y por qué estados pasa la etapa | DG-CLS-001 cadena · DG-CLS-002 seguridad · DG-STM-001 estados de la etapa | [vista-informacion.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-informacion.drawio) | [vista-informacion.md](vista-informacion.md) |
 | **Despliegue** | Dónde corre cada componente, con qué tecnología y qué queda como instancia única | DG-DEP-001 | [vista-despliegue.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-despliegue.drawio) | [vista-despliegue.md](vista-despliegue.md) |
 
@@ -29,11 +29,11 @@ La v6 tenía 40 diagramas: un panorama, tres cajas negras, diez cajas blancas co
 |---|---|
 | Tres cajas negras por ASR (DG-CMP-002 a 004) | Dos diagramas por camino: DG-CMP-002 junta ASR-1 y ASR-2; DG-CMP-003 junta ASR-3 y ASR-4 |
 | Diez cajas blancas (DG-CST-001 a 010) | Cuatro, abiertas dentro del diagrama de su camino: Verificador y Reacción en DG-CMP-002; Coordinador y Monitor en DG-CMP-003. Las otras seis quedan como caja negra |
-| Doce secuencias internas (DG-SEQ-001 a 012) | Se pliegan en las tres secuencias de la vista de concurrencia, cuyas líneas de vida son las partes y los hilos |
-| Dos diagramas de hilos (DG-CON-001 y 002) | Los procesos y los hilos son las líneas de vida de DG-SEQ-001 a 003; la sincronización va en la tabla bajo cada secuencia |
+| Doce secuencias internas (DG-SEQ-001 a 012) | Las partes de cada caja blanca muestran el orden de su operación crítica con los conectores numerados; la carrera de la cadena va en DG-SEQ-003 |
+| Dos diagramas de hilos (DG-CON-001 y 002) y cinco secuencias de punta a punta | Los dos modelos de concurrencia vuelven como diagramas principales (DG-CON-001 y 002). De las secuencias queda la de ASR-3 y ASR-4 (DG-SEQ-003); las medidas de ASR-1 y ASR-2 van como notas en DG-CON-002 |
 | La secuencia del orden de las etapas (DG-SEQ-013) | El orden queda en DG-CMP-003 (las entregas 1, 2 y 3) y en DG-STM-001 (Pendiente pasa a EnCurso cuando la anterior completa) |
 | Tres diagramas de clases | Dos: la cadena (DG-CLS-001) y la seguridad (DG-CLS-002), que junta identidad, bitácora y reacción |
-| Los estados de la sesión y del actor (DG-STM-002) | Atributos en DG-CLS-002 y orden en DG-SEQ-002 |
+| Los estados de la sesión y del actor (DG-STM-002) | Atributos en DG-CLS-002 y orden en DG-CMP-002 |
 | Dos despliegues | Uno, con el bróker y la base como barras compartidas |
 
 Los ID se renumeran: DG-CMP-001 sigue siendo el panorama, pero el resto de los números no coinciden con los de la v6. Las líneas «Diagramas afectados» del final traen los ID nuevos para cada ADR.
@@ -42,22 +42,22 @@ Los ID se renumeran: DG-CMP-001 sigue siendo el panorama, pero el resto de los n
 
 | ADR | Tácticas (ID) | Elemento que la aloja | Componentes | Concurrencia | Información y despliegue |
 |---|---|---|---|---|---|
-| ADR-001 · eventos, bróker durable y base transaccional | EST-03 · MOD-04 · DIS-17 | Todo el sistema | DG-CMP-001 a 003 | DG-SEQ-001 a 003 | DG-DEP-001 |
-| ADR-002 · Coordinador que orquesta con estado por etapa | INT-08 · DIS-15 | OrquestadorCadena · RepositorioCadena | DG-CMP-001 · DG-CMP-003 | DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 |
+| ADR-001 · eventos, bróker durable y base transaccional | EST-03 · MOD-04 · DIS-17 | Todo el sistema | DG-CMP-001 a 003 | DG-CON-001 · DG-CON-002 · DG-SEQ-003 | DG-DEP-001 |
+| ADR-002 · Coordinador que orquesta con estado por etapa | INT-08 · DIS-15 | OrquestadorCadena · RepositorioCadena | DG-CMP-001 · DG-CMP-003 | DG-CON-001 · DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 |
 | ADR-003 · etapas consecutivas | INT-10 | OrquestadorCadena | DG-CMP-001 · DG-CMP-003 | — | DG-STM-001 |
-| ADR-004 · plazo vencido, barrido y sondeo | DIS-04 · DIS-03 · DIS-01 | BarridoPlazos · SondeoSalud | DG-CMP-001 · DG-CMP-003 | DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 |
-| ADR-005 · idempotencia por pedido y etapa | DIS-17 | Facturación · Inventario · Validación de despacho | DG-CMP-001 · DG-CMP-003 | DG-SEQ-003 | DG-CLS-001 · DG-DEP-001 |
-| ADR-006 · un reintento y escalamiento | DIS-12 · DIS-14 | Reanudador · Bandeja | DG-CMP-001 · DG-CMP-003 | DG-SEQ-003 | DG-STM-001 · DG-DEP-001 |
-| ADR-007 · huella del dispositivo verificada tras la sesión | SEG-02 · SEG-09 · SEG-15 | Gestor de sesión · ComparadorHuella · Notificador | DG-CMP-001 · DG-CMP-002 | DG-SEQ-001 | DG-CLS-002 |
-| ADR-008 · detección por evento en la misma transacción | SEG-09 · SEG-18 · DIS-17 | Detector · Pedidos · Inventario | DG-CMP-001 · DG-CMP-002 | DG-SEQ-002 | DG-CLS-002 · DG-DEP-001 |
-| ADR-009 · revocación en la puerta de entrada | SEG-02 · SEG-13 | Puerta de entrada · Lista de revocación | DG-CMP-001 · DG-CMP-002 | DG-SEQ-002 | DG-CLS-002 · DG-DEP-001 |
-| ADR-010 · compensación dentro de una reacción ordenada | DIS-13 · SEG-13 · SEG-14 · SEG-15 | OrquestadorReaccion · Pedidos · Inventario | DG-CMP-001 · DG-CMP-002 | DG-SEQ-002 | DG-CLS-002 |
+| ADR-004 · plazo vencido, barrido y sondeo | DIS-04 · DIS-03 · DIS-01 | BarridoPlazos · SondeoSalud | DG-CMP-001 · DG-CMP-003 | DG-CON-001 · DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 |
+| ADR-005 · idempotencia por pedido y etapa | DIS-17 | Facturación · Inventario · Validación de despacho | DG-CMP-001 · DG-CMP-003 | DG-CON-001 · DG-SEQ-003 | DG-CLS-001 · DG-DEP-001 |
+| ADR-006 · un reintento y escalamiento | DIS-12 · DIS-14 | Reanudador · Bandeja | DG-CMP-001 · DG-CMP-003 | DG-CON-001 · DG-SEQ-003 | DG-STM-001 · DG-DEP-001 |
+| ADR-007 · huella del dispositivo verificada tras la sesión | SEG-02 · SEG-09 · SEG-15 | Gestor de sesión · ComparadorHuella · Notificador | DG-CMP-001 · DG-CMP-002 | DG-CON-002 | DG-CLS-002 |
+| ADR-008 · detección por evento en la misma transacción | SEG-09 · SEG-18 · DIS-17 | Detector · Pedidos · Inventario | DG-CMP-001 · DG-CMP-002 | DG-CON-002 | DG-CLS-002 · DG-DEP-001 |
+| ADR-009 · revocación en la puerta de entrada | SEG-02 · SEG-13 | Puerta de entrada · Lista de revocación | DG-CMP-001 · DG-CMP-002 | DG-CON-002 | DG-CLS-002 · DG-DEP-001 |
+| ADR-010 · compensación dentro de una reacción ordenada | DIS-13 · SEG-13 · SEG-14 · SEG-15 | OrquestadorReaccion · Pedidos · Inventario | DG-CMP-001 · DG-CMP-002 | DG-CON-002 | DG-CLS-002 |
 
 ### Los componentes que quedan como caja negra
 
 | Componente | Por qué no se abre |
 |---|---|
-| Gestor de sesión · Detector de escrituras indebidas | Fijan t0 y t_det, pero su trabajo interno es una sola consulta; DG-SEQ-001 y DG-SEQ-002 lo muestran |
+| Gestor de sesión · Detector de escrituras indebidas | Fijan t0 y t_det, pero su trabajo interno es una sola consulta; DG-CON-002 muestra los hilos que lo hacen |
 | Puerta de entrada · Notificador a seguridad | La consulta a la Lista y la entrega del aviso se ven completas en las secuencias |
 | Facturación · Inventario · Validación de despacho | Siguen la misma receta de ADR-005, que se ve en DG-CLS-001 y DG-SEQ-003 |
 | Pedidos | Sigue la misma receta que Inventario: bitácora y outbox en la transacción, y anulación como compensación |
@@ -118,7 +118,7 @@ Las tres puertas de la skill `diagramar-uml-arquitectura` 1.2.0 se corrieron sob
 | Vista | Diagramas | Sintaxis (mmdc 12.0.0) | Lint | Revisión visual del draw.io |
 |---|---|---|---|---|
 | Componentes | 3 | 3 compilan | 2 errores y 4 avisos, todos de tamaño o de eclosión | Sin solapes. DG-CMP-001 cruza dos aristas largas; DG-CMP-002 y DG-CMP-003 cruzan una cada uno |
-| Concurrencia | 3 | 3 compilan | 0 errores | Sin solapes. Algunas etiquetas pasan sobre una barra de activación, con fondo blanco |
+| Concurrencia | 3 | 3 compilan | 0 errores · 2 avisos de tamaño justificados · paridad 0 | Sin cruces ni solapes. DG-CON-001 declara dos aristas de retorno, que son su semántica |
 | Información | 3 | 3 compilan | 0 errores | Sin solapes |
 | Despliegue | 1 | 1 compila | 0 errores | Sin solapes. Los cruces de rutas se marcan con un arco |
 
@@ -130,10 +130,10 @@ El sitio publica las copias Mermaid con Mermaid 11.4.1 (`docs/_config.yml`), y l
 
 | ASR | ADR | Componentes | Concurrencia | Información y despliegue | Hueco |
 |---|---|---|---|---|---|
-| ASR-1 · suplantación del vendedor | ADR-001, ADR-007 | DG-CMP-001 · DG-CMP-002 | DG-SEQ-001 | DG-CLS-002 · DG-DEP-001 | Identificadores de la huella; quién registra el cambio legítimo; canal del aviso; tendero sin señal (R-007a) |
-| ASR-2 · escritura indebida | ADR-001, ADR-008, ADR-009, ADR-010 | DG-CMP-001 · DG-CMP-002 | DG-SEQ-002 | DG-CLS-002 · DG-DEP-001 | Lista de revocación caída (TO-009a); pedido indebido con la cadena en curso (R-010a); bitácora sin separar (SEG-18) |
-| ASR-3 · cadena detenida | ADR-001 a ADR-004 | DG-CMP-001 · DG-CMP-003 | DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 | Plazo de cada etapa sin medir (TO-004a); Monitor como punto único (R-004a); dónde guarda sus señales |
-| ASR-4 · reanudación sin duplicar | ADR-001 a ADR-006 | DG-CMP-001 · DG-CMP-003 | DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 | Confirmación que llega después de escalar; carga manual por transitorios (R-006a); factura en un sistema externo (NR-005a) |
+| ASR-1 · suplantación del vendedor | ADR-001, ADR-007 | DG-CMP-001 · DG-CMP-002 | DG-CON-002 | DG-CLS-002 · DG-DEP-001 | Identificadores de la huella; quién registra el cambio legítimo; canal del aviso; tendero sin señal (R-007a) |
+| ASR-2 · escritura indebida | ADR-001, ADR-008, ADR-009, ADR-010 | DG-CMP-001 · DG-CMP-002 | DG-CON-002 | DG-CLS-002 · DG-DEP-001 | Lista de revocación caída (TO-009a); pedido indebido con la cadena en curso (R-010a); bitácora sin separar (SEG-18) |
+| ASR-3 · cadena detenida | ADR-001 a ADR-004 | DG-CMP-001 · DG-CMP-003 | DG-CON-001 · DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 | Plazo de cada etapa sin medir (TO-004a); Monitor como punto único (R-004a); dónde guarda sus señales |
+| ASR-4 · reanudación sin duplicar | ADR-001 a ADR-006 | DG-CMP-001 · DG-CMP-003 | DG-CON-001 · DG-SEQ-003 | DG-CLS-001 · DG-STM-001 · DG-DEP-001 | Confirmación que llega después de escalar; carga manual por transitorios (R-006a); factura en un sistema externo (NR-005a) |
 
 ## Huecos y ADR pendientes
 
@@ -141,11 +141,11 @@ Las preguntas abiertas no van dentro de los diagramas; están aquí.
 
 **Decisiones que faltan (ADR pendientes).**
 
-- **Sincronización de la fila `CadenaEtapa`.** Tres hilos la tocan: ConsumidorMensajes, Reanudador y BarridoPlazos. DG-SEQ-003 dibuja una actualización condicional por estado, marcada propuesta. Ningún ADR la decide.
+- **Sincronización de la fila `CadenaEtapa`.** Tres hilos la tocan: ConsumidorMensajes, Reanudador y BarridoPlazos. DG-CON-001 dibuja una actualización condicional por estado, marcada propuesta, y DG-SEQ-003 muestra quién gana la carrera. Ningún ADR la decide.
 - **Confirmación que llega después de escalar.** Si la etapa confirma cuando la fila ya está Escalada, la actualización condicional la ignora, y el responsable recibe un pedido cuya etapa sí terminó. Hay que decidir si la fila pasa a Completada y el pedido sale de la Bandeja (DG-SEQ-003, DG-STM-001).
-- **Qué hace la Puerta si la Lista de revocación no responde** (TO-009a): rechazar todo protege ASR-2 y deja el sistema sin servicio; dejar pasar hace lo contrario. DG-SEQ-002 no dibuja ese camino.
+- **Qué hace la Puerta si la Lista de revocación no responde** (TO-009a): rechazar todo protege ASR-2 y deja el sistema sin servicio; dejar pasar hace lo contrario. DG-CON-002 no dibuja ese camino.
 - **Separar la bitácora.** El registro de auditoría del catálogo (SEG-18) pide una traza fuera del alcance del atacante. Hoy la bitácora vive en la base del servicio que el actor escribió (DG-CLS-002).
-- **Deduplicación del aviso.** El Notificador registra cada `idAlerta` para no avisar dos veces cuando el bróker repite la alerta (DG-SEQ-001). Es propuesta.
+- **Deduplicación del aviso.** El Notificador registra cada `idAlerta` para no avisar dos veces cuando el bróker repite la alerta (DG-CON-002). Es propuesta.
 - **Estructura interna del Coordinador.** DG-CMP-003 le da dos puertos de entrada, uno para `etapa.completada` y otro para la Cola de reintentos, que entrega directo al Reanudador. Es propuesta.
 
 **Datos que faltan.**
@@ -166,16 +166,16 @@ Las preguntas abiertas no van dentro de los diagramas; están aquí.
 
 Los ADR citan los ID de su plan de diagramas (sección 6 de [adrs-ccp-reto2.md](adrs-ccp-reto2.md)), que no coinciden con los de la v7. Estas líneas los reemplazan.
 
-- ADR-001 — `Diagramas afectados: DG-CMP-001 a 003, DG-SEQ-001 a 003, DG-DEP-001`
-- ADR-002 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-SEQ-003, DG-CLS-001, DG-STM-001, DG-DEP-001`
+- ADR-001 — `Diagramas afectados: DG-CMP-001 a 003, DG-CON-001, DG-CON-002, DG-SEQ-003, DG-DEP-001`
+- ADR-002 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-CON-001, DG-SEQ-003, DG-CLS-001, DG-STM-001, DG-DEP-001`
 - ADR-003 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-STM-001`
-- ADR-004 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-SEQ-003, DG-CLS-001, DG-STM-001, DG-DEP-001`
-- ADR-005 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-SEQ-003, DG-CLS-001, DG-DEP-001`
-- ADR-006 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-SEQ-003, DG-STM-001, DG-DEP-001`
-- ADR-007 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-SEQ-001, DG-CLS-002`
-- ADR-008 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-SEQ-002, DG-CLS-002, DG-DEP-001`
-- ADR-009 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-SEQ-002, DG-CLS-002, DG-DEP-001`
-- ADR-010 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-SEQ-002, DG-CLS-002`
+- ADR-004 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-CON-001, DG-SEQ-003, DG-CLS-001, DG-STM-001, DG-DEP-001`
+- ADR-005 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-CON-001, DG-SEQ-003, DG-CLS-001, DG-DEP-001`
+- ADR-006 — `Diagramas afectados: DG-CMP-001, DG-CMP-003, DG-CON-001, DG-SEQ-003, DG-STM-001, DG-DEP-001`
+- ADR-007 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-CON-002, DG-CLS-002`
+- ADR-008 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-CON-002, DG-CLS-002, DG-DEP-001`
+- ADR-009 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-CON-002, DG-CLS-002, DG-DEP-001`
+- ADR-010 — `Diagramas afectados: DG-CMP-001, DG-CMP-002, DG-CON-002, DG-CLS-002`
 
 ## Lucid
 
