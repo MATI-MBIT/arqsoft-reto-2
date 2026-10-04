@@ -52,7 +52,7 @@ consume, y por eso los nombres de archivo son los del paquete.
 | `docs/requirements.md` | `Requirements & Quality` | Insumo |
 | `docs/glossary.md` | `Objective → Glossary` | Insumo |
 | `docs/quality-attributes.md` | escenarios colgados de las historias | **Producto de los insumos** |
-| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1, H2 sobre ASR-3) | Validación de decisiones |
+| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1 · E02: H2 sobre ASR-3) | Validación de decisiones |
 
 ---
 
@@ -81,7 +81,14 @@ aparece por primera vez en el escenario de calidad.
 Para verificar antes de entregar: `grep -c ASR docs/*.md` debe dar cero en todo
 salvo `quality-attributes.md` y `experiments.md`, que va después de los ASR.
 
-### El experimento E01
+### Los experimentos E01 y E02
+
+El 2026-10-04 Nicolás partió el experimento en dos, uno por hipótesis, porque
+cada una lleva a una decisión distinta (ADR-007 y ADR-004) y puede caer sin la
+otra. `docs/experiments.md` tiene una sección de montaje común y luego E01
+(seguridad, ASR-1) y E02 (disponibilidad, ASR-3). En Helix son dos
+experimentos, cada uno legible solo.
+
 
 `docs/experiments.md` espeja el formulario `Experiments` de Helix (pestañas
 `Planning` y `Results & analysis`, leídas el 2026-10-03 del E01 del reto 1). Las

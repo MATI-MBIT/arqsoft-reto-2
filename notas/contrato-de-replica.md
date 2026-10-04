@@ -25,7 +25,7 @@ clave es el contrato: si una sección de Helix no tiene página, no tiene fuente
 | `requirements.md` | `Requirements & Quality` | Árbol Epic → Feature → Story |
 | `quality-attributes.md` | Escenarios de calidad colgados de las historias | Ver abajo |
 | *(falta)* | `Objective → Glossary` | El vocabulario ya está fijado; falta la página |
-| `experiments.md` | `Experiments` | Título · `Planning` (hipótesis, escenarios enlazados, tácticas, diseño, recursos, elementos, esfuerzo) · `Results & analysis` |
+| `experiments.md` | `Experiments`, un experimento por hipótesis (E01 y E02) | Título · `Planning` (hipótesis, escenarios enlazados, tácticas, diseño, recursos, elementos, esfuerzo) · `Results & analysis` |
 
 Los nombres de sección salieron del recorrido del 2026-09-19 y están
 verificados contra la interfaz. El detalle completo de cada formulario está en
@@ -201,4 +201,18 @@ Se cargó el experimento **E01** desde `docs/experiments.md`.
 
 `[PREGUNTA]` `Code repository` quedó vacío: falta decidir dónde vive el código
 del prototipo.
+
+### Actualización del mismo día: dos experimentos
+
+El experimento se partió en dos, uno por hipótesis. En Helix:
+
+| Experimento | Escenario enlazado | Contenido |
+|---|---|---|
+| E01 — Validar la detección del dispositivo no registrado con el micro de sesiones | `security_detection — HU-01` (ASR-1) | Solo H1, sus tácticas, fases S1–S4, recursos, elementos y 31 horas-persona |
+| E02 — Validar la detección y el encolado del pedido detenido con el Monitor de la cadena | `availability_detection — HU-03` (ASR-3) | Solo H2, sus tácticas, fases D1–D4, recursos, elementos y 41 horas-persona |
+
+Cada uno repite el montaje común (carga, cruce de entradas y salidas,
+limitaciones comunes) para leerse solo. Los dos tienen `External report` con el
+enlace al wiki. Para reemplazar el contenido de un editor enriquecido sirvió
+hacer clic en el editor, `Cmd+A`, `Backspace` y luego `Import Markdown`.
 
