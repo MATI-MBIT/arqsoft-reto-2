@@ -4,7 +4,7 @@ nav_order: 8
 helix_section: "Experiments"
 ---
 
-# Experimento E01 — detección del dispositivo no registrado, y detección y reacción ante el pedido detenido
+# Experimento E01 — detección del dispositivo no registrado, y reacción ante el pedido detenido
 
 Este experimento pone a prueba dos ideas de diseño con un solo prototipo, y cada
 una tiene su propio alcance:
@@ -23,20 +23,6 @@ en [ASRs de disponibilidad y seguridad](quality-attributes.md). Las decisiones
 con las que se comparan los resultados están en el
 [registro de ADR](modelos/adrs-ccp-reto2.md).
 
-La página sigue el formulario `Experiments` de Helix, campo por campo, para que
-cargarla sea copiar cada sección en su casilla.
-
-| Pestaña de Helix | Campo de Helix | Sección de esta página |
-|---|---|---|
-| — | Experiment title | El título del experimento |
-| `Planning` | Design Hypothesis | Las hipótesis de diseño |
-| `Planning` | Linked Quality Scenarios | Los escenarios enlazados |
-| `Planning` | Tactics and Patterns | Las tácticas y los patrones |
-| `Planning` | Experiment Design | El diseño del experimento |
-| `Planning` | Required resources · Architecture elements involved · Estimated effort | Recursos, elementos y esfuerzo |
-| `Results & analysis` | Results · Analysis of results · Links & evidence | Resultados y análisis |
-| `Results & analysis` | Conclusion · Architectural Decision | La decisión que sigue a cada resultado |
-
 ## El título del experimento
 
 **E01 — Validar la detección del dispositivo no registrado con el micro de
@@ -45,30 +31,34 @@ cadena.**
 
 ## Las hipótesis de diseño
 
-Una hipótesis es la idea de diseño que el equipo quiere validar, no el
-requisito. Cada una se escribe en una frase con la forma *si [decisión de
-diseño], entonces se cumple el escenario enlazado*. Debajo va por qué el equipo
-la cree, qué resultado la refutaría y qué número desconocido debe entregar el
-experimento.
-
 ### H1 — Seguridad: el micro de sesiones detecta la huella de un dispositivo no registrado
 
-**Si el micro de sesiones compara la huella del dispositivo con la registrada
-para el vendedor apenas se abre la sesión, sin hacer esperar al inicio de
-sesión, entonces se cumple ASR-1.**
+**Si el micro de sesiones compara la huella del dispositivo —el ID que la base
+guarda para cada vendedor— apenas se abre la sesión, entonces seguridad recibirá
+el aviso en ≤ 2 s, porque la comparación es una sola lectura en la base y no
+bloquea el inicio de sesión.**
 
-Por qué la creemos: CCP le entrega el dispositivo a cada vendedor, así que el
+- **Variable independiente:** dónde y cuándo se compara la huella. Se compara
+  en el micro de sesiones, en cada apertura y contra el registro de la base, sin
+  caché.
+- **Variables dependientes:** la demora entre la apertura de la sesión y el
+  aviso; los avisos falsos por cada 100 cambios legítimos de dispositivo, que
+  ASR-1 limita a uno; y las aperturas desde un dispositivo no registrado que
+  quedan sin aviso.
+
+Fundamento: CCP le entrega el dispositivo a cada vendedor, de modo que el
 sistema tiene contra qué comparar aunque las credenciales sean correctas. La
-comparación es una lectura por vendedor en la base, y se hace después de abrir
-la sesión, así que no frena al vendedor legítimo. Un cambio legítimo de equipo
-se registra antes de usarse, y por eso no dispara el aviso.
+comparación corre después de abrir la sesión, así que no frena al vendedor
+legítimo. En el prototipo, el micro Onboarding registra el equipo nuevo de un
+cambio legítimo antes de que se use, y por eso no dispara el aviso. [PREGUNTA]
+¿Quién lo registra en la operación real? ADR-007 lo dejó abierto.
 
 Lo que la refutaría, cualquiera de tres casos:
 
 - Una sesión abierta desde un dispositivo no registrado que no produce aviso, o
   que lo produce fuera de plazo.
-- Un aviso por el equipo nuevo de un cambio legítimo ya registrado, por encima
-  de lo que admite el escenario.
+- Avisos disparados por equipos nuevos ya registrados en más de uno de cada 100
+  cambios legítimos.
 - Un aviso que llega sin el vendedor, el dispositivo o la hora, que es lo que
   seguridad necesita para actuar.
 
@@ -79,17 +69,29 @@ de esa ráfaga.
 
 ### H2 — Disponibilidad: el Monitor de la cadena detecta el pedido detenido, y el pedido se encola
 
-**Si el Monitor de la cadena sondea cada etapa de forma periódica y declara
-detenida la que no responde N sondeos seguidos, y el micro de ventas envía a la
-cola de contingencia cada pedido pendiente en ella, entonces se cumple ASR-3.**
+**Si el Monitor de la cadena sondea cada etapa y el micro de ventas encola los
+pedidos de la etapa que no responde N sondeos seguidos, entonces todo pedido
+detenido llegará a la cola de contingencia en ≤ 30 s, porque N sondeos
+fallidos caben en ese plazo.**
 
-Por qué la creemos: una etapa que se cae deja de responder al sondeo, y el
-Monitor lo nota sin depender de ella. El micro de ventas sabe qué pedidos le entregó a esa
-etapa y cuáles no han vuelto. Con eso arma,
-por cada pedido, un mensaje con el pedido, la etapa y el tiempo transcurrido, y
-lo envía a la cola. Publicar en una cola durable cuesta milisegundos, así que la
-reacción no se come el plazo de la detección. Además, el mensaje sobrevive
-aunque nadie lo atienda todavía.
+«Pedido detenido» incluye el que se congela dentro de una etapa que sigue
+respondiendo al sondeo. Es el caso que el sondeo quizá no vea, y la fase D3 lo
+pone a prueba.
+
+- **Variable independiente:** el sondeo del Monitor y el envío a la cola. El
+  Monitor sondea cada T segundos y declara detenida la etapa que no responde N
+  sondeos seguidos; el micro de ventas envía a la cola cada pedido pendiente en
+  ella.
+- **Variables dependientes:** la demora entre la falla y la confirmación del
+  pedido en la cola; las falsas alarmas por hora, que ASR-3 limita a una; y los
+  pedidos detenidos que no llegan a la cola o que llegan dos veces.
+
+Fundamento: el Monitor nota que una etapa no responde sin depender de ella. El
+micro de ventas sabe qué pedidos le entregó a esa etapa y cuáles no han vuelto.
+Con eso arma, por cada uno, un mensaje con el pedido, la etapa y el tiempo
+transcurrido. Publicar en una cola durable cuesta milisegundos: la reacción no
+se come el plazo de la detección, y el mensaje sobrevive aunque nadie lo
+atienda todavía.
 
 Lo que la refutaría, cualquiera de dos casos:
 
@@ -104,7 +106,7 @@ Lo que la refutaría, cualquiera de dos casos:
 El número que no conocemos: el menor N de sondeos sin respuesta que no dispara
 falsas alarmas con la variación normal de las etapas. Con un sondeo cada T
 segundos, el pedido llega a la cola cerca de N × T segundos después de la
-falla, y ese producto tiene que caber en los 30 s que da ASR-3.
+falla. Ese producto tiene que caber en los 30 s que da ASR-3.
 
 ## Los escenarios enlazados
 
