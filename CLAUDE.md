@@ -90,7 +90,10 @@ enlaza y no se transcribe, cada hipótesis dice qué la tumba y qué N desconoci
 mide, y las entradas y salidas se cruzan por identificador. Nicolás fijó el
 2026-10-03 que H1 cubre ASR-2 **solo hasta la detección** (matar la sesión,
 revocar y Logs quedan en rojo en su diagrama) y que H2 prueba el **heartbeat**
-de forma falseable contra ADR-004. Resultados: pendientes de las corridas.
+de forma falseable contra ADR-004. El 2026-10-03 ajustó H2 a **detección y
+reacción**: la reacción es solo enviar el pedido detenido a la cola de
+contingencia (el nodo de contingencia del diagrama); consumirla es de ASR-4.
+Resultados: pendientes de las corridas.
 
 ### Los ASR
 

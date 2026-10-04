@@ -1,15 +1,17 @@
 ---
-title: Experimento E01 — detección
+title: Experimento E01 — detección y reacción
 nav_order: 8
 helix_section: "Experiments"
 ---
 
-# Experimento E01 — detección de la escritura indebida y del pedido detenido
+# Experimento E01 — detección de la escritura indebida, y detección y reacción ante el pedido detenido
 
 Este experimento pone a prueba dos ideas de diseño con un solo prototipo. La
 primera es de seguridad: un micro de sesiones que compara cada operación con el
-perfil vigente del actor. La segunda es de disponibilidad: un heartbeat, es
-decir, un latido periódico de cada una de las tres etapas que siguen al pedido.
+perfil vigente del actor, y llega hasta la detección. La segunda es de
+disponibilidad: un heartbeat, es decir, un latido periódico de cada una de las
+tres etapas que siguen al pedido. Esta cubre la detección y la reacción, que
+consiste solo en enviar el pedido detenido a una cola de contingencia.
 
 Los escenarios de calidad que cada idea debe cumplir son ASR-2 y ASR-3, y están
 en [ASRs de disponibilidad y seguridad](quality-attributes.md). Las decisiones con las que se comparan los
@@ -31,8 +33,9 @@ cargarla sea copiar cada sección en su casilla.
 
 ## El título del experimento
 
-**E01 — Validar la detección de la escritura indebida con el micro de sesiones y
-la del pedido detenido con el heartbeat de las etapas.**
+**E01 — Validar la detección de la escritura indebida con el micro de sesiones,
+y la detección y el encolado del pedido detenido con el heartbeat de las
+etapas.**
 
 ## Las hipótesis de diseño
 
@@ -72,26 +75,33 @@ por segundo, pero no sabemos cuánto margen queda por encima.
 > escritura. El experimento llega hasta la detección y el aviso; el bloqueo, el
 > cierre y la reversión quedan fuera de este prototipo.
 
-### H2 — Disponibilidad: el heartbeat detecta el pedido detenido
+### H2 — Disponibilidad: el heartbeat detecta el pedido detenido y lo encola
 
-**Si cada etapa de la cadena emite un latido periódico, y el micro de ventas
-declara detenida la etapa que pierde N latidos seguidos, entonces se cumple
-ASR-3.**
+**Si cada etapa emite un latido periódico, y el micro de ventas declara detenida
+la etapa que pierde N latidos seguidos y envía a la cola de contingencia cada
+pedido pendiente en ella, entonces se cumple ASR-3.**
 
 Por qué la creemos: una etapa que se cae deja de latir, y el micro de ventas
-sabe qué pedidos le entregó a esa etapa y cuáles no han vuelto. Con eso puede
-señalar cada pedido, la etapa y el tiempo transcurrido.
+sabe qué pedidos le entregó a esa etapa y cuáles no han vuelto. Con eso arma, por
+cada pedido, un mensaje con el pedido, la etapa y el tiempo transcurrido, y lo
+envía a la cola. Publicar en una cola durable cuesta milisegundos, así que la
+reacción no se come el plazo de la detección. Además, el mensaje sobrevive
+aunque nadie lo atienda todavía.
 
-Lo que la refutaría: una etapa que sigue viva y late con normalidad mientras
-un pedido se queda congelado dentro de ella. ASR-3 describe justo esa falla, sin
-señal de error. En [ADR-004](modelos/adrs-ccp-reto2.md) el equipo predijo que el
-heartbeat no la ve, y por eso eligió un plazo por pedido y etapa. El experimento
-contrasta esa predicción con datos.
+Lo que la refutaría, cualquiera de dos casos:
+
+- Una etapa que sigue viva y late con normalidad mientras un pedido se queda
+  congelado dentro de ella. ASR-3 describe justo esa falla, sin señal de error.
+  En [ADR-004](modelos/adrs-ccp-reto2.md) el equipo predijo que el heartbeat no
+  la ve, y por eso eligió un plazo por pedido y etapa. El experimento contrasta
+  esa predicción con datos.
+- Un pedido detectado que no llega a la cola, o que llega dos veces. Un
+  duplicado haría que la reanudación de ASR-4 repita una etapa.
 
 El número que no conocemos: el menor N de latidos perdidos que no dispara
 falsas alarmas con la variación normal de las etapas. Con un latido cada T
-segundos, la señal tarda cerca de N × T, y ese producto tiene que caber en los
-30 s que da ASR-3.
+segundos, el pedido llega a la cola cerca de N × T segundos después de la
+falla, y ese producto tiene que caber en los 30 s que da ASR-3.
 
 ## Los escenarios enlazados
 
@@ -101,7 +111,7 @@ el atributo y la historia de usuario a la que está atado.
 | ASR | Nombre en Helix | Historia | Hipótesis | Cobertura |
 |---|---|---|---|---|
 | ASR-2 | Security — Reacción ante la escritura indebida | [HU-13](requirements.md) | H1 | Parcial: la detección y el aviso, no la reacción |
-| ASR-3 | Availability — Creación del pedido en la tienda | [HU-03](requirements.md) | H2 | Completa |
+| ASR-3 | Availability — Creación del pedido en la tienda | [HU-03](requirements.md) | H2 | Completa: la detección y la reacción, que es encolar el pedido |
 
 ## Las tácticas y los patrones
 
@@ -113,9 +123,12 @@ el control preventivo ya falló.
 
 **Para H2.** La táctica es *heartbeat*: cada etapa emite un latido al componente
 Heartbeat, y este avisa al micro de ventas cuando faltan N latidos seguidos. El
-micro de ventas toma los pedidos que tiene pendientes en esa etapa y los entrega
-como señalados al nodo de contingencia. Ese nodo recibe los pedidos señalados y,
-en este prototipo, solo los registra: qué hace con ellos es materia de ASR-4.
+micro de ventas toma los pedidos que tiene pendientes en esa etapa y reacciona
+enviando cada uno a la cola de contingencia, que es el nodo de contingencia del
+diagrama. La cola desacopla la detección de quien atiende el pedido: reanudarlo
+o entregarlo a una persona es materia de ASR-4, y en este prototipo nadie
+consume la cola. Cada mensaje lleva como clave el pedido, la etapa y el intento,
+para que el mismo pedido no entre dos veces.
 
 **Las alternativas contra las que se compara cada hipótesis:**
 
@@ -153,7 +166,7 @@ flowchart LR
     INV -. latido .-> HB
     DES -. latido .-> HB
     HB --> VEN
-    VEN --> NC["Nodo de contingencia"]
+    VEN -- encola --> NC[["Cola de contingencia<br/>(nodo de contingencia)"]]
     UNV -.-> KILL["matar la sesión"]
     UNV -.-> REV["usuarios revocados"]
     UNV -.-> LOGS["Logs"]
@@ -163,7 +176,7 @@ flowchart LR
     class KILL,REV,LOGS fuera
 ```
 
-Cuatro decisiones de montaje que el diagrama no dice:
+Cinco decisiones de montaje que el diagrama no dice:
 
 - **El inicio de sesión se simula.** El micro Onboarding carga los usuarios en la
   base, y el simulador abre las sesiones con esas credenciales sin un desafío de
@@ -176,16 +189,20 @@ Cuatro decisiones de montaje que el diagrama no dice:
 - **El SMS de seguridad lo recibe un receptor simulado** que anota la hora de
   llegada de cada aviso. Un proveedor real sumaría su propia demora, que ningún
   componente del diseño controla.
+- **El nodo de contingencia es una cola durable** de RabbitMQ, y el micro de
+  ventas espera la confirmación del bróker antes de dar el pedido por encolado.
+  Un registrador lee la cola sin consumirla y anota la hora de llegada de cada
+  mensaje.
 - **Las tres etapas corren en paralelo**, como en el diagrama. ADR-003 las ordena
   en serie, pero el orden no cambia lo que H2 evalúa, que es si la parada se
-  detecta.
+  detecta y el pedido llega a la cola.
 
 ### La carga
 
 Toda la carga es la del Ambiente A, fijada en el supuesto S-4 de los
 [ASR](quality-attributes.md): 1 pedido y 10 consultas por segundo, con arribo
 aleatorio y no equiespaciado. Cada pedido recorre las tres etapas. Cada etapa
-tarda un tiempo aleatorio, para que el latido y la señal convivan con la
+tarda un tiempo aleatorio, para que el latido y la detección convivan con la
 variación normal de la operación.
 
 Cada corrida empieza con un calentamiento de 5 minutos que no entra en ningún
@@ -210,16 +227,16 @@ enunciado.
 ### Qué se mide y cómo se cruzan entradas y salidas
 
 Cada operación y cada pedido llevan un identificador desde el simulador hasta el
-final del recorrido. Un aviso o una señal cuenta solo cuando se cruza, uno a
+final del recorrido. Un aviso o un mensaje en la cola cuenta solo cuando se cruza, uno a
 uno, con la falla inyectada que lo causó. Contar avisos no basta: hay que
 mostrar a qué entrada corresponde cada salida.
 
 | Hipótesis | Reloj de inicio | Reloj de fin | Cruce por identificador |
 |---|---|---|---|
 | H1 | Ventas confirma la escritura indebida | El receptor recibe el aviso | Identificador de la operación |
-| H2 | El inyector detiene la etapa (D2) o congela el pedido (D3) | El nodo de contingencia recibe la señal | Identificador del pedido y nombre de la etapa |
+| H2 | El inyector detiene la etapa (D2) o congela el pedido (D3) | El bróker confirma el mensaje del pedido en la cola | Identificador del pedido y nombre de la etapa |
 
-Para H2, una señal es **falsa alarma** cuando nombra un pedido que llegó a
+Para H2, un mensaje en la cola es **falsa alarma** cuando nombra un pedido que llegó a
 logística o una etapa que nunca se detuvo.
 
 Todos los componentes corren en la misma máquina y leen el mismo reloj, así que
@@ -240,12 +257,14 @@ La demora entre la escritura y el aviso se informa con su mediana, su percentil
 en la detección. [PREGUNTA] ¿Qué demora de detección acepta el equipo antes de
 dar H1 por cumplida?
 
-**H2 se sostiene si se cumplen las tres condiciones:**
+**H2 se sostiene si se cumplen las cuatro condiciones:**
 
-- En D2, las 30 señales llegan en ≤ 30 s, cada una con el pedido, la etapa y el
-  tiempo transcurrido.
+- En D2, los 30 pedidos llegan a la cola en ≤ 30 s, cada uno con el pedido, la
+  etapa y el tiempo transcurrido.
 - En D1, hay ≤ 1 falsa alarma por hora.
-- En D3, las 30 señales también llegan en ≤ 30 s.
+- En D3, los 30 pedidos también llegan a la cola en ≤ 30 s.
+- En todas las fases, cada pedido detenido entra a la cola una sola vez: cero
+  pedidos perdidos y cero duplicados.
 
 Si D2 y D1 pasan y D3 falla, H2 queda refutada para la falla que describe ASR-3,
 aunque el heartbeat detecte bien las caídas.
@@ -258,6 +277,9 @@ aunque el heartbeat detecte bien las caídas.
   usuario, no se revierte la escritura y no se escriben registros (logs).
 - Solo se inyectan fallas de software, por el supuesto S-3. Las caídas de
   máquina, red o base quedan fuera.
+- Nadie consume la cola de contingencia: reanudar el pedido o entregarlo a una
+  persona es de ASR-4. La caída del bróker es una falla de infraestructura y
+  queda fuera por S-3.
 - El componente Heartbeat es un solo proceso. Si cae, nadie detecta nada: es el
   mismo riesgo que el equipo anotó en ADR-004 para su monitor (R-004a).
 - Una hora de D1 solo distingue entre cero, una y varias falsas alarmas.
@@ -266,7 +288,8 @@ aunque el heartbeat detecte bien las caídas.
 ## Recursos, elementos y esfuerzo
 
 **Required resources.** La pila del supuesto SUP-01 del registro de ADR: Java 21,
-Spring Boot 3, PostgreSQL y RabbitMQ, en contenedores con Docker Compose. Un
+Spring Boot 3, PostgreSQL y RabbitMQ (con una cola durable y confirmación de
+publicación), en contenedores con Docker Compose. Un
 generador de carga con arribo aleatorio, como k6, que ya se usó en el reto 1. Un
 inyector de fallas que detiene procesos y congela pedidos marcados. El receptor
 simulado del SMS. Un registro de tiempos por identificador para el cruce de
@@ -275,7 +298,7 @@ entradas y salidas.
 **Architecture elements involved.** Incluidos: simulador de sesiones, micro de
 sesiones, SIMULADOR-DB, usuario no válido, receptor del SMS de seguridad, micro
 de ventas, facturación, descargue de inventario, validación de despacho,
-Heartbeat, logística y nodo de contingencia. Simulado: micro Onboarding. Fuera:
+Heartbeat, logística y cola de contingencia (nodo de contingencia). Simulado: micro Onboarding. Fuera:
 matar la sesión, usuarios revocados y Logs.
 
 **Estimated effort.** [PREGUNTA] ¿Cuántas personas y cuántos días? El trabajo se
@@ -295,9 +318,10 @@ las corridas. Para cada fase, los resultados deben traer:
 | Dato | H1 | H2 |
 |---|---|---|
 | Fallas inyectadas | Escrituras indebidas, cambios de perfil e intentos rechazados | Etapas detenidas y pedidos congelados |
-| Detectadas | Avisos cruzados con su operación | Señales cruzadas con su pedido y su etapa |
-| Escapes | Escrituras indebidas sin aviso | Pedidos detenidos o congelados sin señal |
-| Falsas detecciones | Avisos sin escritura indebida ejecutada | Señales sobre pedidos que llegaron a logística o sobre etapas que nunca se detuvieron |
+| Detectadas | Avisos cruzados con su operación | Mensajes en la cola cruzados con su pedido y su etapa |
+| Escapes | Escrituras indebidas sin aviso | Pedidos detenidos o congelados que no llegaron a la cola |
+| Duplicados | No aplica | Pedidos que entraron a la cola más de una vez |
+| Falsas detecciones | Avisos sin escritura indebida ejecutada | Mensajes sobre pedidos que llegaron a logística o sobre etapas que nunca se detuvieron |
 | Demora | Mediana, percentil 95 y máximo | Mediana, percentil 95 y máximo |
 | Número desconocido | Tasa en la que la detección se atrasa (S4) | Menor N sin falsas alarmas, y N × T (D4) |
 
@@ -316,7 +340,8 @@ resultado no se acomoda después a la decisión.
 | H1 falla en S3: avisa por intentos que no se ejecutaron | Mover la detección a la escritura confirmada, como propone ADR-008 |
 | H1 falla en S2: no ve el permiso quitado | Revisar de dónde lee el perfil el micro de sesiones antes de cualquier otro cambio |
 | H1 se atrasa en S4 por debajo de 3 veces la carga del Ambiente A | Declarar la tasa medida como límite del diseño y llevarla a la decisión sobre cuántas instancias del micro de sesiones correr |
-| H2 se sostiene en D1, D2 y D3 | Adoptar el heartbeat como mecanismo de detección de ASR-3 y reabrir ADR-004 |
+| H2 se sostiene en D1, D2 y D3 | Adoptar el heartbeat como mecanismo de detección de ASR-3, con la cola de contingencia como reacción, y reabrir ADR-004 |
 | H2 pasa D1 y D2 pero falla D3 | Confirmar ADR-004: el plazo por pedido y etapa es el mecanismo, y el heartbeat queda como apoyo para las caídas de etapas enteras |
 | H2 falla D2: no detecta ni la etapa caída en ≤ 30 s | Buscar en D4 una combinación de T y N que quepa; si ninguna cabe sin falsas alarmas, adoptar ADR-004 sin el heartbeat de apoyo |
+| H2 detecta a tiempo pero pierde o duplica pedidos en la cola | Hacer la publicación idempotente con la clave de pedido, etapa e intento (NR-004a), y repetir D2 |
 | H2 falla D1: más falsas alarmas de las admitidas | Subir N con el resultado de D4, y verificar que N × T siga cabiendo en los 30 s |
