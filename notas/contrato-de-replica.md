@@ -25,6 +25,7 @@ clave es el contrato: si una sección de Helix no tiene página, no tiene fuente
 | `requirements.md` | `Requirements & Quality` | Árbol Epic → Feature → Story |
 | `quality-attributes.md` | Escenarios de calidad colgados de las historias | Ver abajo |
 | *(falta)* | `Objective → Glossary` | El vocabulario ya está fijado; falta la página |
+| `experiments.md` | `Experiments` | Título · `Planning` (hipótesis, escenarios enlazados, tácticas, diseño, recursos, elementos, esfuerzo) · `Results & analysis` |
 
 Los nombres de sección salieron del recorrido del 2026-09-19 y están
 verificados contra la interfaz. El detalle completo de cada formulario está en
@@ -42,10 +43,14 @@ libre. De ahí se sigue una secuencia obligatoria:
 
 ## Cómo se carga cada campo
 
-Todo editor de texto enriquecido de Helix tiene un botón **`Import Markdown`**,
-pero abre el selector de archivos del sistema operativo y no un diálogo de la
-página. Desde el navegador automatizado no se puede alcanzar, así que la carga
-del 2026-09-19 se hizo escribiendo directo en cada campo.
+Todo editor de texto enriquecido de Helix tiene un botón **`Import Markdown`**.
+**Corrección del 2026-10-04:** en el formulario de `Experiments` el botón abre
+un panel de la página con un cuadro «Paste your Markdown text here…» y un botón
+`Insert`. Ahí se pega el Markdown y entra con formato: títulos, negritas,
+viñetas y enlaces. Conviene pegar los párrafos sin saltos de línea internos y
+pasar las tablas a viñetas, porque no está probado que el editor dibuje tablas.
+La carga del 2026-09-19 se hizo escribiendo directo en cada campo; falta
+probar si los demás editores también tienen el panel.
 
 **Lo que eso cuesta:** el texto entra con saltos de línea, no con párrafos. Se
 lee bien, pero cada campo queda como un solo párrafo con saltos adentro. Si
@@ -177,3 +182,23 @@ en operación normal sigue sin definirse.
 La segunda cifra es la que importa y es la que no se mueve cargando escenarios.
 Se mueve cuando exista una decisión que los cite o un elemento de modelo que los
 realice.
+
+---
+
+## Estado de la réplica al 2026-10-04
+
+Se cargó el experimento **E01** desde `docs/experiments.md`.
+
+| Campo | Estado |
+|---|---|
+| Título | Cargado |
+| `Design Hypothesis` | H1 y H2 completas, con `Import Markdown` |
+| `Linked Quality Scenarios` | `security_detection — HU-01` (ASR-1) y `availability_detection — HU-03` (ASR-3) |
+| `Tactics and Patterns` | Cargado; la tabla de alternativas entró como viñetas |
+| `Experiment Design` | Cargado sin la imagen ni el Mermaid, con enlace a la página del wiki; las tablas de fases y de relojes entraron como viñetas |
+| `Required resources` · `Architecture elements involved` · `Estimated effort` | Cargados como texto plano |
+| `Results & analysis` | Solo `External report`, con el enlace a la página del wiki. Resultados, análisis, conclusión y decisión quedan vacíos hasta las corridas |
+
+`[PREGUNTA]` `Code repository` quedó vacío: falta decidir dónde vive el código
+del prototipo.
+
