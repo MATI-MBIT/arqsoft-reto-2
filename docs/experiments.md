@@ -9,15 +9,16 @@ helix_section: "Experiments"
 Este experimento pone a prueba dos ideas de diseño con un solo prototipo, y cada
 una tiene su propio alcance:
 
-- **H1, de seguridad, llega solo hasta la detección.** El micro de sesiones
-  compara la huella del dispositivo de cada operación con la registrada, y avisa
-  a seguridad cuando una sesión desde un dispositivo no registrado escribe.
+- **H1, de seguridad, cubre la detección.** Al abrirse cada sesión, el micro de
+  sesiones compara la huella del dispositivo con la registrada para el vendedor,
+  y avisa a seguridad cuando no coinciden. Ese aviso es toda la respuesta que el
+  escenario le pide al sistema.
 - **H2, de disponibilidad, cubre la detección y la reacción.** Un heartbeat, es
   decir, un latido periódico de cada etapa que sigue al pedido, detecta la etapa
   detenida. La reacción consiste solo en enviar el pedido detenido a una cola de
   contingencia.
 
-Los escenarios de calidad que cada idea debe cumplir son ASR-2 y ASR-3, y están
+Los escenarios de calidad que cada idea debe cumplir son ASR-1 y ASR-3, y están
 en [ASRs de disponibilidad y seguridad](quality-attributes.md). Las decisiones
 con las que se comparan los resultados están en el
 [registro de ADR](modelos/adrs-ccp-reto2.md).
@@ -52,36 +53,29 @@ experimento.
 
 ### H1 — Seguridad: el micro de sesiones detecta la huella de un dispositivo no registrado
 
-**Si el micro de sesiones compara en cada operación la huella del dispositivo
-con la registrada para el usuario, y trata como de solo consulta a la sesión que
-no coincide, entonces toda escritura de esa sesión llega a seguridad como aviso,
-que es la detección de la que parte ASR-2.**
+**Si el micro de sesiones compara la huella del dispositivo con la registrada
+para el vendedor apenas se abre la sesión, sin hacer esperar al inicio de
+sesión, entonces se cumple ASR-1.**
 
 Por qué la creemos: CCP le entrega el dispositivo a cada vendedor, así que el
-sistema tiene contra qué comparar. Quien opera con credenciales correctas desde
-otro equipo no tiene permiso para escribir. Como todas las operaciones pasan por
-el micro de sesiones, ninguna escritura llega a ventas sin que su huella se haya
-comparado antes.
+sistema tiene contra qué comparar aunque las credenciales sean correctas. La
+comparación es una lectura por vendedor en la base, y se hace después de abrir
+la sesión, así que no frena al vendedor legítimo. Un cambio legítimo de equipo
+se registra antes de usarse, y por eso no dispara el aviso.
 
 Lo que la refutaría, cualquiera de tres casos:
 
-- Una escritura desde un dispositivo no registrado que ventas registró y que
-  nunca produjo aviso.
-- Un aviso por un dispositivo que sí estaba registrado, incluido el equipo nuevo
-  de un cambio legítimo ya registrado.
-- Un aviso por un intento que ventas rechazó y que por eso no llegó a
-  ejecutarse.
+- Una sesión abierta desde un dispositivo no registrado que no produce aviso, o
+  que lo produce fuera de plazo.
+- Un aviso por el equipo nuevo de un cambio legítimo ya registrado, por encima
+  de lo que admite el escenario.
+- Un aviso que llega sin el vendedor, el dispositivo o la hora, que es lo que
+  seguridad necesita para actuar.
 
-El número que no conocemos: la tasa de operaciones por segundo a partir de la
-cual la detección empieza a atrasarse. En el Ambiente A llegan 11 operaciones
-por segundo, pero no sabemos cuánto margen queda por encima.
-
-{: .importante }
-> H1 cubre ASR-2 solo en parte, y lo cubre con una decisión del equipo. ASR-2
-> parte de una escritura ejecutada por un actor de solo consulta. H1 trata como
-> de solo consulta a la sesión abierta desde un dispositivo no registrado. El
-> experimento llega hasta la detección y el aviso. El bloqueo, el cierre de la
-> sesión y la reversión quedan fuera de este prototipo.
+El número que no conocemos: la tasa de aperturas de sesión por segundo a partir
+de la cual el aviso empieza a atrasarse. Los 2 000 vendedores abren sesión
+sobre todo al arrancar la jornada, y no sabemos cuánto margen queda por encima
+de esa ráfaga.
 
 ### H2 — Disponibilidad: el heartbeat detecta el pedido detenido y lo encola
 
@@ -118,18 +112,19 @@ el atributo y la historia de usuario a la que está atado.
 
 | ASR | Nombre en Helix | Historia | Hipótesis | Cobertura |
 |---|---|---|---|---|
-| ASR-2 | Security — Reacción ante la escritura indebida | [HU-13](requirements.md) | H1 | Parcial: la detección y el aviso, no la reacción |
+| ASR-1 | Security — Inicio de sesión desde el dispositivo suministrado | [HU-01](requirements.md) | H1 | Completa: la detección y el aviso a seguridad, que son toda la respuesta del escenario |
 | ASR-3 | Availability — Creación del pedido en la tienda | [HU-03](requirements.md) | H2 | Completa: la detección y la reacción, que es encolar el pedido |
 
 ## Las tácticas y los patrones
 
-**Para H1.** La táctica es *detectar intrusiones* con la huella del dispositivo
-como parte de la identidad del usuario. Es la idea de
-[ADR-007](modelos/adrs-ccp-reto2.md), llevada de la apertura de sesión a cada
-operación. El micro de sesiones lee la huella registrada de la base en cada
-operación, sin caché. El aviso a seguridad aplica la táctica *informar a los
-actores*. La escritura no se bloquea antes de ejecutarse, porque ASR-2 parte del
-caso en que el control preventivo ya falló.
+**Para H1.** La táctica es *detectar intrusiones*, con la huella del
+dispositivo como parte de la identidad del vendedor. Es la decisión de
+[ADR-007](modelos/adrs-ccp-reto2.md), con la comparación dentro del micro de
+sesiones, como la dibuja el diagrama. El micro lee la huella registrada de la
+base en cada apertura, sin caché, y entrega la sesión que no coincide al
+componente de usuario no válido. Ese componente avisa a seguridad, que es la
+táctica *informar a los actores*. Matar la sesión y revocar al usuario son
+reacciones del área de seguridad, fuera del sistema y fuera del escenario.
 
 **Para H2.** La táctica es *heartbeat*: cada etapa emite un latido al componente
 Heartbeat, y este avisa al micro de ventas cuando faltan N latidos seguidos. El
@@ -144,8 +139,8 @@ para que el mismo pedido no entre dos veces.
 
 | Hipótesis | Alternativa | Dónde está | Por qué no entra al prototipo |
 |---|---|---|---|
-| H1 | Verificar la huella una sola vez, al abrir la sesión | ADR-007 | Avisa por la sesión y no por la escritura. Es la respuesta de ASR-1, no la detección de la que parte ASR-2 |
-| H1 | Bitácora y bandeja de eventos de salida (outbox) en la misma transacción de la escritura, con un detector que consume cada evento | ADR-008 | Detecta sobre la escritura ya confirmada, pero agrega dos filas a cada escritura de ventas e inventario. Con S1 y S3 el equipo sabrá si ese costo hace falta |
+| H1 | Verificar la huella dentro del inicio de sesión, antes de dejar entrar | ADR-007, descartada | El inicio de sesión espera la comparación, y un cambio legítimo sin registrar deja al vendedor por fuera |
+| H1 | Revisar por lotes las aperturas de sesión | ADR-007, descartada | Cada segundo del periodo se suma a la demora, y los 2 s no dejan margen |
 | H2 | Plazo vencido por pedido y etapa, con una revisión periódica de los plazos | ADR-004 | Es la decisión que el equipo tomó en ADR-004. Si la fase D3, la del pedido congelado en una etapa viva, refuta H2, el diseño vuelve a ella |
 | H2 | Temporizador en memoria, uno por pedido | ADR-004, opción C | Los temporizadores mueren si cae el proceso que los guarda |
 
@@ -193,9 +188,9 @@ Cinco decisiones de montaje que el diagrama no dice:
   credenciales sin un desafío de autenticación real. El experimento mide lo que
   pasa después del inicio de sesión, no el inicio mismo.
 - **La huella es el ID de dispositivo que ya guarda la base.** El simulador
-  envía el ID del dispositivo en cada operación. Un dispositivo no registrado es
-  uno cuyo ID no coincide con el registrado para ese usuario. Un cambio legítimo
-  de equipo se simula registrando el ID nuevo con el micro Onboarding.
+  envía el ID del dispositivo al abrir la sesión. Un dispositivo no registrado
+  es uno cuyo ID no coincide con el registrado para ese vendedor. Un cambio
+  legítimo de equipo se simula registrando el ID nuevo con el micro Onboarding.
 - **El SMS de seguridad lo recibe un receptor simulado** que anota la hora de
   llegada de cada aviso. Un proveedor real sumaría su propia demora, que ningún
   componente del diseño controla.
@@ -222,10 +217,10 @@ criterio.
 
 | Fase | Hipótesis | Qué se hace | Duración o repeticiones | Tipo |
 |---|---|---|---|---|
-| S1 — Escritura desde un dispositivo no registrado | H1 | Una sesión con credenciales correctas y un ID de dispositivo distinto al registrado registra un pedido o descarga inventario, y ventas lo acepta | 50 escrituras en momentos aleatorios dentro de 30 min de carga normal | Con criterio |
-| S2 — Cambio legítimo de dispositivo | H1 | Se registra el equipo nuevo de un vendedor, y ese vendedor escribe desde él | 20 repeticiones | Con criterio |
-| S3 — Intento rechazado | H1 | Una sesión desde un dispositivo no registrado intenta escribir y ventas rechaza la operación | 20 repeticiones | Con criterio |
-| S4 — Rampa de carga | H1 | Se sube la carga a 1, 3 y 5 veces la del Ambiente A, con escrituras desde dispositivos no registrados en cada nivel | 10 min por nivel | Exploratoria |
+| S1 — Sesión desde un dispositivo no registrado | H1 | Se abre una sesión con las credenciales correctas de un vendedor y un ID de dispositivo distinto al registrado, y la sesión opera | 50 aperturas en momentos aleatorios dentro de 30 min de carga normal | Con criterio |
+| S2 — Cambio legítimo de dispositivo | H1 | Se registra el equipo nuevo de un vendedor, y ese vendedor abre sesión desde él | 100 cambios, para medir la tasa por cada 100 que fija el escenario | Con criterio |
+| S3 — Registro y apertura casi simultáneos | H1 | El vendedor abre sesión desde el equipo nuevo menos de 1 s después de registrarlo | 20 repeticiones | Con criterio |
+| S4 — Rampa de aperturas | H1 | Se sube la tasa de aperturas de sesión a 1, 3 y 5 veces la del Ambiente A, con aperturas desde dispositivos no registrados en cada nivel | 10 min por nivel | Exploratoria |
 | D1 — Sin fallas | H2 | Carga normal sin ninguna falla inyectada | 1 h | Con criterio |
 | D2 — Etapa caída | H2 | Se detiene el proceso de una etapa con pedidos en curso | 10 veces por etapa, 30 en total | Con criterio |
 | D3 — Etapa viva, pedido congelado | H2 | La etapa sigue latiendo, pero un pedido se queda congelado dentro de ella, sin respuesta | 10 veces por etapa, 30 en total | Con criterio: es la fase que puede refutar H2 |
@@ -243,7 +238,7 @@ hay que mostrar a qué entrada corresponde cada salida.
 
 | Hipótesis | Reloj de inicio | Reloj de fin | Cruce por identificador |
 |---|---|---|---|
-| H1 | Ventas confirma la escritura desde el dispositivo no registrado | El receptor recibe el aviso | Identificador de la operación |
+| H1 | El micro de sesiones registra la apertura de la sesión | El receptor recibe el aviso | Identificador de la sesión |
 | H2 | El inyector detiene la etapa (D2) o congela el pedido (D3) | El bróker confirma el mensaje del pedido en la cola | Identificador del pedido y nombre de la etapa |
 
 Para H2, un mensaje en la cola es **falsa alarma** cuando nombra un pedido que
@@ -256,19 +251,12 @@ medir las diferencias de tiempo no exige sincronizar relojes.
 
 **H1 se sostiene si se cumplen las cuatro condiciones:**
 
-- En S1, cada una de las 50 escrituras desde un dispositivo no registrado
-  produce su aviso.
-- En S2, ninguna de las 20 escrituras desde un equipo nuevo ya registrado
-  produce aviso.
-- En S3, ninguno de los 20 intentos rechazados produce aviso, porque ninguno se
-  ejecutó.
-- En ninguna fase aparece un aviso por una escritura desde un dispositivo
+- En S1, las 50 aperturas desde un dispositivo no registrado producen su aviso
+  en ≤ 2 s, cada uno con el vendedor, el dispositivo y la hora.
+- En S2, hay ≤ 1 aviso en los 100 cambios legítimos.
+- En S3, ninguna de las 20 aperturas produce aviso.
+- En ninguna fase aparece un aviso por una sesión desde el dispositivo
   registrado.
-
-La demora entre la escritura y el aviso se informa con su mediana, su percentil
-95 y su máximo. ASR-2 no fija un límite para esa demora, porque su reloj arranca
-en la detección. [PREGUNTA] ¿Qué demora de detección acepta el equipo antes de
-dar H1 por cumplida?
 
 **H2 se sostiene si se cumplen las cuatro condiciones:**
 
@@ -286,8 +274,9 @@ aunque el heartbeat detecte bien las caídas.
 
 - Una sola máquina y una red local: el experimento valida las ideas de diseño,
   no el tamaño de la infraestructura.
-- La reacción de ASR-2 queda fuera: no se corta la sesión, no se revoca al
-  usuario, no se revierte la escritura y no se escriben registros (logs).
+- La reacción ante la sesión sospechosa queda fuera: no se corta la sesión, no
+  se revoca al usuario y no se escriben registros (logs). ASR-1 deja esa
+  reacción en manos del área de seguridad.
 - La huella es un ID que el simulador envía. Quien copie el ID de un dispositivo
   registrado pasa la comparación, el mismo riesgo que el equipo anotó en ADR-007
   (R-007b).
@@ -340,13 +329,13 @@ las corridas. Para cada fase, los resultados deben traer:
 
 | Dato | H1 | H2 |
 |---|---|---|
-| Fallas inyectadas | Escrituras desde dispositivos no registrados, cambios legítimos e intentos rechazados | Etapas detenidas y pedidos congelados |
-| Detectadas | Avisos cruzados con su operación | Mensajes en la cola cruzados con su pedido y su etapa |
-| Escapes | Escrituras desde dispositivos no registrados sin aviso | Pedidos detenidos o congelados que no llegaron a la cola |
+| Fallas inyectadas | Aperturas desde dispositivos no registrados, cambios legítimos y aperturas pegadas al registro | Etapas detenidas y pedidos congelados |
+| Detectadas | Avisos cruzados con su sesión | Mensajes en la cola cruzados con su pedido y su etapa |
+| Escapes | Aperturas desde dispositivos no registrados sin aviso, o con aviso fuera de los 2 s | Pedidos detenidos o congelados que no llegaron a la cola |
 | Duplicados | No aplica | Pedidos que entraron a la cola más de una vez |
-| Falsas detecciones | Avisos por dispositivos registrados o por intentos no ejecutados | Mensajes sobre pedidos que llegaron a logística o sobre etapas que nunca se detuvieron |
+| Falsas detecciones | Avisos por dispositivos registrados, contados por cada 100 cambios legítimos | Mensajes sobre pedidos que llegaron a logística o sobre etapas que nunca se detuvieron |
 | Demora | Mediana, percentil 95 y máximo | Mediana, percentil 95 y máximo |
-| Número desconocido | Tasa en la que la detección se atrasa (S4) | Menor N sin falsas alarmas, y N × T (D4) |
+| Número desconocido | Tasa de aperturas en la que el aviso se atrasa (S4) | Menor N sin falsas alarmas, y N × T (D4) |
 
 En `Links & evidence` van el repositorio del prototipo, el reporte de las
 corridas y las salidas crudas de cada fase.
@@ -358,11 +347,11 @@ resultado no se acomoda después a la decisión.
 
 | Resultado | Decisión de arquitectura |
 |---|---|
-| H1 se sostiene en S1, S2 y S3 | Adoptar la huella comparada en cada operación como la entrada de la reacción de ASR-2, y diseñar el siguiente experimento con el corte de la sesión y la reversión |
-| H1 falla en S1: hay escrituras sin aviso | Mover la detección a la escritura confirmada, como propone ADR-008, porque el camino por el micro de sesiones deja escapes |
-| H1 falla en S2: avisa por equipos nuevos ya registrados | Revisar cuándo ve el micro de sesiones el registro del equipo nuevo, antes de cualquier otro cambio |
-| H1 falla en S3: avisa por intentos que no se ejecutaron | Mover la detección a la escritura confirmada, como propone ADR-008 |
-| H1 se atrasa en S4 por debajo de 3 veces la carga del Ambiente A | Declarar la tasa medida como límite del diseño y llevarla a la decisión sobre cuántas instancias del micro de sesiones correr |
+| H1 se sostiene en S1, S2 y S3 | Aceptar ADR-007, con la comparación dentro del micro de sesiones |
+| H1 falla en S1: hay aperturas sin aviso o con aviso fuera de los 2 s | Sacar la comparación del micro de sesiones a un verificador que consume cada apertura como evento, como lo plantea ADR-007 |
+| H1 falla en S2: más de 1 aviso por cada 100 cambios legítimos | Revisar el camino de registro previo del equipo nuevo, que ADR-007 dejó con dueño abierto |
+| H1 falla en S3: avisa por equipos recién registrados | Revisar cuándo ve el micro de sesiones el registro nuevo, antes de cualquier otro cambio |
+| H1 se atrasa en S4 por debajo de 3 veces la tasa del Ambiente A | Declarar la tasa medida como límite del diseño y llevarla a la decisión sobre cuántas instancias del micro de sesiones correr |
 | H2 se sostiene en D1, D2 y D3 | Adoptar el heartbeat como mecanismo de detección de ASR-3, con la cola de contingencia como reacción, y reabrir ADR-004 |
 | H2 pasa D1 y D2 pero falla D3 | Confirmar ADR-004: el plazo por pedido y etapa es el mecanismo, y el heartbeat queda como apoyo para las caídas de etapas enteras |
 | H2 falla D2: no detecta ni la etapa caída en ≤ 30 s | Buscar en D4 una combinación de T y N que quepa; si ninguna cabe sin falsas alarmas, adoptar ADR-004 sin el heartbeat de apoyo |

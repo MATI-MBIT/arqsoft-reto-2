@@ -52,7 +52,7 @@ consume, y por eso los nombres de archivo son los del paquete.
 | `docs/requirements.md` | `Requirements & Quality` | Insumo |
 | `docs/glossary.md` | `Objective → Glossary` | Insumo |
 | `docs/quality-attributes.md` | escenarios colgados de las historias | **Producto de los insumos** |
-| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-2, H2 sobre ASR-3) | Validación de decisiones |
+| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1, H2 sobre ASR-3) | Validación de decisiones |
 
 ---
 
@@ -88,14 +88,15 @@ salvo `quality-attributes.md` y `experiments.md`, que va después de los ASR.
 hipótesis siguen la regla de Darío: la idea de diseño en una frase, el ASR se
 enlaza y no se transcribe, cada hipótesis dice qué la tumba y qué N desconocido
 mide, y las entradas y salidas se cruzan por identificador. Nicolás fijó el
-2026-10-03 que H1 cubre ASR-2 **solo hasta la detección** (matar la sesión,
-revocar y Logs quedan en rojo en su diagrama) y que H2 prueba el **heartbeat**
+2026-10-03 que H1 es **solo detección** (matar la sesión, revocar y Logs
+quedan en rojo en su diagrama) y que H2 prueba el **heartbeat**
 de forma falseable contra ADR-004. El 2026-10-03 ajustó H2 a **detección y
 reacción**: la reacción es solo enviar el pedido detenido a la cola de
 contingencia (el nodo de contingencia del diagrama); consumirla es de ASR-4.
-Después cambió H1 a **la huella de un dispositivo no registrado**, atada a
-ASR-2 por decisión suya: la sesión cuyo ID de dispositivo no coincide se trata
-como de solo consulta, y su escritura es la indebida. Stack fijado: local, Java
+Después cambió H1 a **la huella de un dispositivo no registrado**, y al ver la
+tabla de escenarios cayó en cuenta de que eso es **ASR-1**, no ASR-2: H1 quedó
+atada a ASR-1 y HU-01, con ADR-007 como la decisión que valida. ASR-2 no entra
+al experimento. Stack fijado: local, Java
 21 + Spring Boot 3 por micro, PostgreSQL y RabbitMQ en Docker Compose.
 Resultados: pendientes de las corridas.
 
