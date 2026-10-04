@@ -268,7 +268,7 @@ classDiagram
 | Escalada | ESCALADA | El reintento no confirmó en 3 s; el pedido está en la Bandeja |
 | TerminadaAMano · Cancelada | TERMINADA_A_MANO · CANCELADA | El responsable del pedido escalado lo termina o lo cancela desde la Bandeja, por `terminar` o `cancelar` de `IEstadoCadena` (HU-14) |
 
-**Qué muestra:** el camino de fallo completo de ASR-3 y ASR-4 en una sola fila: en curso, plazo vencido, un reintento y escalamiento. Cada transición de fallo tiene su guarda numérica. · **Decisión que refleja:** ADR-002 (el estado se guarda), ADR-004 (la guarda del plazo) y ADR-006 (un reintento de 3 s). · **Qué no muestra:** qué pasa si la etapa confirma cuando la fila ya está Escalada. Ningún ADR lo decide, y la actualización condicional de DG-SEQ-003 hoy la ignora (ver Huecos).
+**Qué muestra:** el camino de fallo completo de ASR-3 y ASR-4 en una sola fila: en curso, plazo vencido, un reintento y escalamiento. Cada transición de fallo tiene su guarda numérica. · **Decisión que refleja:** ADR-002 (el estado se guarda), ADR-004 (la guarda del plazo) y ADR-006 (un reintento de 3 s). · **Qué no muestra:** qué pasa si la etapa confirma cuando la fila ya está Escalada. Ningún ADR lo decide, y la actualización condicional de DG-CON-003 hoy la ignora (ver Huecos).
 
 ### Copia en Mermaid
 

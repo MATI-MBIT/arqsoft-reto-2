@@ -300,7 +300,7 @@ flowchart LR
 | ASR-3 | Monitor de la cadena | Es el único que nota la cadena detenida. De su barrido salen los 30 s, y el sondeo muestra por qué la salud de la etapa no basta |
 | ASR-3, ASR-4 | Coordinador de la cadena | Guarda el plazo que el Monitor revisa, reanuda la etapa pendiente una vez o la escala. De él dependen los 5 s |
 
-Las etapas quedan como caja negra. Las tres siguen la misma receta de ADR-005: la fila `EtapaProcesada` y el efecto se escriben en la misma transacción, y eso está en DG-CLS-001 y en DG-SEQ-003.
+Las etapas quedan como caja negra. Las tres siguen la misma receta de ADR-005: la fila `EtapaProcesada` y el efecto se escriben en la misma transacción, y eso está en DG-CLS-001 y en DG-CON-003.
 
 | Parte | Componente | Rol | Responsabilidad |
 |---|---|---|---|
@@ -315,7 +315,7 @@ Las etapas quedan como caja negra. Las tres siguen la misma receta de ADR-005: l
 | RegistroSenales | Monitor | «entity» | Una señal por pedido, etapa e intento |
 | ClienteCadena · ClienteSalud · PublicadorReintentos | Monitor | «adapter» | Salen por pEstado, pSalud y pReintentos |
 
-**Qué muestra:** la cadena corre por eventos y en orden. El Coordinador guarda el estado y el Monitor lo lee desde afuera. Lo que el reintento no resuelve termina en la Bandeja, por el tema `cadena.escalada` o por los mensajes fallidos de la Cola. · **Decisión que refleja:** ADR-001 a ADR-006. · **Qué no muestra:** la sincronización de la fila `CadenaEtapa` entre los hilos, que está en DG-SEQ-003, ni dónde guarda el Monitor sus señales, que ningún ADR decide.
+**Qué muestra:** la cadena corre por eventos y en orden. El Coordinador guarda el estado y el Monitor lo lee desde afuera. Lo que el reintento no resuelve termina en la Bandeja, por el tema `cadena.escalada` o por los mensajes fallidos de la Cola. · **Decisión que refleja:** ADR-001 a ADR-006. · **Qué no muestra:** la sincronización de la fila `CadenaEtapa` entre los hilos, que está en DG-CON-003, ni dónde guarda el Monitor sus señales, que ningún ADR decide.
 
 **Cambio frente a la v6.** El Coordinador tiene ahora dos puertos de entrada: pEntrada para `etapa.completada` y pReanudar para la Cola de reintentos. La Cola entrega directo al Reanudador, como ya lo dibujaba el diagrama de hilos de la v6. Es **propuesta**: ningún ADR fija la estructura interna del Coordinador.
 
