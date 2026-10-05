@@ -35,7 +35,7 @@ Esta página dibuja qué componentes tiene el sistema, por dónde se hablan y c�
 | T1, T2… | Marca de táctica. La tabla bajo el diagrama dice cuál es, con su ID del catálogo del curso, su ADR y su precio |
 | Amarillo | Componente o parte que aloja una táctica de un ADR |
 | Línea punteada roja | Mensaje que no se pudo procesar y va a otro destino |
-| Figura de palo | Actor: una persona que usa el sistema (CCP Support, Responsable del pedido escalado, Área de seguridad) |
+| Figura de palo | Actor: una persona que usa el sistema, como el soporte de CCP (rótulo «CCP Support»), el Responsable del pedido escalado o el Área de seguridad |
 | Marco punteado | Agrupación sin semántica de componente: las etapas de la cadena |
 | Línea azul (solo en el panorama) | Flujo agregado por el equipo que no sale de ningún ADR; ver «Diferencias por resolver» |
 | Nota | ADR y precio de la decisión anclada |
@@ -54,7 +54,7 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 
 | Marca | ID | Táctica (curso) | Componente | ADR | Precio → cobra a |
 |---|---|---|---|---|---|
-| — | EST-03 · MOD-04 · DIS-17 | Estilo dirigido por eventos: intermediario durable entre componentes y transacción local en cada servicio | Todo el diagrama: las aristas «event» de seguridad pasan por el bróker, y las de la cadena, por el Broker de Eventos (T8) | ADR-001 | Un salto más por evento → latencia de ASR-1 y ASR-2 (TO-001a). El bróker es pieza común de los cuatro caminos (R-001a) |
+| — | EST-03 · MOD-04 · DIS-17 | Estilo dirigido por eventos: intermediario durable entre componentes y transacción local en cada servicio | Todo el diagrama: las aristas «event» de seguridad pasan por el bróker, y las de la cadena, por el bróker de la cadena (T8) | ADR-001 | Un salto más por evento → latencia de ASR-1 y ASR-2 (TO-001a). El bróker es pieza común de los cuatro caminos (R-001a) |
 | T1 | SEG-02 · SEG-13 | Autenticar en el borde y revocar el acceso | Puerta de entrada · Lista de revocación | ADR-009 | Una consulta a la Lista por cada petición → disponibilidad del borde (R-1) |
 | T2 | SEG-02 · SEG-09 · SEG-15 | Dispositivo como parte de la identidad, detectar la intrusión e informar | Gestor de sesión · Verificador · Notificador | ADR-007 | Cada cambio legítimo de equipo exige registro previo, o es falsa alarma → ASR-1 |
 | T3 | SEG-18 · DIS-17 | Bitácora de escrituras y evento en la misma transacción | Pedidos · Inventario | ADR-008 | Dos filas más por escritura → desempeño de la escritura |
@@ -62,13 +62,13 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 | T5 | SEG-13 · SEG-14 · DIS-13 · SEG-15 | Reacción ordenada: revocar, bloquear, compensar y avisar | Reacción | ADR-009 · ADR-010 | Una operación inversa por tipo de escritura → modificabilidad |
 | T6 | INT-08 · DIS-15 · INT-10 · DIS-12 · DIS-14 | Orquestar la cadena con estado por etapa, en orden, con un reintento y escalamiento | Coordinador | ADR-002 · ADR-003 · ADR-006 | Punto central (R-002a) → ASR-4. La cadena dura la suma de las tres etapas (R-003a) |
 | T7 | DIS-04 · DIS-03 · DIS-01 | Plazo vencido por pedido, monitor que barre y sondeo de salud (ping/echo) de apoyo | Monitor: avisa al Coordinador la falla de estado de los servicios y verifica las etapas por ping/echo | ADR-004 | Plazo por calibrar → falsas alarmas de ASR-3 (TO-004a). Punto único (R-004a) |
-| T8 | [PREGUNTA] | Bróker de eventos de la cadena: recibe `etapa.ejecutar` y `etapa.completada` del Coordinador, los enruta a las etapas y manda lo que falla a la Dead-Letter-Queue | Broker de Eventos Cadena de suministros | ADR-001 · ADR-006 | [PREGUNTA] |
+| T8 | [PREGUNTA] | Bróker de la cadena: recibe `etapa.ejecutar` y `etapa.completada` del Coordinador, los enruta a las etapas y manda lo que falla a la cola de mensajes fallidos | Bróker de la cadena (rótulo «Broker de Eventos Cadena de suministros») | ADR-001 · ADR-006 | [PREGUNTA] |
 | T9 · T10 | DIS-17 | Idempotencia por pedido y etapa con clave única en la transacción del efecto | Facturación (T9) · Inventario y Validación de despacho (T10) | ADR-005 | Una fila más por pedido y etapa → almacenamiento |
-| T11 | [PREGUNTA] | Cola de mensajes fallidos de la cadena, que atiende el soporte de CCP | Dead-Letter-Queue | ADR-006 | [PREGUNTA] |
+| T11 | [PREGUNTA] | Cola de mensajes fallidos de la cadena, que atiende el soporte de CCP | Cola de mensajes fallidos (rótulo «Dead-Letter-Queue») | ADR-006 | [PREGUNTA] |
 
-**Qué muestra:** los componentes del sistema y el camino de cada ASR. Los de seguridad observan la sesión y la escritura por eventos, sin frenarlas. Los de disponibilidad llevan la cadena del pedido por un Coordinador que habla con las etapas a través del Broker de Eventos de la cadena. El Monitor vigila desde afuera: avisa al Coordinador las fallas y verifica las etapas por ping/echo. Lo que el bróker no logra entregar va a la Dead-Letter-Queue, que atiende el soporte de CCP. · **Decisión que refleja:** los diez ADR, cada uno con su marca. · **Qué no muestra:** las partes internas, ni los temas de seguridad como nodos; esos detalles están en DG-CMP-002 y DG-CMP-003.
+**Qué muestra:** los componentes del sistema y el camino de cada ASR. Los de seguridad observan la sesión y la escritura por eventos, sin frenarlas. Los de disponibilidad llevan la cadena del pedido por un Coordinador que habla con las etapas a través del bróker de la cadena. Es el grupo de temas de la cadena dentro del mismo bróker de mensajes, que la vista de despliegue separa en su propio espacio aislado del bróker (vhost `/cadena`). El Monitor vigila desde afuera: avisa al Coordinador las fallas y verifica las etapas por ping/echo. Lo que el bróker de la cadena no logra entregar va a la cola de mensajes fallidos, que atiende el soporte de CCP. · **Decisión que refleja:** los diez ADR, cada uno con su marca. · **Qué no muestra:** las partes internas, ni los temas de seguridad como nodos; esos detalles están en DG-CMP-002 y DG-CMP-003.
 
-**Tamaño.** El panorama tiene 22 elementos, sobre el tope de 20 que fija la skill de diagramas. Para que se lea, los temas de seguridad van plegados en la arista discontinua y las etapas se agrupan en un marco.
+**Tamaño.** El panorama tiene 22 elementos, sobre el tope de legibilidad de 20. Para que se lea, los temas de seguridad van plegados en la arista discontinua y las etapas se agrupan en un marco.
 
 
 ---
@@ -143,7 +143,7 @@ Los demás quedan como caja negra. El Gestor de sesión fija t0 y el Detector fi
 | T5 | DIS-04 · DIS-03 | Plazo vencido por pedido y etapa, encontrado por un monitor que barre cada 5 s | BarridoPlazos | ADR-004 | Plazo corto da falsas alarmas y plazo largo incumple → ASR-3 (TO-004a). El Monitor también cae → ASR-3 (R-004a) |
 | T6 | DIS-01 | Sondeo de salud de las etapas, solo como apoyo | SondeoSalud | ADR-004 | Tráfico de sondeo, y no detecta la omisión que describe ASR-3 → desempeño |
 | T7 | DIS-14 | Degradación con gracia: lo que no se reanuda llega a una persona | Bandeja de pedidos escalados | ADR-006 | Carga manual sin cifra → usabilidad del responsable (R-006a) |
-| — | MOD-04 | Intermediario durable: el comando pendiente sobrevive a la caída de la etapa | Broker de Eventos Cadena de Suministros (marcado T4 en el diagrama) · temas y Cola de reintentos | ADR-001 | Pieza común de los cuatro caminos (R-001a) |
+| — | MOD-04 | Intermediario durable: el comando pendiente sobrevive a la caída de la etapa | Bróker de la cadena (marcado T4 en el diagrama) · temas y Cola de reintentos | ADR-001 | Pieza común de los cuatro caminos (R-001a) |
 
 ### Por qué se abren estos dos componentes
 
@@ -167,7 +167,7 @@ Las etapas quedan como caja negra. Las tres siguen la misma receta de ADR-005: l
 | RegistroSenales | Monitor | «entity» | Una señal por pedido, etapa e intento |
 | ClienteCadena · ClienteSalud · PublicadorReintentos | Monitor | «adapter» | Salen por pEstado, pSalud y pReintentos |
 
-**Qué muestra:** la cadena corre por eventos y en orden. El Coordinador publica por su puerto pSalida en el Broker de Eventos de la cadena, que pone `etapa.ejecutar` a cada etapa. El Coordinador guarda el estado y el Monitor lo lee desde afuera. Lo que el reintento no resuelve termina en la Bandeja, por el tema `cadena.escalada` o por los mensajes fallidos de la Cola. · **Decisión que refleja:** ADR-001 a ADR-006. · **Qué no muestra:** la sincronización de la fila `CadenaEtapa` entre los hilos, que está en DG-CON-003, ni dónde guarda el Monitor sus señales, que ningún ADR decide.
+**Qué muestra:** la cadena corre por eventos y en orden. El Coordinador publica por su puerto pSalida en el bróker de la cadena, que entrega `etapa.ejecutar` a cada etapa. El Coordinador guarda el estado y el Monitor lo lee desde afuera. Lo que el reintento no resuelve termina en la Bandeja, por el tema `cadena.escalada` o por la cola de mensajes fallidos. · **Decisión que refleja:** ADR-001 a ADR-006. · **Qué no muestra:** la sincronización de la fila `CadenaEtapa` entre los hilos, que está en DG-CON-003, ni dónde guarda el Monitor sus señales, que ningún ADR decide.
 
 **Tamaño.** El diagrama tiene unos 39 elementos. Pasa el tope de 20 por la misma razón que DG-CMP-002. Se lee por franjas: arriba el Coordinador y las etapas, abajo el Monitor y la Cola.
 
@@ -181,7 +181,8 @@ El texto de esta página describe los diagramas tal como están dibujados. Estas
 |---|---|---|
 | DG-CMP-001 | Una línea azul del Notificador a la Lista de revocación: «Registrar en lista de Revocación · ASR 5» | ASR-5 no existe; los ASR van de ASR-1 a ASR-4. ADR-009 deja a la Reacción como el único que escribe en la Lista |
 | DG-CMP-001 | La flecha de Pedidos a `escritura.realizada` lleva el rótulo «ASR 2» | Las aristas no llevan ASR en el resto de la vista; la trazabilidad va en la tabla |
-| DG-CMP-001 y DG-CMP-003 | El Broker de Eventos de la cadena es T8 en el panorama y T4 en DG-CMP-003 | En DG-CMP-003, T4 ya es la idempotencia de las etapas. Falta el ID del catálogo del Broker (T8) y de la Dead-Letter-Queue (T11) |
+| DG-CMP-001 y DG-CMP-003 | El bróker de la cadena es T8 en el panorama y T4 en DG-CMP-003 | En DG-CMP-003, T4 ya es la idempotencia de las etapas. Falta el ID del catálogo del bróker de la cadena (T8) y de la cola de mensajes fallidos (T11) |
+| DG-CMP-001 | El soporte de CCP atiende la cola de mensajes fallidos | [PREGUNTA] ¿Es el mismo actor que el Responsable del pedido escalado, que atiende la Bandeja? |
 | DG-CMP-001 | Facturación es T9 e Inventario y Validación de despacho son T10 | Las tres etapas aplican la misma táctica, DIS-17 de ADR-005, que antes era una sola marca |
 | DG-CMP-001 | El Monitor se llama «Monitor» | En las demás vistas se llama «Monitor de la cadena» |
 | DG-CMP-001 | El Monitor avisa al Coordinador «Notificación Falla status Servicios» | ADR-004 y DG-CMP-003 dicen que el Monitor pide las etapas vencidas al Coordinador (`vencidas(ahora)`) y encola la señal en la Cola de reintentos |

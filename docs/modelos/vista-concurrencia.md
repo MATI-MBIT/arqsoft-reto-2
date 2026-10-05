@@ -4,9 +4,11 @@ title: Vista de concurrencia — Reto 2 CCP (v7)
 
 # Vista de concurrencia — Reto 2 CCP (v7)
 
-Esta página profundiza la [vista de componentes](vista-componentes.md). Mantiene sus componentes y agrega lo que esa vista no muestra: qué proceso corre cada componente y con cuántas réplicas, qué hilos corren dentro, por qué canal, tema y cola pasa cada mensaje, qué estado comparten los hilos y en qué orden avanza cada flujo.
+Esta página profundiza la [vista de componentes](vista-componentes.md): mantiene sus componentes y agrega lo que esa vista no muestra. Dibuja qué proceso corre cada componente y con cuántas réplicas, y qué hilos corren dentro. También dibuja por qué canal, tema y cola pasa cada mensaje, qué estado comparten los hilos y en qué orden avanza cada flujo.
 
-**Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta, así que cada diagrama también lo está. La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md). Las instancias de cada servicio en producción salen de la [vista de despliegue](vista-despliegue.md).
+**Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta, así que cada diagrama también lo está.
+
+La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md). Las instancias de cada servicio en producción salen de la [vista de despliegue](vista-despliegue.md).
 
 **Fuente: draw.io.** Los diagramas viven en [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio), que se abre en draw.io web ([descargar](drawio/vista-concurrencia.drawio)), con una pestaña por diagrama. Cada imagen de esta página se exporta de ese archivo; un cambio se hace en el draw.io y después se vuelve a exportar.
 
@@ -46,12 +48,12 @@ Esta página profundiza la [vista de componentes](vista-componentes.md). Mantien
 | `{guarded}` · amarillo | Estado compartido entre hilos; la tabla de cada diagrama dice cómo se protege |
 | Flecha continua | Llamada: el hilo de origen llama y espera. `desencolar()` va del consumidor a la cola, porque es el consumidor quien la llama |
 | Flecha discontinua | Publicación o enrutamiento asíncrono: quien publica no espera |
-| Flecha discontinua roja | Mensaje que no se pudo procesar y va a la cola de fallidos |
+| Flecha discontinua roja | Mensaje que no se pudo procesar y va a la cola de mensajes fallidos |
 | A1, B1, 1, R1… | Orden del flujo. Una flecha sin número no es un paso: ocurre en cada petición o a su propio ritmo |
 | Arco en un cruce | Dos flechas que se cruzan sin tocarse |
 | Nota | ADR o medida del ASR que sostiene el elemento |
 
-**Qué significa «el bróker entrega al menos una vez».** El bróker de ADR-001 vuelve a entregar todo mensaje que su consumidor no confirmó. Eso protege contra la pérdida, pero un mismo mensaje puede llegar dos veces. Por eso cada consumidor de esta página tiene una clave que le impide actuar dos veces sobre lo mismo.
+**Qué significa «el bróker entrega al menos una vez».** El bróker de ADR-001 vuelve a entregar todo mensaje que su consumidor no confirmó. Eso protege contra la pérdida, pero un mismo mensaje puede llegar dos veces. Por eso cada consumidor dibujado aquí tiene una clave que le impide actuar dos veces sobre lo mismo.
 
 ---
 
@@ -63,7 +65,7 @@ Esta página profundiza la [vista de componentes](vista-componentes.md). Mantien
 
 ![DG-CON-001 · Grupos de procesos con sus réplicas, sus hilos y los canales que los llevan al bróker](png-v7/04-DG-CON-001.png)
 
-El diagrama arranca en los usuarios: vendedores y tenderos llegan con un arribo estocástico y mandan solicitudes concurrentes a la App móvil, que corre en N teléfonos. La App pasa el token y la huella a la Puerta de entrada, y la Puerta lee la Lista de revocación en cada petición antes de abrir sesión o crear un pedido.
+El diagrama arranca en los usuarios: vendedores y tenderos llegan en momentos aleatorios (arribo estocástico) y mandan solicitudes concurrentes a la App móvil, que corre en N teléfonos. La App pasa el token y la huella a la Puerta de entrada. La Puerta lee la Lista de revocación en cada petición, antes de abrir sesión o crear un pedido.
 
 **Los grupos de procesos.**
 
@@ -75,7 +77,7 @@ El diagrama arranca en los usuarios: vendedores y tenderos llegan con un arribo 
 | cadena-pedido, etapas · ASR-3 y ASR-4 | P réplicas ≤ particiones | `:Coordinador de la cadena [1]`, que hace llamadas asíncronas con plazo por etapa · `:Facturación [2]`, `:Inventario [2]` y `:Validación de despacho [2]`, cada una con un «thread pool» 1..P · `:Bandeja de pedidos escalados [1]` | Publica `etapa.ejecutar`, `cadena.escalada` y `pedido.listo`, y desencola `etapa.completada` y `cola.reintentos`, por el canal `pedidos-status` (`key = vendedor`) |
 | vigilancia · ASR-3 y ASR-4 | 1 líder + 1 en espera | `:Monitor de la cadena [1]`, con un «scheduled thread» que barre cada 5 s · `:reanudador de la cadena [1]`, con su «thread» consumidor | Publica los eventos de reintento en el canal `pedidos-status`, avisa al Coordinador las etapas fallidas y sondea las etapas |
 
-**El bróker.** `:Bróker de mensajes [1]` tiene los temas de seguridad sueltos (`sesion.abierta`, `alerta.seguridad`, `escritura.realizada`) y los de la cadena en un grupo de eventos: `etapa.ejecutar`, `etapa.completada`, `cadena.escalada`, `pedido.listo` y la cola `cola.reintentos`. Logística desencola `pedido.listo` del canal `pedidos-status`, y el Responsable del pedido escalado consulta la Bandeja y Logística.
+**El bróker.** `:Bróker de mensajes [1]` tiene los temas de seguridad sueltos (`sesion.abierta`, `alerta.seguridad`, `escritura.realizada`) y los de la cadena en un grupo de eventos: `etapa.ejecutar`, `etapa.completada`, `cadena.escalada`, `pedido.listo` y la cola `cola.reintentos`. Logística desencola `pedido.listo` del canal `pedidos-status`.
 
 **Qué muestra:** cómo se escala cada camino. La seguridad y la vigilancia corren con un activo y uno en espera, el Gestor con N réplicas y la cadena con tantas réplicas como particiones tenga su canal. Todo lo asíncrono pasa por un canal con clave antes de llegar al bróker. · **Decisión que refleja:** ADR-001 (bróker durable), ADR-002 y ADR-004 (Coordinador y Monitor ×1) y las rutas de las demás decisiones. · **Qué no muestra:** los hilos internos de cada componente abierto, que están en DG-CON-002 y DG-CON-003.
 
@@ -89,22 +91,22 @@ El diagrama arranca en los usuarios: vendedores y tenderos llegan con un arribo 
 
 ![DG-CON-002 · Hilos, canales, temas y colas de la sesión y de la escritura](png-v7/05-DG-CON-002.png)
 
-Cada mensaje cruza tres piezas: el hilo lo publica en un canal de eventos con su clave (cilindro naranja), el canal lo lleva al tema del bróker, el bróker lo enruta a la cola del suscriptor y el hilo consumidor lo desencola desde el canal.
+Cada mensaje cruza tres piezas: un canal de eventos con su clave (cilindro naranja), un tema del bróker y la cola del suscriptor. El hilo publica en el canal, el canal lleva el mensaje al tema y el bróker lo enruta a la cola. El hilo consumidor lo desencola desde el canal.
 
 **El orden del flujo.**
 
 | Paso | Hilo que lo ejecuta | Qué hace |
 |---|---|---|
 | A1 · A2 | HiloPeticion de la Puerta y del Gestor | El usuario abre sesión desde la App con la huella; la Puerta la pasa al Gestor |
-| A3´ | HiloPeticion del Gestor | Publica la sesión abierta con t0 en el canal `sesiones-{status:abierta}`, que llega al tema `sesion.abierta`, y responde al usuario sin esperar |
+| A3´ | HiloPeticion del Gestor | Publica la sesión abierta con t0, el instante en que se abrió, en el canal `sesiones-{status:abierta}`, que llega al tema `sesion.abierta`, y responde al usuario sin esperar |
 | A4 | Bróker | Enruta el tema a `cola.verificador` |
 | A5 · A6 · A7 | ConsumidorSesiones del Verificador | Desencola del canal de sesiones, compara la huella y lee la vigente en RegistroDispositivos |
 | A8 · A9 | ConsumidorSesiones, con PublicadorAlertas | Si no coincide, publica en el canal `sesiones-{status:alert Security}`, que llega al tema `alerta.seguridad` |
 | A10 · A11 · A12 | Bróker · ConsumidorAlertas del Notificador | Enruta a `cola.notificador`; el Notificador desencola del canal de alertas y avisa al Área de seguridad |
-| B1 | HiloPeticion de la Puerta y de Pedidos | El usuario con perfil de consulta crea un pedido, y se escribe |
+| B1 | HiloPeticion de la Puerta y de Pedidos | El usuario con perfil de solo consulta, que no debería escribir, crea un pedido, y Pedidos lo escribe en su base |
 | B2 | RelevoOutbox de Pedidos o de Inventario | Publica la escritura después del commit en el canal de alertas y escrituras, que llega al tema `escritura.realizada` |
 | B3 · B4 | Bróker · ConsumidorEscrituras del Detector | Enruta a `cola.detector`; el Detector desencola del canal |
-| B5 · B6 | ConsumidorEscrituras | Pide los permisos vigentes al Gestor y, si la escritura no cabía, pide la reacción (t_det) |
+| B5 · B6 | ConsumidorEscrituras | Pide los permisos vigentes al Gestor y, si la escritura no cabía en esos permisos, pide la reacción (t_det, el instante de la detección) |
 | B7 a B13 | OrquestadorReaccion, en un hilo de la Reacción | Abre la reacción, revoca en la Lista, bloquea en el Gestor, compensa en Pedidos o Inventario y avisa |
 | B14 | OrquestadorReaccion, con PublicadorAlertas | Publica en el canal de alertas, que llega a `alerta.seguridad` y sigue el camino de A10 a A12 |
 | Sin número | ConsumidorSesiones · ControladorRegistro | El consumidor de sesiones llama al ControladorRegistro, que registra el cambio legítimo de equipo en RegistroDispositivos |
@@ -120,7 +122,7 @@ Cada mensaje cruza tres piezas: el hilo lo publica en un canal de eventos con su
 
 **Qué muestra:** que ningún control de seguridad corre en el hilo que atiende al usuario. La sesión y la escritura terminan, y su evento cruza un canal y el bróker hasta otro proceso, donde lo toma un hilo consumidor. El único estado que comparten el camino del usuario y el de la reacción es la Lista de revocación. · **Decisión que refleja:** ADR-001 (bróker), ADR-007 (huella), ADR-008 (outbox y detección), ADR-009 (la Lista) y ADR-010 (reacción ordenada). · **Qué no muestra:** el tamaño de cada pool de hilos, que depende de la prueba de carga con el Ambiente A.
 
-**Las medidas.** ASR-1 corre de A3´ a A12: ≤ 2 s desde t0. ASR-2 corre de B6 a B12: ≤ 5 s desde t_det. Revocar va primero y toma milisegundos, así que desde B9 ninguna escritura del actor pasa la Puerta.
+**Las medidas.** La medida de ASR-1 va de A3´ a A12: ≤ 2 s desde t0. La de ASR-2 va de B6 a B12: ≤ 5 s desde t_det. Revocar va primero y toma milisegundos, así que desde B9 ninguna escritura del actor pasa la Puerta.
 
 ---
 
@@ -132,7 +134,13 @@ Cada mensaje cruza tres piezas: el hilo lo publica en un canal de eventos con su
 
 ![DG-CON-003 · Hilos, canales, temas y colas de la cadena del pedido](png-v7/06-DG-CON-003.png)
 
-La cadena usa tres canales de eventos con clave: `pedidos-status` con `key = {pedido}` para los comandos y las confirmaciones, `key = vendedor` para los reintentos y `key = {error}` para lo escalado, lo fallido y lo que va a Logística.
+En este diagrama, la cadena usa un solo canal de eventos, `pedidos-status`, con tres claves. La entrada de pedidos, en DG-CON-001, publica por otro canal, `pedidos-confirmados`.
+
+| Clave | Qué lleva |
+|---|---|
+| `key = {pedido}` | Los comandos a las etapas y sus confirmaciones |
+| `key = vendedor` | Los reintentos que publica el Monitor |
+| `key = {error}` | Lo escalado, lo fallido y lo que va a Logística |
 
 **El orden del flujo.**
 
@@ -141,9 +149,9 @@ La cadena usa tres canales de eventos con clave: `pedidos-status` con `key = {pe
 | 1 · 2 · 3 · 4 | HiloPeticion de Pedidos · ControladorCadena | Pedidos inicia la cadena; el Coordinador marca la primera etapa EN_CURSO con su plazo |
 | 5 · 6 | ControladorCadena, con PublicadorComandos · Bróker | Publica en el canal `key = {pedido}`, que llega al tema `etapa.ejecutar`; el bróker lo enruta a la cola de esa etapa |
 | 7 · 8 | ConsumidorEtapa de la etapa | Desencola del canal, ejecuta la etapa con su clave única y publica `etapa.completada` |
-| 9 · 10 · 11 | Bróker · ConsumidorMensajes | Enruta a `cola.coordinador`; el consumidor desencola del canal y avisa al orquestador, que marca la etapa COMPLETADA y vuelve al paso 5 con la siguiente |
+| 9 · 10 · 11 | Bróker · ConsumidorMensajes | Enruta a `cola.coordinador`; el consumidor desencola del canal y avisa al OrquestadorCadena, la parte del Coordinador que lleva el orden de las etapas. El orquestador marca la etapa COMPLETADA y vuelve al paso 5 con la siguiente |
 | 12 · 13 · 14 | PublicadorComandos · Bróker · Logística | Con las tres etapas cerradas, publica `pedido.listo`, que se enruta a `cola.logistica`; Logística desencola del canal `key = {error}` |
-| R1 · R2 · R3 | BarridoPlazos, cada 5 s | Pide al Coordinador las etapas fallidas o vencidas, solo lectura, y registra la señal |
+| R1 · R2 · R3 | BarridoPlazos, cada 5 s | Pide al Coordinador las etapas fallidas o vencidas, solo lectura, y registra la señal: la marca de que esa etapa de ese pedido se detuvo y debe reintentarse |
 | R4 · R5 | BarridoPlazos, con PublicadorReintentos | Publica el pedido señalado en el canal `key = vendedor`, que llega a `cola.reintentos` (t_señal) |
 | R6 · R7 · R8 | Reanudador | Desencola del canal `key = {pedido}`, pasa la fila a EN_REINTENTO y reenvía solo esa etapa |
 | R9 · R10 · R11 | Reanudador · Bróker · ConsumidorBandeja | Si a los 3 s no hay confirmación, publica en el canal `key = {error}`, que llega a `cadena.escalada` y se enruta a `cola.bandeja`; la Bandeja desencola |
@@ -155,13 +163,13 @@ La cadena usa tres canales de eventos con clave: `pedidos-status` con `key = {pe
 
 | Estado compartido | Quién escribe · quién lee | Cómo se protege | De dónde sale |
 |---|---|---|---|
-| :RepositorioCadena, fila `CadenaEtapa` | Escriben ConsumidorMensajes (paso 11, por el orquestador) y Reanudador (R7) · lee BarridoPlazos (R2) | **Actualización condicional**: la fila cambia solo si sigue en el estado que el hilo espera. Si la etapa confirma justo cuando el Reanudador va a escalar, gana el primero que escribe y el otro afecta 0 filas | **propuesta**: ADR-002 guarda el estado en la base, pero ningún ADR decide cómo se resuelve la carrera |
+| :RepositorioCadena, fila `CadenaEtapa` | Escriben ConsumidorMensajes (paso 11, por el OrquestadorCadena) y Reanudador (R7) · lee BarridoPlazos (R2) | **Actualización condicional**: la fila cambia solo si sigue en el estado que el hilo espera. Si la etapa confirma justo cuando el Reanudador va a escalar, gana el primero que escribe y el otro afecta 0 filas | **propuesta**: ADR-002 guarda el estado en la base, pero ningún ADR decide cómo se resuelve la carrera |
 | `EtapaProcesada` de cada etapa | Los consumidores de una etapa, si el bróker entrega el comando dos veces | Clave única (idPedido, etapa) en la misma transacción del efecto: no se emite una segunda factura | ADR-005 |
 | :RegistroSenales | BarridoPlazos | Clave única (idPedido, etapa, intento): un barrido repetido no encola dos veces | ADR-004 (NR-004a) |
 
-**Qué muestra:** que la fila de cada etapa es el único punto donde dos hilos escriben lo mismo, y que todo lo demás pasa por canales y colas: el Monitor no espera al Coordinador, y las etapas no esperan al consumidor de confirmaciones. El Coordinador, el Monitor y la Bandeja corren como proceso único. · **Decisión que refleja:** ADR-001 (bróker), ADR-002 (estado por etapa), ADR-003 (una etapa a la vez), ADR-004 (barrido y sondeo), ADR-005 (clave única) y ADR-006 (un reintento y la Bandeja). · **Qué no muestra:** la confirmación que llega después de escalar, que la actualización condicional hoy ignora (ver Huecos en la portada).
+**Qué muestra:** que la fila de cada etapa es el único punto donde dos hilos escriben lo mismo. Todo lo demás pasa por canales y colas: el Monitor no espera al Coordinador, y las etapas no esperan al consumidor de confirmaciones. El Coordinador, el Monitor y la Bandeja corren como proceso único. · **Decisión que refleja:** ADR-001 (bróker), ADR-002 (estado por etapa), ADR-003 (una etapa a la vez), ADR-004 (barrido y sondeo), ADR-005 (clave única) y ADR-006 (un reintento y la Bandeja). · **Qué no muestra:** la confirmación que llega después de escalar, que la actualización condicional hoy ignora (ver Huecos en la portada).
 
-**Las medidas.** ASR-3 corre de la detención de la etapa a R5: plazo ≤ 25 s más un barrido de 5 s, ≤ 30 s. ASR-4 corre de R6 a R11: un intento de 3 s y el escalamiento, ≤ 5 s, sin duplicados. Sumados dan los 35 s del presupuesto conjunto.
+**Las medidas.** La medida de ASR-3 va de la detención de la etapa a R5: plazo ≤ 25 s más un barrido de 5 s, ≤ 30 s. La de ASR-4 va de R6 a R11: un intento de 3 s y el escalamiento, ≤ 5 s, sin duplicados. Sumados dan los 35 s del presupuesto conjunto.
 
 ---
 
@@ -179,4 +187,6 @@ El texto de esta página describe los diagramas tal como están dibujados. Estas
 | DG-CON-002 | El mismo canal `sesiones-{status:alert Security} {Escritura Realizada}` lleva las alertas y las escrituras | Son dos temas distintos del bróker, `alerta.seguridad` y `escritura.realizada`, con suscriptores distintos |
 | DG-CON-003 | Logística desencola del canal `key = {error}` (fallidos) | Logística recibe `pedido.listo`, que no es un error |
 | DG-CON-003 | El Monitor publica los reintentos en el canal `key = vendedor` (R5), y el Reanudador desencola del canal `key = {pedido}` (R6) | El reintento que se publica en un canal debería desencolarse del mismo |
+| DG-CON-001 y DG-CON-003 | En DG-CON-001, la cadena publica y Logística desencola por `pedidos-status` con `key = vendedor`; en DG-CON-003, los comandos van con `key = {pedido}` y Logística desencola de `key = {error}` | La clave de cada flujo de la cadena tiene que ser la misma en los dos diagramas |
+| DG-CON-001 | `:Coordinador de la cadena [1]` y `:Bandeja de pedidos escalados [1]` están dentro del grupo de P réplicas ≤ particiones | Un proceso único no escala con las particiones de su grupo |
 | Rótulos | «Disposito {no valido}», «A3´» | Erratas: «Dispositivo {no válido}» y «A3» |

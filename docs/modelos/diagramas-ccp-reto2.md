@@ -106,24 +106,24 @@ Estos términos aparecen en las secuencias y en la vista de información.
 | **Idempotencia** | Repetir la operación no produce un segundo efecto. Aquí la da una fila con clave única por (idPedido, etapa) |
 | **Compensación** | Operación inversa que deshace el efecto de una escritura sin tocar lo que vino después |
 | **Entrega al menos una vez** | El bróker reentrega todo mensaje que su consumidor no confirmó. No se pierde nada, pero un mensaje puede llegar dos veces |
-| **Mensajes fallidos** | Destino al que la Cola de reintentos manda un mensaje que no se pudo procesar, en vez de perderlo. Aquí es la Bandeja de pedidos escalados |
+| **Cola de mensajes fallidos** | Cola a la que va un mensaje que no se pudo procesar, en vez de perderse. Aquí es `cola.fallidos`, que desencola la Bandeja de pedidos escalados; la vista de componentes la rotula «Dead-Letter-Queue» |
 | **Actualización condicional** | La fila cambia solo si sigue en el estado que el hilo espera. Resuelve la carrera entre dos hilos que escriben la misma fila |
 | **t0 · t_det · t_stop · t_señal** | Apertura de la sesión (ASR-1), detección de la escritura indebida (ASR-2), instante en que la etapa deja de avanzar y instante de la señal (ASR-3). Desde ahí corren las medidas |
 | **p99** | La duración que solo el 1 % de las ejecuciones supera |
 
 ## Diferencias entre diagramas por resolver
 
-Las páginas describen cada diagrama tal como está dibujado en el draw.io. Cuando un diagrama choca con un ADR o con otro diagrama, la página de su vista lo lista en su sección «Diferencias por resolver». Estas son las que piden una decisión del equipo:
+Las páginas describen cada diagrama tal como está dibujado en el draw.io. Cuando un diagrama choca con un ADR o con otro diagrama, la página de su vista lo lista en su sección «Diferencias por resolver». Estas son las que piden una decisión de diseño; las demás son erratas o conexiones sueltas:
 
 | Diferencia | Diagramas | Qué hay que decidir |
 |---|---|---|
 | Dónde corre el Reanudador | DG-CON-001 lo pone en el grupo de vigilancia, junto al Monitor; ADR-006, DG-CMP-003 y DG-CON-003 lo ponen dentro del Coordinador | En qué proceso vive, y corregir el ADR o los diagramas |
 | Cómo detecta el Detector | DG-CON-001 le da un «scheduled thread» cada 1 s; ADR-008 y DG-CON-002 lo hacen consumir `escritura.realizada` | Si detecta por evento o por barrido |
-| Cuántas réplicas corre cada proceso | DG-CON-001 usa grupos con N réplicas, 1 activo + 1 en espera y P réplicas ≤ particiones; DG-DEP-001 usa ×2 y ×1 sin respaldo | Una sola política de réplicas para las dos vistas |
-| Qué tipo de bróker hay | DG-CON-001 a 003 dibujan canales con clave de partición; ADR-001 y DG-DEP-001 usan RabbitMQ con colas durables | Si hay particiones, y en qué ADR se decide |
+| Cuántas réplicas corre cada proceso | DG-CON-001 usa grupos con N réplicas, 1 activo + 1 en espera y P réplicas ≤ particiones, y deja procesos ×1 dentro del grupo de P réplicas; DG-DEP-001 usa ×2 y ×1 sin respaldo | Una sola política de réplicas para las dos vistas |
+| Qué tipo de bróker hay | DG-CON-001 a 003 dibujan canales con clave de partición, y la clave de cada flujo de la cadena cambia entre DG-CON-001 y DG-CON-003; ADR-001 y DG-DEP-001 usan RabbitMQ con colas durables | Si hay particiones, y en qué ADR se decide |
 | Qué hace el Monitor | DG-CMP-001 avisa al Coordinador las fallas; ADR-004 y DG-CMP-003 piden las vencidas y encolan la señal. DG-DEP-001 sondea tres etapas; DG-CMP-003 y DG-CON-003, dos | La interacción del Monitor y qué etapas sondea |
 | Una flecha a un ASR que no existe | DG-CMP-001 rotula «ASR 5» la escritura del Notificador en la Lista de revocación | Si esa escritura existe, qué ASR la pide y qué ADR la decide |
-| Marcas de táctica | El Broker de la cadena es T8 en DG-CMP-001 y T4 en DG-CMP-003, y las etapas pasan a T9 y T10 | Una marca por táctica y el ID del catálogo del Broker y de la Dead-Letter-Queue |
+| Marcas de táctica | El bróker de la cadena es T8 en DG-CMP-001 y T4 en DG-CMP-003, y las etapas pasan a T9 y T10 | Una marca por táctica y el ID del catálogo del bróker de la cadena y de la cola de mensajes fallidos |
 
 Las erratas y las conexiones sueltas de cada diagrama están en la sección de su vista.
 
@@ -161,7 +161,14 @@ Las preguntas abiertas no van dentro de los diagramas; están aquí.
 - ¿Por qué protocolo recibe Logística el pedido listo?
 - ¿Cuántos hilos consumidores necesita cada componente con la carga del Ambiente A?
 
-**Dibujado sin ADR que lo respalde.** Las dos instancias de los servicios sin estado, el balanceador y la observabilidad (DG-DEP-001); la actualización condicional, la deduplicación del aviso y los dos puertos de entrada del Coordinador; el Broker de Eventos de la cadena, la Dead-Letter-Queue y el soporte de CCP que la atiende (DG-CMP-001 y DG-CMP-003); y los grupos de procesos con su política de réplicas y los canales de eventos con clave de partición (DG-CON-001 a 003).
+**Dibujado sin ADR que lo respalde.**
+
+- DG-DEP-001: las dos instancias de los servicios sin estado, el balanceador y la observabilidad.
+- DG-CON-003: la actualización condicional de la fila `CadenaEtapa`.
+- DG-CON-002: la deduplicación del aviso.
+- DG-CMP-003: los dos puertos de entrada del Coordinador.
+- DG-CMP-001 y DG-CMP-003: el bróker de la cadena, la cola de mensajes fallidos y el soporte de CCP que la atiende.
+- DG-CON-001 a 003: los grupos de procesos con su política de réplicas y los canales de eventos con clave de partición.
 
 ## Líneas «Diagramas afectados» para las Consecuencias de cada ADR
 
