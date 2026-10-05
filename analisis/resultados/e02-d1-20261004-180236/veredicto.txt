@@ -1,0 +1,40 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                               variables                                                                |            inicio             |              fin              |    duracion     
+------------------------+-------------+------+----------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------
+ e02-d1-20261004-180236 | E02         | D1   | {"N": 3, "T_ms": 2000, "d1_s": 3600, "vars": "D1_S=3600", "caidas": 0, "caida_s": 45, "congelar": 0, "espera_ms": 500, "tasa_base": 2} | 2026-10-05 01:01:16.090061+00 | 2026-10-05 02:01:16.351547+00 | 01:00:00.261486
+
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+
+== Criterios de H2
+                                       criterio                                       | casos | cumplen | fallan | veredicto 
+--------------------------------------------------------------------------------------+-------+---------+--------+-----------
+ D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |     0 |       0 |      0 | NO APLICA
+ D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+ D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |     0 |       0 |      0 | PASA
+ Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |     0 |       0 |      0 | NO APLICA
+
+
+== Demora hasta la cola (ms), por tipo de falla y etapa
+ falla | etapa | detenidos | encolados | escapes | duplicados | mediana | p95 | maximo 
+-------+-------+-----------+-----------+---------+------------+---------+-----+--------
+
+
+== D2 · cada caída con sus pedidos detenidos
+ falla_id | etapa | falla | caida | detenidos | encolados | demora_max_ms | declarada_tras 
+----------+-------+-------+-------+-----------+-----------+---------------+----------------
+
+
+== Falsas alarmas: declaraciones sin caída y mensajes sin pedido detenido
+ que | ts | etapa | pedido_id | llego_a_logistica 
+-----+----+-------+-----------+-------------------
+
+
+== Escapes: pedidos detenidos que no llegaron a la cola o llegaron tarde
+ falla | etapa | pedido_id | t0 | encolado | demora_ms 
+-------+-------+-----------+----+----------+-----------
+

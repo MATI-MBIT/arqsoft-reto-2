@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: ventas
+  config:
+    import: classpath:comun.yml

@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: usuario-no-valido
+  config:
+    import: classpath:comun.yml

@@ -1,0 +1,33 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                          variables                                                          |            inicio             |              fin              |    duracion     
+------------------------+-------------+------+-----------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------
+ e01-s1-20261004-180236 | E01         | S1   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "-", "caidas": 0, "caida_s": 45, "congelar": 0, "espera_ms": 500, "tasa_base": 2} | 2026-10-04 23:07:41.851296+00 | 2026-10-04 23:38:42.488321+00 | 00:31:00.637025
+
+CREATE VIEW
+
+== Criterios de H1
+                                criterio                                | casos | cumplen | fallan | veredicto 
+------------------------------------------------------------------------+-------+---------+--------+-----------
+ S1 · 50 intrusos con aviso en ≤ 2 s y con vendedor, dispositivo y hora |    50 |      50 |      0 | PASA
+ S2 · ≤ 1 aviso por cada 100 cambios legítimos                          |     0 |       0 |      0 | NO APLICA
+ S3 · 0 avisos en aperturas a menos de 1 s del registro                 |     0 |       0 |      0 | NO APLICA
+ Todas · 0 avisos por sesiones desde el dispositivo registrado          |  3720 |    3720 |      0 | PASA
+
+
+== Demora del aviso por fase (ms), solo sesiones de intruso
+ fase | intrusos | con_aviso | escapes | mediana | p95  | maximo 
+------+----------+-----------+---------+---------+------+--------
+ S1   |       50 |        50 |       0 |    22.0 | 53.0 |  119.8
+
+
+== S4 · aperturas por segundo logradas en cada nivel (número desconocido de H1)
+ fase | aperturas | por_segundo 
+------+-----------+-------------
+
+
+== Avisos fuera de lo esperado (escapes y falsas alarmas)
+ sesion_id | tipo | vendedor | dispositivo | abierta | demora_ms | completo 
+-----------+------+----------+-------------+---------+-----------+----------
+

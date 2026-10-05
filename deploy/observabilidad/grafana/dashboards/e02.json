@@ -1,0 +1,1260 @@
+{
+  "uid": "e02",
+  "title": "E02 · Detección y encolado del pedido detenido (H2, ASR-3)",
+  "description": "Si el Monitor sondea cada etapa y encola los pedidos de la que no responde N sondeos seguidos, todo pedido detenido llega a la cola de reintentos en ≤ 30 s.",
+  "tags": [
+    "reto2",
+    "e02"
+  ],
+  "timezone": "browser",
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Fallas inyectadas",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "registro"
+        },
+        "enable": true,
+        "iconColor": "red",
+        "target": {
+          "refId": "A",
+          "rawSql": "SELECT ts AS time, etapa || ' · ' || (datos ->> 'tipo') AS text, 'falla' AS tags\nFROM registro.evento WHERE tipo = 'falla.inyectada' AND $__timeFilter(ts)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      },
+      {
+        "name": "Etapa reiniciada",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "registro"
+        },
+        "enable": true,
+        "iconColor": "green",
+        "target": {
+          "refId": "A",
+          "rawSql": "SELECT ts AS time, etapa || ' responde de nuevo' AS text, 'reinicio' AS tags\nFROM registro.evento WHERE tipo = 'etapa.reiniciada' AND $__timeFilter(ts)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      },
+      {
+        "name": "Corridas",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "registro"
+        },
+        "enable": true,
+        "iconColor": "blue",
+        "target": {
+          "refId": "A",
+          "rawSql": "SELECT inicio AS time, coalesce(fin, now()) AS timeend, id AS text, 'corrida' AS tags\nFROM registro.corrida WHERE experimento = 'E02' AND inicio IS NOT NULL AND $__timeFilter(inicio)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Veredicto en vivo · registro de eventos, ventana del tablero",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Fallas inyectadas",
+      "description": "Caídas de etapa (D2) y congelamientos (D3) que ejecutó el inyector.",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.evento WHERE tipo = 'falla.inyectada' AND $__timeFilter(ts)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Pedidos detenidos",
+      "description": "D2: los que la etapa tenía en curso al caer y los que recibió caída. D3: el pedido congelado.",
+      "gridPos": {
+        "x": 3,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.e02_detenidos WHERE $__timeFilter(t0)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "En la cola ≤ 30 s",
+      "description": "Detenidos cuyo mensaje confirmó el bróker en ≤ 30 s desde la falla.",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.e02_cruce WHERE demora_ms <= 30000 AND $__timeFilter(t0)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Escapes",
+      "description": "Detenidos que no llegaron a la cola o llegaron tarde. D3 los produce si el sondeo no ve el pedido congelado, que es lo que ADR-004 predijo.",
+      "gridPos": {
+        "x": 9,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.e02_cruce\nWHERE t0 < now() - interval '30 seconds' AND (encolado IS NULL OR demora_ms > 30000) AND $__timeFilter(t0)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "Duplicados",
+      "description": "Pedidos que entraron más de una vez a la cola. Uno solo haría repetir una etapa en ASR-4.",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.e02_cruce WHERE mensajes > 1 AND $__timeFilter(t0)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "Falsas alarmas (episodios)",
+      "description": "Declaraciones de etapa detenida sin caída inyectada en esa etapa (D-6). ASR-3 admite ≤ 1 por hora.",
+      "gridPos": {
+        "x": 15,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.e02_declaraciones WHERE NOT justificada AND $__timeFilter(ts)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "orange"
+              },
+              {
+                "value": 2,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 7
+    },
+    {
+      "type": "stat",
+      "title": "Mensajes sin pedido detenido",
+      "description": "Mensajes encolados por pedidos que no estaban detenidos; casi siempre llegan después a logística.",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT count(*) FROM registro.e02_mensajes_falsos WHERE $__timeFilter(ts)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "orange"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 8
+    },
+    {
+      "type": "stat",
+      "title": "Demora p95 hasta la cola",
+      "description": "Desde la falla, o desde el envío si el pedido llegó con la etapa ya caída (D-5), hasta la confirmación del bróker.",
+      "gridPos": {
+        "x": 21,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY demora_ms) FROM registro.e02_cruce\nWHERE encolado IS NOT NULL AND $__timeFilter(t0)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 30000,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "id": 9
+    },
+    {
+      "type": "row",
+      "title": "El Monitor de la cadena · Prometheus",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 10
+    },
+    {
+      "type": "state-timeline",
+      "title": "Lo que declara el Monitor de cada etapa",
+      "description": "Verde: viva. Rojo: declarada detenida tras N sondeos sin respuesta. Las anotaciones rojas marcan cada falla inyectada; las verdes, cada etapa que volvió a responder.",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (etapa) (monitor_etapa_detenida)",
+          "legendFormat": "{{etapa}}",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "viva",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "detenida",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "mergeValues": true,
+        "rowHeight": 0.8
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Sondeos sin respuesta seguidos, contra N",
+      "description": "Cuando una etapa alcanza la línea de N, el Monitor la declara detenida.",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (etapa) (monitor_sondeos_fallidos_seguidos)",
+          "legendFormat": "{{etapa}}",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(monitor_config_n)",
+          "legendFormat": "N",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Pedidos en curso por etapa (ventas)",
+      "description": "Los pedidos que ventas envió a cada etapa y no han vuelto. En una caída crecen sin parar; en D3, el congelado queda para siempre.",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (etapa) (ventas_pedidos_en_curso)",
+          "legendFormat": "{{etapa}}",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 13
+    },
+    {
+      "type": "timeseries",
+      "title": "Mensajes en la cola de reintentos",
+      "description": "reintentos no tiene consumidor: crece con cada pedido encolado. reintentos.auditoria la vacía el auditor.",
+      "gridPos": {
+        "x": 8,
+        "y": 12,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (queue) (rabbitmq_queue_messages{queue=~\"reintentos.*\"})",
+          "legendFormat": "{{queue}}",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Encolados por segundo: Monitor y auditor",
+      "description": "Lo que el Monitor confirmó y lo que el auditor leyó de la copia. Deben coincidir.",
+      "gridPos": {
+        "x": 16,
+        "y": 12,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (etapa) (rate(monitor_pedidos_encolados_total[15s]))",
+          "legendFormat": "monitor · {{etapa}}",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (etapa) (rate(auditor_mensajes_total[15s]))",
+          "legendFormat": "auditor · {{etapa}}",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 15
+    },
+    {
+      "type": "row",
+      "title": "Cada pedido detenido, cruzado con su mensaje",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 16
+    },
+    {
+      "type": "timeseries",
+      "title": "Demora hasta la cola de cada pedido detenido (ms)",
+      "description": "Un punto por pedido. La línea punteada es el umbral de ASR-3 (30 s). En una caída, los pedidos que llegan después forman una escalera que baja: esperan solo hasta el ciclo siguiente.",
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 16,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT t0 AS time, falla || ' · ' || etapa AS metric, demora_ms FROM registro.e02_cruce\nWHERE encolado IS NOT NULL AND $__timeFilter(t0) ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "points",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "always",
+            "spanNulls": false,
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 30000,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 17
+    },
+    {
+      "type": "timeseries",
+      "title": "Duración de cada etapa: p50 y p99,9 (s)",
+      "description": "La variación normal que el Monitor tiene que tolerar (S-11). D1 la mide de paso: es el dato que ADR-004 pide para calibrar su plazo (TO-004a).",
+      "gridPos": {
+        "x": 16,
+        "y": 21,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le, etapa) (rate(etapa_duracion_seconds_bucket[2m])))",
+          "legendFormat": "p50 · {{etapa}}",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.999, sum by (le, etapa) (rate(etapa_duracion_seconds_bucket[2m])))",
+          "legendFormat": "p99,9 · {{etapa}}",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 18
+    },
+    {
+      "type": "timeseries",
+      "title": "k6: solicitudes por segundo, por tipo",
+      "description": "El Ambiente A: 1 pedido y 10 consultas por segundo (S-4).",
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (tipo) (rate(k6_http_reqs_total[15s]))",
+          "legendFormat": "{{tipo}}",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 19
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU",
+      "description": "Si la máquina se satura, un sondeo lento parece una etapa caída: revisar aquí antes de culpar al diseño por una falsa alarma.",
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (application) (process_cpu_usage)",
+          "legendFormat": "{{application}}",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(system_cpu_usage)",
+          "legendFormat": "máquina",
+          "range": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 6,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "id": 20
+    },
+    {
+      "type": "row",
+      "title": "Detalle",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 21
+    },
+    {
+      "type": "table",
+      "title": "Cada caída (D2): pedidos detenidos y cuándo la declaró el Monitor",
+      "description": "declarada_tras debería rondar N × T.",
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT c.falla, c.etapa, c.reinicio - c.falla AS caida,\n       (SELECT min(d.ts) - c.falla FROM registro.e02_declaraciones d\n        WHERE d.etapa = c.etapa AND d.ts >= c.falla AND d.ts <= coalesce(c.reinicio, 'infinity')) AS declarada_tras,\n       count(x.pedido_id) AS detenidos, count(x.encolado) AS encolados, max(x.demora_ms) AS demora_max_ms\nFROM registro.e02_caidas c\nLEFT JOIN registro.e02_cruce x ON x.falla = 'D2' AND x.falla_id = c.falla_id\nWHERE $__timeFilter(c.falla)\nGROUP BY c.falla_id, c.falla, c.etapa, c.reinicio ORDER BY c.falla DESC LIMIT 50",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "id": 22
+    },
+    {
+      "type": "table",
+      "title": "Escapes, duplicados y falsas alarmas",
+      "description": "Vacía es lo esperado, salvo los escapes de D3 si el sondeo no ve el pedido congelado.",
+      "gridPos": {
+        "x": 12,
+        "y": 38,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT t0 AS cuando, 'escape' AS que, falla || ' · ' || etapa AS detalle, pedido_id, demora_ms\nFROM registro.e02_cruce\nWHERE $__timeFilter(t0) AND t0 < now() - interval '30 seconds' AND (encolado IS NULL OR demora_ms > 30000)\nUNION ALL\nSELECT t0, 'duplicado', falla || ' · ' || etapa, pedido_id, demora_ms FROM registro.e02_cruce\nWHERE $__timeFilter(t0) AND mensajes > 1\nUNION ALL\nSELECT ts, 'falsa alarma', etapa, NULL, NULL FROM registro.e02_declaraciones\nWHERE $__timeFilter(ts) AND NOT justificada\nUNION ALL\nSELECT ts, CASE WHEN llego_a_logistica THEN 'mensaje · llegó a logística' ELSE 'mensaje sin detenido' END,\n       etapa, pedido_id, NULL FROM registro.e02_mensajes_falsos WHERE $__timeFilter(ts)\nORDER BY 1 DESC LIMIT 100",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "id": 23
+    },
+    {
+      "type": "table",
+      "title": "Corridas de E02",
+      "description": "La ventana de medición de cada corrida empieza al terminar el calentamiento.",
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 24,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "registro"
+          },
+          "rawSql": "SELECT id, experimento, fase, inicio, fin, fin - inicio AS duracion, variables\nFROM registro.corrida WHERE experimento = 'E02' ORDER BY arranque DESC LIMIT 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "registro"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "id": 24
+    }
+  ],
+  "templating": {
+    "list": []
+  }
+}

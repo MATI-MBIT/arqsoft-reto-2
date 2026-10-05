@@ -1,0 +1,187 @@
+# Topología de los experimentos E01 y E02: un contenedor por micro, en una sola
+# máquina. Los puertos del host sirven para k6 y para mirar cada micro a mano.
+#
+#   sesiones :8081 · usuario-no-valido :8082 · receptor-sms :8083 · onboarding :8084
+#   ventas :8090 · etapas :8091-8093 · logistica :8094 · monitor :8095 · auditor :8096
+#   Grafana :3000 · Prometheus :9090 · RabbitMQ :15672 · PostgreSQL :5433
+name: reto2
+
+x-micro: &micro
+  restart: "no"
+  depends_on:
+    postgres:
+      condition: service_healthy
+  environment: &entorno
+    DB_URL: jdbc:postgresql://postgres:5432/reto2
+    RABBIT_HOST: rabbitmq
+    USUARIO_NO_VALIDO_URL: http://usuario-no-valido:8080
+    RECEPTOR_SMS_URL: http://receptor-sms:8080
+    VENTAS_URL: http://ventas:8080
+    FACTURACION_URL: http://etapa-facturacion:8080
+    INVENTARIO_URL: http://etapa-inventario:8080
+    DESPACHO_URL: http://etapa-despacho:8080
+    LOGISTICA_URL: http://logistica:8080
+
+x-etapa: &etapa
+  <<: *micro
+  image: reto2/etapa
+  build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: etapa } }
+
+x-receptor: &receptor
+  <<: *micro
+  image: reto2/receptor
+  build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: receptor } }
+
+services:
+  # --- Infraestructura -------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_DB: reto2
+      POSTGRES_USER: reto2
+      POSTGRES_PASSWORD: reto2
+    ports: ["5433:5432"]
+    volumes:
+      - ./postgres/01-esquema.sql:/docker-entrypoint-initdb.d/01-esquema.sql:ro
+      - ./postgres/02-semilla.sql:/docker-entrypoint-initdb.d/02-semilla.sql:ro
+      - ./postgres/03-vistas.sql:/docker-entrypoint-initdb.d/03-vistas.sql:ro
+      - ../analisis:/analisis:ro
+      - datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reto2 -d reto2"]
+      interval: 2s
+      retries: 30
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: reto2
+      RABBITMQ_DEFAULT_PASS: reto2
+      # Sin busy-wait: los planificadores de Erlang giran en vacío y le roban CPU a
+      # los micros de la misma máquina, y un sondeo lento parece una etapa caída.
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "+sbwt none +sbwtdcpu none +sbwtdio none"
+    ports: ["15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 3s
+      retries: 30
+
+  # --- E01 -------------------------------------------------------------------
+  sesiones:
+    <<: *micro
+    image: reto2/sesiones
+    build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: sesiones } }
+    ports: ["8081:8080"]
+
+  usuario-no-valido:
+    <<: *micro
+    image: reto2/usuario-no-valido
+    build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: usuario-no-valido } }
+    ports: ["8082:8080"]
+
+  receptor-sms:
+    <<: *receptor
+    environment: { <<: *entorno, ROL: sms }
+    ports: ["8083:8080"]
+
+  onboarding:
+    <<: *micro
+    image: reto2/onboarding
+    build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: onboarding } }
+    ports: ["8084:8080"]
+
+  # --- E02 -------------------------------------------------------------------
+  ventas:
+    <<: *micro
+    image: reto2/ventas
+    build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: ventas } }
+    ports: ["8090:8080"]
+
+  # Las etapas llevan nombre fijo porque el inyector las mata por nombre.
+  etapa-facturacion:
+    <<: *etapa
+    container_name: etapa-facturacion
+    environment: { <<: *entorno, ETAPA: facturacion, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-2000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.5}" }
+    ports: ["8091:8080"]
+
+  etapa-inventario:
+    <<: *etapa
+    container_name: etapa-inventario
+    environment: { <<: *entorno, ETAPA: inventario, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-2000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.5}" }
+    ports: ["8092:8080"]
+
+  etapa-despacho:
+    <<: *etapa
+    container_name: etapa-despacho
+    environment: { <<: *entorno, ETAPA: despacho, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-2000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.5}" }
+    ports: ["8093:8080"]
+
+  logistica:
+    <<: *receptor
+    environment: { <<: *entorno, ROL: logistica }
+    ports: ["8094:8080"]
+
+  # T y N vienen del entorno: D4 recrea solo este contenedor con otros valores.
+  monitor:
+    <<: *micro
+    image: reto2/monitor
+    build: { context: .., dockerfile: deploy/Dockerfile, args: { SERVICE: monitor } }
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    environment:
+      <<: *entorno
+      SONDEO_T_MS: "${SONDEO_T_MS:-2000}"
+      SONDEO_N: "${SONDEO_N:-3}"
+      SONDEO_ESPERA_MS: "${SONDEO_ESPERA_MS:-500}"
+    ports: ["8095:8080"]
+
+  auditor-cola:
+    <<: *receptor
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    environment: { <<: *entorno, ROL: auditor-cola }
+    ports: ["8096:8080"]
+
+  inyector:
+    build: { context: ./inyector }
+    image: reto2/inyector
+    container_name: inyector
+    environment:
+      PGHOST: postgres
+      PGUSER: reto2
+      PGPASSWORD: reto2
+      PGDATABASE: reto2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # --- Observabilidad --------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver   # k6 empuja aquí sus métricas
+      - --storage.tsdb.retention.time=15d
+    ports: ["9090:9090"]
+    volumes:
+      - ./observabilidad/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+
+  grafana:
+    image: grafana/grafana:13.2.3
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/e02.json
+    ports: ["3000:3000"]
+    volumes:
+      - ./observabilidad/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observabilidad/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus, postgres]
+
+volumes:
+  datos:
+  prometheus:

@@ -1,0 +1,66 @@
+time="2026-10-04T19:08:27-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:08:32-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:08:37-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:08:47-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:08:52-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:08:57-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:07-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:12-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:17-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:22-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:27-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:42-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:47-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:09:52-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:02-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:07-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:32-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:37-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:42-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:47-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:10:52-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:02-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:07-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:12-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:22-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:37-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:42-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:52-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:11:57-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:02-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:07-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:12-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:17-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:22-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:27-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:47-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+time="2026-10-04T19:12:57-05:00" level=error msg="Failed to send the time series data to the endpoint" error="got status code: 400 instead expected a 2xx successful status code" output="Prometheus remote write"
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 744     1.031363/s
+    checks_succeeded...: 100.00% 744 out of 744
+    checks_failed......: 0.00%   0 out of 744
+
+    ✓ pedido confirmado
+
+    HTTP
+    http_req_duration..............: med=1.85ms p(95)=5.13ms p(99)=10.27ms max=126.38ms
+      { expected_response:true }...: med=1.85ms p(95)=5.13ms p(99)=10.27ms max=126.38ms
+    http_req_failed................: 0.00%  0 out of 7935
+    http_reqs......................: 7935   10.999819/s
+
+    EXECUTION
+    iteration_duration.............: med=2.08ms p(95)=5.52ms p(99)=10.68ms max=126.66ms
+    iterations.....................: 7935   10.999819/s
+    vus............................: 0      min=0         max=1 
+    vus_max........................: 20     min=20        max=20
+
+    NETWORK
+    data_received..................: 2.4 MB 3.3 kB/s
+    data_sent......................: 891 kB 1.2 kB/s
+
+
+
+time="2026-10-04T19:19:59-05:00" level=error msg="test run was aborted because k6 received a 'interrupt' signal"

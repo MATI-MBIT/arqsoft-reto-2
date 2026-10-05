@@ -1,0 +1,26 @@
+# Raspado cada 2 s: el criterio de E01 es de 2 s y uno de 15 s no dejaría ver
+# nada en el tablero. El veredicto no sale de aquí, sale del registro de eventos.
+global:
+  scrape_interval: 2s
+  evaluation_interval: 2s
+
+scrape_configs:
+  - job_name: micros
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - sesiones:8080
+          - usuario-no-valido:8080
+          - receptor-sms:8080
+          - onboarding:8080
+          - ventas:8080
+          - etapa-facturacion:8080
+          - etapa-inventario:8080
+          - etapa-despacho:8080
+          - logistica:8080
+          - monitor:8080
+          - auditor-cola:8080
+  - job_name: rabbitmq
+    metrics_path: /metrics/per-object
+    static_configs:
+      - targets: [rabbitmq:15692]

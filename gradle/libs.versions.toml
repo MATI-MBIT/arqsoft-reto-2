@@ -1,0 +1,8 @@
+# Catálogo de versiones del prototipo de los experimentos E01 y E02 (reto 2).
+[versions]
+springBoot = "3.5.16"
+dependencyManagement = "1.1.7"
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+dependency-management = { id = "io.spring.dependency-management", version.ref = "dependencyManagement" }

@@ -53,6 +53,7 @@ consume, y por eso los nombres de archivo son los del paquete.
 | `docs/glossary.md` | `Objective → Glossary` | Insumo |
 | `docs/quality-attributes.md` | escenarios colgados de las historias | **Producto de los insumos** |
 | `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1 · E02: H2 sobre ASR-3) | Validación de decisiones |
+| `docs/results.md` | `Experiments → Results & analysis` | Resultado de las corridas y decisión que sale de cada una |
 
 ---
 
@@ -79,7 +80,8 @@ historias dicen **qué** tiene que ocurrir, nunca **en cuánto tiempo**. El umbr
 aparece por primera vez en el escenario de calidad.
 
 Para verificar antes de entregar: `grep -c ASR docs/*.md` debe dar cero en todo
-salvo `quality-attributes.md` y `experiments.md`, que va después de los ASR.
+salvo `quality-attributes.md`, `experiments.md` y `results.md`, que van después
+de los ASR.
 
 ### Los experimentos E01 y E02
 
@@ -112,7 +114,20 @@ al experimento. Stack fijado: local, Java
 Prometheus y Grafana para ver la corrida, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
-Resultados: pendientes de las corridas.
+Resultados (corridas del 2026-10-04, en `docs/results.md`): H1 se sostiene en
+S1, S2 y S3 → aceptar ADR-007. H2 cae en D3 (0 de 30 congelados detectados) y en
+D2 (9 de 1 522 pedidos tardíos por la ventana ciega al recuperarse la etapa) →
+confirmar ADR-004. D4 no corrió.
+
+### El prototipo
+
+Vive en este repositorio: `services/` (micros), `deploy/` (Compose, Grafana,
+Prometheus, inyector), `load/` (k6, `plan.tsv`, `experimento.sh`) y `analisis/`
+(veredicto en SQL, resultados por corrida, capturas). `make help` lista todo;
+`make e2e` verifica el montaje; `make experimentos` corre E01 y E02 (~4 h 20 min).
+El plan y los supuestos S-10 y S-11 están en `notas/plan-implementacion-experimentos.md`.
+No abrir Grafana mientras una corrida de E02 mide: su carga llegó a vencer
+sondeos del Monitor.
 
 ### Los ASR
 

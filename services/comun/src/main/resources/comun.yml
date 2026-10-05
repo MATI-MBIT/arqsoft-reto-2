@@ -1,0 +1,30 @@
+# Configuración que comparten todos los micros. Cada uno la importa desde su
+# application.yml con spring.config.import.
+server:
+  port: 8080
+spring:
+  main:
+    banner-mode: off
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/reto2}
+    username: ${DB_USER:reto2}
+    password: ${DB_PASSWORD:reto2}
+    hikari:
+      maximum-pool-size: 10
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  health:
+    rabbit:
+      enabled: false

@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: receptor-${ROL:sms}
+  config:
+    import: classpath:comun.yml
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    username: ${RABBIT_USER:reto2}
+    password: ${RABBIT_PASSWORD:reto2}

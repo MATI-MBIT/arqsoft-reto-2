@@ -13,3 +13,14 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Prototipo de los experimentos
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+bin/
+*.iml
+gradle.properties
+analisis/resultados/*/eventos-*.csv
+analisis/resultados/humo-*
+analisis/resultados/resumen-*.tsv

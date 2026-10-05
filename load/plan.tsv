@@ -1,0 +1,40 @@
+# Plan de corridas de los experimentos E01 y E02.
+#
+# Esto es DATO, no código: cada fila es una corrida y dice a qué hipótesis
+# sirve. Agregar un punto de medida es agregar una línea. El orquestador
+# (experimento.sh) lo lee y lo ejecuta en orden.
+#
+# grupo        para correr por partes: ./load/experimento.sh e02
+# id           nombre de la corrida; la carpeta de resultados le agrega la hora
+# experimento  E01 (H1, ASR-1) o E02 (H2, ASR-3)
+# fase         E01: la FASE de load/k6/e01.js. E02: solo etiqueta; lo que se
+#              corre lo dicen las variables D1_S, REPS y CONGELAR
+# criterio     decide = la corrida entra al veredicto de la hipótesis | observa
+# vars         K=V;K=V. Por omisión: WARMUP_S=300 · TASA_BASE=2 (S-10)
+#              SONDEO_T_MS=2000 · SONDEO_N=3 · SONDEO_ESPERA_MS=500
+#              D1_S=0 (segundos sin fallas) · REPS=0 (caídas, D2) · CAIDA_S=45
+#              PAUSA_S=30 · CONGELAR=0 (congelamientos, D3) · ESPACIO_S=60
+#              GRACIA_S=60 (espera tras el fin para que lleguen las salidas)
+#
+# grupo	id	experimento	fase	criterio	vars	pregunta
+humo	humo-e01	E01	SMOKE	observa	WARMUP_S=20;GRACIA_S=10	¿Circula E01 de punta a punta? (~2,5 min)
+humo	humo-e02	E02	HUMO	observa	WARMUP_S=20;D1_S=20;REPS=3;CAIDA_S=20;PAUSA_S=15;CONGELAR=3;ESPACIO_S=10;GRACIA_S=40	¿Circula E02 de punta a punta? (~4 min)
+e01	e01-s1	E01	S1	decide	-	¿Avisa en ≤ 2 s por cada sesión desde un dispositivo no registrado?
+e01	e01-s2	E01	S2	decide	-	¿Hay ≤ 1 aviso por cada 100 cambios legítimos?
+e01	e01-s3	E01	S3	decide	-	¿Ve el registro hecho menos de 1 s antes de abrir la sesión?
+e01	e01-s4	E01	S4	observa	-	¿A qué tasa de aperturas empieza a atrasarse el aviso?
+e02	e02-d1	E02	D1	decide	D1_S=3600	¿Hay ≤ 1 falsa alarma por hora sin fallas?
+e02	e02-d2	E02	D2	decide	REPS=30	¿Llega a la cola en ≤ 30 s todo pedido de una etapa caída?
+e02	e02-d3	E02	D3	decide	CONGELAR=30	¿Ve el pedido congelado dentro de una etapa viva?
+e02-d4	d4-t1-n1	E02	D4	observa	SONDEO_T_MS=1000;SONDEO_N=1;D1_S=1200;REPS=15	T=1 s, N=1: ¿falsas alarmas y demora de D2? (N×T=1 s)
+e02-d4	d4-t1-n2	E02	D4	observa	SONDEO_T_MS=1000;SONDEO_N=2;D1_S=1200;REPS=15	T=1 s, N=2: ¿falsas alarmas y demora de D2? (N×T=2 s)
+e02-d4	d4-t1-n3	E02	D4	observa	SONDEO_T_MS=1000;SONDEO_N=3;D1_S=1200;REPS=15	T=1 s, N=3: ¿falsas alarmas y demora de D2? (N×T=3 s)
+e02-d4	d4-t1-n5	E02	D4	observa	SONDEO_T_MS=1000;SONDEO_N=5;D1_S=1200;REPS=15	T=1 s, N=5: ¿falsas alarmas y demora de D2? (N×T=5 s)
+e02-d4	d4-t2-n1	E02	D4	observa	SONDEO_T_MS=2000;SONDEO_N=1;D1_S=1200;REPS=15	T=2 s, N=1: ¿falsas alarmas y demora de D2? (N×T=2 s)
+e02-d4	d4-t2-n2	E02	D4	observa	SONDEO_T_MS=2000;SONDEO_N=2;D1_S=1200;REPS=15	T=2 s, N=2: ¿falsas alarmas y demora de D2? (N×T=4 s)
+e02-d4	d4-t2-n3	E02	D4	observa	SONDEO_T_MS=2000;SONDEO_N=3;D1_S=1200;REPS=15	T=2 s, N=3: ¿falsas alarmas y demora de D2? (N×T=6 s)
+e02-d4	d4-t2-n5	E02	D4	observa	SONDEO_T_MS=2000;SONDEO_N=5;D1_S=1200;REPS=15	T=2 s, N=5: ¿falsas alarmas y demora de D2? (N×T=10 s)
+e02-d4	d4-t5-n1	E02	D4	observa	SONDEO_T_MS=5000;SONDEO_N=1;D1_S=1200;REPS=15	T=5 s, N=1: ¿falsas alarmas y demora de D2? (N×T=5 s)
+e02-d4	d4-t5-n2	E02	D4	observa	SONDEO_T_MS=5000;SONDEO_N=2;D1_S=1200;REPS=15	T=5 s, N=2: ¿falsas alarmas y demora de D2? (N×T=10 s)
+e02-d4	d4-t5-n3	E02	D4	observa	SONDEO_T_MS=5000;SONDEO_N=3;D1_S=1200;REPS=15	T=5 s, N=3: ¿falsas alarmas y demora de D2? (N×T=15 s)
+e02-d4	d4-t5-n5	E02	D4	observa	SONDEO_T_MS=5000;SONDEO_N=5;D1_S=1200;REPS=15	T=5 s, N=5: ¿falsas alarmas y demora de D2? (N×T=25 s)
