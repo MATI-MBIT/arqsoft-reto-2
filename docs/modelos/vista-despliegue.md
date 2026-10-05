@@ -14,13 +14,22 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 
 | Notación | Significado |
 |---|---|
-| Cubo «device» | Nodo físico o virtual: un teléfono o el nodo de un producto comprado |
-| Cubo «executionEnvironment» | Entorno de ejecución; aquí, la JVM que corre el servicio |
-| «artifact» (hoja con esquina doblada) | Lo que se despliega en el nodo |
-| ×N | Número de instancias. ×1 marca una pieza sin réplica |
-| Línea sin punta | Ruta de comunicación, con su protocolo y su puerto. Un arco marca el cruce de dos rutas que no se tocan |
-| Amarillo | Nodo que aloja una táctica de un ADR o un riesgo de instancia única |
-| Nota | ADR o riesgo anclado al nodo |
+| Cubo «device» | Nodo físico o virtual: un teléfono, un equipo, el balanceador o el nodo de un producto comprado (Redis, RabbitMQ, PostgreSQL) |
+| Cubo «executionEnvironment» | Entorno de ejecución; aquí, la JVM 21 que corre cada servicio, o el Docker de la observabilidad |
+| Cubo gris «external» | Actor o sistema fuera del alcance que recibe algo del sistema: el Área de seguridad y el Sistema de logística |
+| «artifact» (hoja con esquina doblada) | Lo que se despliega en el nodo. Dentro de RabbitMQ son los vhosts con sus temas; dentro de PostgreSQL, los «schema» de cada servicio |
+| ×N | Número de instancias que corren a la vez, las de DG-CON-001. ×1 marca una pieza sin réplica. En los dispositivos, ×N indica que hay muchos |
+| Línea negra continua | «HTTPS»: llamada síncrona, con la operación que invoca |
+| Línea azul discontinua | «AMQP»: el servicio publica o consume en el bróker |
+| Línea verde continua | «JDBC»: el servicio escribe y lee en su esquema de la base |
+| Línea roja continua | «REST»: lectura o escritura en Redis |
+| Línea gris punteada | Recolección de métricas desde cada JVM |
+| Arco en una línea | Cruce de dos rutas que no se tocan |
+| Amarillo | Nodo que aloja una táctica de un ADR |
+| Borde punteado | Propuesta sin ADR que la respalde |
+| Marco «Red interna de CCP» | Lo que corre dentro de la red de CCP. Los dispositivos, el balanceador y los externos quedan fuera |
+| Nota | ADR, riesgo o propuesta anclada al nodo |
+| Franja «Por dónde pasa cada ASR» | El recorrido de cada ASR, nodo por nodo, con su medida |
 | Aproximación en la copia Mermaid | Mermaid no dibuja el cubo 3D del nodo UML; el marco con «device» o «executionEnvironment» lo reemplaza |
 
 ---
@@ -35,90 +44,45 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 
 | Nodo | Instancias | Componentes que corren ahí | De dónde sale |
 |---|---|---|---|
-| Teléfono | ×N | App móvil. El del vendedor lo suministra CCP (R-2); el del tendero es suyo (R-11) | contexto |
+| Teléfono del vendedor | ×N | App móvil, que calcula la huella del dispositivo. Lo suministra CCP (R-2, R-11) | contexto · ADR-007 |
+| Teléfono del tendero | ×N | App móvil. Es del tendero (R-8, R-11) | contexto |
+| Equipo del usuario interno | ×N | Cliente de consulta del perfil de solo consulta (S-8). Es el origen de la escritura indebida | contexto · S-8 |
+| Consola del responsable del pedido escalado | ×N | Navegador con el que el soporte de CCP atiende la Bandeja (HU-14) | **propuesta** |
+| Balanceador de carga | ×1 | Termina TLS y reparte las peticiones entre las dos Puertas | **propuesta** |
 | Puerta de entrada | ×2 | Puerta de entrada de la API | ADR-009 |
-| Identidad y seguridad | ×2 | Gestor de sesión, Verificador de dispositivo, Detector de escrituras indebidas, Reacción ante acceso indebido, Notificador a seguridad | **propuesta**: agrupa lo que observa la sesión y la escritura |
-| Pedidos e Inventario | ×2 | Pedidos e Inventario, con su relevo del outbox | **propuesta**: son las dos funciones que escriben (ADR-008) |
-| Facturación y Validación de despacho | ×2 | Las dos etapas que sondea el Monitor | **propuesta** |
-| Coordinador y Bandeja | ×1 | Coordinador de la cadena, Bandeja de pedidos escalados | ADR-002; la Bandeja junto al Coordinador es **propuesta** |
-| Monitor de la cadena | ×1 | Monitor de la cadena | ADR-004 |
-| Redis | ×1 | Lista de revocación | ADR-009 |
-| RabbitMQ | ×1 | Bróker: `sesion.abierta`, `escritura.realizada`, `alerta.seguridad`, `etapa.ejecutar`, `etapa.completada`, `cadena.escalada`, `pedido.listo` y la Cola de reintentos | ADR-001 · ADR-006 |
-| PostgreSQL | ×1 | Base transaccional con un esquema por servicio: `CadenaEtapa` en el del Coordinador, `EtapaProcesada` y el efecto en el de cada etapa, la bitácora y el outbox en el de Pedidos e Inventario | ADR-001 · ADR-002 · ADR-005 · ADR-008 |
+| Gestor de sesión | ×2 | Gestor de sesión | ADR-007 · ADR-009 |
+| Verificador de dispositivo | ×2 | Verificador de dispositivo | ADR-007 |
+| Notificador a seguridad | ×2 | Notificador a seguridad. La deduplicación por `idAlerta` es **propuesta** | ADR-007 · ADR-010 |
+| Detector de escrituras indebidas | ×2 | Detector de escrituras indebidas | ADR-008 |
+| Reacción ante acceso indebido | ×2 | Reacción ante acceso indebido | ADR-009 · ADR-010 |
+| Pedidos | ×2 | Pedidos, con su relevo del outbox | ADR-008 · ADR-010 |
+| Inventario | ×2 | Inventario, con su relevo del outbox. También es la etapa de descargue | ADR-005 · ADR-008 · ADR-010 |
+| Facturación | ×2 | Facturación | ADR-005 |
+| Validación de despacho | ×2 | Validación de despacho | ADR-005 |
+| Coordinador de la cadena | ×1 | Coordinador de la cadena, con su Reanudador | ADR-002 · ADR-003 · ADR-006 |
+| Bandeja de pedidos escalados | ×1 | Bandeja de pedidos escalados | ADR-006 |
+| Monitor de la cadena | ×1 | Monitor de la cadena. Su esquema propio para `Senal` es **propuesta** | ADR-004 |
+| Área de seguridad | — | Externo. Recibe los avisos; el canal está abierto (CN-12) | contexto |
+| Sistema de logística | — | Externo. Desencola `pedido.listo` | contexto · S-2 |
+| Redis | ×1 | Lista de revocación: claves `jti` e `idActor` que vencen con el token | ADR-009 · SUP-01 |
+| RabbitMQ | ×1 | Bróker con dos vhosts. `/seguridad`: `sesion.abierta`, `escritura.realizada`, `alerta.seguridad`. `/cadena`: `etapa.ejecutar`, `etapa.completada`, `cadena.escalada`, `pedido.listo`, `cola.reintentos` y `cola.fallidos`. La separación en vhosts es **propuesta** | ADR-001 · ADR-006 |
+| PostgreSQL | ×1 | Base transaccional con un esquema por servicio: `CadenaEtapa` en el del Coordinador, `EtapaProcesada` y el efecto en el de cada etapa, la bitácora y el outbox en los de Pedidos e Inventario, `Reaccion`, `DispositivoRegistrado`, `Senal` y el registro de eventos para medir (R-12) | ADR-001 · ADR-002 · ADR-005 · ADR-008 · ADR-010 |
+| Observabilidad | ×1 | Prometheus y Grafana, con las métricas de cada JVM | **propuesta** · R-12 |
+
+Las ×2 de los servicios salen de DG-CON-001; ningún ADR fija ese número.
 
 | ID | Táctica (curso) | Nodo | ADR | Precio → cobra a |
 |---|---|---|---|---|
-| DIS-11 | Réplicas de servicios sin estado en memoria: cualquier instancia atiende | Los cuatro nodos ×2 | **propuesta** | El estado sale a la base, el bróker y la Lista, que quedan ×1 → disponibilidad de esos tres |
+| DIS-11 | Réplicas de servicios sin estado en memoria: cualquier instancia atiende | Los diez servicios ×2 · Balanceador delante de las Puertas | **propuesta** | El estado sale a la base, el bróker y la Lista, que quedan ×1 → disponibilidad de esos tres. Dos instancias pueden tomar el mismo trabajo → exige clave única en `Reaccion` (`idEscritura`) y en los avisos (`idAlerta`) |
 | SEG-13 | La revocación vive fuera de las instancias de la Puerta, así que alcanza a las dos | Redis | ADR-009 | En el camino de cada petición → disponibilidad del borde (R-1, TO-009a) |
-| INT-08 · DIS-15 | Orquestación con estado persistido: el estado sobrevive a la caída del Coordinador porque vive en la base | Coordinador ×1 · PostgreSQL | ADR-002 | Si el Coordinador cae, ninguna cadena avanza hasta que vuelva → ASR-4 (R-002a) |
-| DIS-03 · DIS-01 | Monitor dedicado que sondea la salud de las etapas | Monitor ×1 · ruta hacia Facturación y Validación de despacho | ADR-004 | Si el Monitor cae, nadie detecta nada → ASR-3 (R-004a). Tráfico de sondeo cada 5 s → desempeño |
-| MOD-04 · DIS-14 | Colas durables; lo que la Cola de reintentos no entrega va a la Bandeja | RabbitMQ | ADR-001 · ADR-006 | Pieza común de los cuatro caminos (R-001a) |
+| INT-08 · DIS-15 | Orquestación con estado persistido: el estado sobrevive a la caída del Coordinador porque vive en la base | Coordinador ×1 · PostgreSQL | ADR-002 | Si el Coordinador cae, ninguna cadena avanza hasta que vuelva y nada lo reinicia → ASR-4 (R-002a) |
+| DIS-04 · DIS-03 · DIS-01 | Monitor dedicado: barre los plazos vencidos por pedido y etapa, y sondea la salud de las tres etapas | Monitor ×1 · rutas hacia Facturación, Inventario y Validación de despacho · esquema `monitor` (**propuesta**) | ADR-004 | Si el Monitor cae, nadie detecta nada → ASR-3 (R-004a). Pide las vencidas al Coordinador (CN-33), así que queda ciego si este cae, y nadie vigila al Coordinador → ASR-3. Tráfico de sondeo cada 5 s → desempeño |
+| DIS-17 · SEG-18 | Cada servicio escribe en su propio esquema; el efecto, la bitácora, el outbox y `EtapaProcesada` van en la misma transacción | PostgreSQL ×1 · doce esquemas | ADR-001 · ADR-005 · ADR-008 | Una o dos filas más por escritura → desempeño. La bitácora vive en la misma base que el actor escribió → SEG-18 se cumple solo en parte |
+| MOD-04 · DIS-12 · DIS-14 | Colas durables; lo que la Cola de reintentos no entrega va a `cola.fallidos`, que consume la Bandeja | RabbitMQ · vhost `/cadena` | ADR-001 · ADR-006 | Pieza común de los cuatro caminos (R-001a) |
+
 
 **Qué muestra:** los servicios sin estado en memoria corren con dos instancias, y todo su estado vive en tres piezas únicas: la base, el bróker y la Lista de revocación. El Coordinador y el Monitor corren como instancia única, y ese es el precio que ADR-002 y ADR-004 aceptaron. · **Decisión que refleja:** ADR-001 (bróker y base), ADR-002 (Coordinador ×1), ADR-004 (Monitor ×1 y el sondeo), ADR-005 (la clave única en la base de cada etapa), ADR-006 (la Cola de reintentos y la Bandeja), ADR-008 (el outbox) y ADR-009 (la Lista consultada desde el borde). · **Qué no muestra:** la nube, el orquestador de contenedores, la red y la redundancia de la base, el bróker y la Lista, porque S-3 deja las fallas de infraestructura fuera del alcance. Tampoco muestra Logística, cuyo protocolo de entrada no está definido, ni la ruta del Monitor a la base, que ningún conector de los ADR fija.
 
 **Por qué no se dibuja redundancia en el Coordinador ni en el Monitor.** El catálogo del curso pide, para disponibilidad, un despliegue con la redundancia visible. Aquí la redundancia visible es la de los servicios ×2; la de las dos piezas centrales no existe todavía. ADR-004 deja abierta la opción de dos Monitores con un candado en la base (R-004a), y ningún ADR propone un segundo Coordinador. Cuando uno lo decida, este diagrama cambia.
 
-### Copia en Mermaid
 
-```mermaid
----
-title: "DG-DEP-001 · ¿Dónde corre cada componente y qué queda como instancia única?"
-config:
-  layout: elk
-  theme: default
-  look: classic
----
-%% id: DG-DEP-001 | tipo: despliegue | asr: [ASR-1, ASR-2, ASR-3, ASR-4] | adr: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-010] | estado: propuesta
-%% leyenda: documento · copia del original en drawio/vista-despliegue.drawio · nodo UML (cubo) aproximado con marco «device»/«executionEnvironment»
-flowchart LR
-    subgraph TEL["«device» Teléfono ×N"]
-        APK@{ shape: doc, label: "«artifact»<br/>app-ccp.apk" }
-    end
-    subgraph NGW["«executionEnvironment» JVM 21 ×2 · Puerta de entrada de la API"]
-        JGW@{ shape: doc, label: "«artifact»<br/>puerta-entrada.jar" }
-    end
-    subgraph NSEG["«executionEnvironment» JVM 21 ×2 · Identidad y seguridad"]
-        JSEG@{ shape: doc, label: "«artifact»<br/>identidad-seguridad.jar" }
-    end
-    subgraph NESC["«executionEnvironment» JVM 21 ×2 · Pedidos e Inventario"]
-        JESC@{ shape: doc, label: "«artifact»<br/>pedidos-inventario.jar" }
-    end
-    subgraph NETA["«executionEnvironment» JVM 21 ×2 · Facturación y Validación de despacho"]
-        JETA@{ shape: doc, label: "«artifact»<br/>etapas.jar" }
-    end
-    subgraph NCOO["«executionEnvironment» JVM 21 ×1 · Coordinador y Bandeja"]
-        JCOO@{ shape: doc, label: "«artifact»<br/>coordinador.jar" }
-    end
-    subgraph NMON["«executionEnvironment» JVM 21 ×1 · Monitor de la cadena"]
-        JMON@{ shape: doc, label: "«artifact»<br/>monitor.jar" }
-    end
-    RED["«device» ×1<br/>Redis · Lista de revocación"]
-    BRK["«device» ×1<br/>RabbitMQ · temas y Cola de reintentos"]
-    PG["«device» ×1<br/>PostgreSQL · un esquema por servicio"]
-
-    TEL ---|"«HTTPS» 443"| NGW
-    NGW ---|"«RESP» 6379 · en cada petición"| RED
-    NGW ---|"«HTTPS» sesión"| NSEG
-    NGW ---|"«HTTPS» escrituras y consultas"| NESC
-    NSEG ---|"«RESP» revocar"| RED
-    NSEG ---|"«HTTPS» compensar"| NESC
-    NSEG ---|"«AMQP» 5672"| BRK
-    NSEG ---|"«JDBC» 5432"| PG
-    NESC ---|"«AMQP» outbox"| BRK
-    NESC ---|"«JDBC»"| PG
-    NESC ---|"«HTTPS» iniciar"| NCOO
-    NETA ---|"«AMQP»"| BRK
-    NETA ---|"«JDBC»"| PG
-    NCOO ---|"«AMQP»"| BRK
-    NCOO ---|"«JDBC»"| PG
-    NMON ---|"«HTTPS» vencidas"| NCOO
-    NMON ---|"«HTTPS» salud cada 5 s"| NETA
-    NMON ---|"«AMQP» encolar"| BRK
-
-    N1>"ADR-009 · ×1 en el camino de cada petición"]
-    N1 -.- RED
-    N2>"R-002a y R-004a · ×1 sin réplica"]
-    N2 -.- JMON
-    classDef tactica fill:#fff4d6,stroke:#b8860b
-    class RED,BRK,PG,JCOO,JMON tactica
-```
