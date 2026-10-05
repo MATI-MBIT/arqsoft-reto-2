@@ -115,9 +115,12 @@ Prometheus y Grafana para ver la corrida, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
 Resultados (corridas del 2026-10-04, en `docs/results.md`): H1 se sostiene en
-S1, S2 y S3 → aceptar ADR-007. H2 cae en D3 (0 de 30 congelados detectados) y en
-D2 (9 de 1 522 pedidos tardíos por la ventana ciega al recuperarse la etapa) →
-confirmar ADR-004. D4 no corrió.
+S1, S2 y S3 → aceptar ADR-007. H2 cae en D3 (0 de 30 congelados detectados). D2
+pasa con el criterio literal (91 pedidos en curso, ≤ 6,4 s) y falla al contar
+los 1 537 detenidos (25 en la ventana ciega al recuperarse la etapa) →
+confirmar ADR-004. D4 no corrió. Aceptar ADR-007 pide ajustar su texto: el
+experimento validó la comparación dentro del micro de sesiones, no un
+Verificador aparte.
 
 ### El prototipo
 

@@ -8,7 +8,7 @@ Esta página dibuja qué componentes tiene el sistema, por dónde se hablan y c�
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta, así que cada diagrama también lo está. La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md).
 
-**Fuente: draw.io.** El original de los tres diagramas es [vista-componentes.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-componentes.drawio), que se abre en draw.io web ([descargar](drawio/vista-componentes.drawio)), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia: un cambio se hace primero en el draw.io y después se copia al Mermaid.
+**Fuente: draw.io.** Los diagramas viven en [vista-componentes.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-componentes.drawio), que se abre en draw.io web ([descargar](drawio/vista-componentes.drawio)), con una pestaña por diagrama. Cada imagen de esta página se exporta de ese archivo; un cambio se hace en el draw.io y después se vuelve a exportar.
 
 ## Cómo leer esta página
 
@@ -35,6 +35,9 @@ Esta página dibuja qué componentes tiene el sistema, por dónde se hablan y c�
 | T1, T2… | Marca de táctica. La tabla bajo el diagrama dice cuál es, con su ID del catálogo del curso, su ADR y su precio |
 | Amarillo | Componente o parte que aloja una táctica de un ADR |
 | Línea punteada roja | Mensaje que no se pudo procesar y va a otro destino |
+| Figura de palo | Actor: una persona que usa el sistema (CCP Support, Responsable del pedido escalado, Área de seguridad) |
+| Marco punteado | Agrupación sin semántica de componente: las etapas de la cadena |
+| Línea azul (solo en el panorama) | Flujo agregado por el equipo que no sale de ningún ADR; ver «Diferencias por resolver» |
 | Nota | ADR y precio de la decisión anclada |
 
 Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La portada tiene la tabla que traduce las tácticas de cada ADR a esos ID.
@@ -51,82 +54,22 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 
 | Marca | ID | Táctica (curso) | Componente | ADR | Precio → cobra a |
 |---|---|---|---|---|---|
-| — | EST-03 · MOD-04 · DIS-17 | Estilo dirigido por eventos: intermediario durable entre componentes y transacción local en cada servicio | Todo el diagrama: cada arista «event» pasa por el bróker | ADR-001 | Un salto más por evento → latencia de ASR-1 y ASR-2 (TO-001a). El bróker es pieza común de los cuatro caminos (R-001a) |
+| — | EST-03 · MOD-04 · DIS-17 | Estilo dirigido por eventos: intermediario durable entre componentes y transacción local en cada servicio | Todo el diagrama: las aristas «event» de seguridad pasan por el bróker, y las de la cadena, por el Broker de Eventos (T8) | ADR-001 | Un salto más por evento → latencia de ASR-1 y ASR-2 (TO-001a). El bróker es pieza común de los cuatro caminos (R-001a) |
 | T1 | SEG-02 · SEG-13 | Autenticar en el borde y revocar el acceso | Puerta de entrada · Lista de revocación | ADR-009 | Una consulta a la Lista por cada petición → disponibilidad del borde (R-1) |
 | T2 | SEG-02 · SEG-09 · SEG-15 | Dispositivo como parte de la identidad, detectar la intrusión e informar | Gestor de sesión · Verificador · Notificador | ADR-007 | Cada cambio legítimo de equipo exige registro previo, o es falsa alarma → ASR-1 |
 | T3 | SEG-18 · DIS-17 | Bitácora de escrituras y evento en la misma transacción | Pedidos · Inventario | ADR-008 | Dos filas más por escritura → desempeño de la escritura |
 | T4 | SEG-09 | Detectar la escritura contra el permiso vigente | Detector | ADR-008 | Una consulta de permisos por escritura → ASR-2 si el Gestor tarda (R-008a) |
 | T5 | SEG-13 · SEG-14 · DIS-13 · SEG-15 | Reacción ordenada: revocar, bloquear, compensar y avisar | Reacción | ADR-009 · ADR-010 | Una operación inversa por tipo de escritura → modificabilidad |
 | T6 | INT-08 · DIS-15 · INT-10 · DIS-12 · DIS-14 | Orquestar la cadena con estado por etapa, en orden, con un reintento y escalamiento | Coordinador | ADR-002 · ADR-003 · ADR-006 | Punto central (R-002a) → ASR-4. La cadena dura la suma de las tres etapas (R-003a) |
-| T7 | DIS-04 · DIS-03 · DIS-01 | Plazo vencido por pedido, monitor que barre y sondeo de salud de apoyo | Monitor | ADR-004 | Plazo por calibrar → falsas alarmas de ASR-3 (TO-004a). Punto único (R-004a) |
-| T8 | DIS-17 | Idempotencia por pedido y etapa con clave única en la transacción del efecto | Facturación · Inventario · Validación de despacho | ADR-005 | Una fila más por pedido y etapa → almacenamiento |
+| T7 | DIS-04 · DIS-03 · DIS-01 | Plazo vencido por pedido, monitor que barre y sondeo de salud (ping/echo) de apoyo | Monitor: avisa al Coordinador la falla de estado de los servicios y verifica las etapas por ping/echo | ADR-004 | Plazo por calibrar → falsas alarmas de ASR-3 (TO-004a). Punto único (R-004a) |
+| T8 | [PREGUNTA] | Bróker de eventos de la cadena: recibe `etapa.ejecutar` y `etapa.completada` del Coordinador, los enruta a las etapas y manda lo que falla a la Dead-Letter-Queue | Broker de Eventos Cadena de suministros | ADR-001 · ADR-006 | [PREGUNTA] |
+| T9 · T10 | DIS-17 | Idempotencia por pedido y etapa con clave única en la transacción del efecto | Facturación (T9) · Inventario y Validación de despacho (T10) | ADR-005 | Una fila más por pedido y etapa → almacenamiento |
+| T11 | [PREGUNTA] | Cola de mensajes fallidos de la cadena, que atiende el soporte de CCP | Dead-Letter-Queue | ADR-006 | [PREGUNTA] |
 
-**Qué muestra:** los dieciséis componentes del sistema y el camino de cada ASR. Los de seguridad observan la sesión y la escritura por eventos, sin frenarlas. Los de disponibilidad llevan la cadena del pedido por un Coordinador que el Monitor vigila desde afuera. · **Decisión que refleja:** los diez ADR, cada uno con su marca. · **Qué no muestra:** los actores, las partes internas y los temas como nodos. Esos detalles están en DG-CMP-002 y DG-CMP-003.
+**Qué muestra:** los componentes del sistema y el camino de cada ASR. Los de seguridad observan la sesión y la escritura por eventos, sin frenarlas. Los de disponibilidad llevan la cadena del pedido por un Coordinador que habla con las etapas a través del Broker de Eventos de la cadena. El Monitor vigila desde afuera: avisa al Coordinador las fallas y verifica las etapas por ping/echo. Lo que el bróker no logra entregar va a la Dead-Letter-Queue, que atiende el soporte de CCP. · **Decisión que refleja:** los diez ADR, cada uno con su marca. · **Qué no muestra:** las partes internas, ni los temas de seguridad como nodos; esos detalles están en DG-CMP-002 y DG-CMP-003.
 
-**Tamaño (AP-09, 19 elementos).** Es el único diagrama cuya pregunta es el sistema entero. Para que quepa bajo el tope de 20, los temas de eventos van plegados en la arista discontinua y las etapas se agrupan en un marco.
+**Tamaño.** El panorama tiene 22 elementos, sobre el tope de 20 que fija la skill de diagramas. Para que se lea, los temas de seguridad van plegados en la arista discontinua y las etapas se agrupan en un marco.
 
-### Copia en Mermaid
-
-```mermaid
----
-title: "DG-CMP-001 · Panorama: los componentes del sistema y cómo se hablan"
-config:
-  layout: elk
-  theme: default
-  look: classic
----
-%% id: DG-CMP-001 | tipo: componentes | asr: [ASR-1, ASR-2, ASR-3, ASR-4] | adr: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-010] | estado: propuesta
-%% leyenda: documento · copia del original en drawio/vista-componentes.drawio
-flowchart LR
-    APP["«component»<br/>App móvil"]
-    GW["«component» T1<br/>Puerta de entrada de la API"]
-    LRV["«datastore» T1<br/>Lista de revocación"]
-    SES["«component» T2<br/>Gestor de sesión"]
-    VDI["«component» T2<br/>Verificador de dispositivo"]
-    NOT["«component» T2<br/>Notificador a seguridad"]
-    PED["«component» T3<br/>Pedidos"]
-    ICOM(("ICompensacion"))
-    DET["«component» T4<br/>Detector de escrituras indebidas"]
-    REA["«component» T5<br/>Reacción ante acceso indebido"]
-    COO["«component» T6<br/>Coordinador de la cadena"]
-    MON["«component» T7<br/>Monitor de la cadena"]
-    subgraph ETA["Etapas de la cadena"]
-        FAC["«component» T8<br/>Facturación"]
-        INV["«component» T3 · T8<br/>Inventario"]
-        DES["«component» T8<br/>Validación de despacho"]
-    end
-    BES["«component»<br/>Bandeja de pedidos escalados"]
-    LOG["«external»<br/>Logística"]
-
-    APP -- "token y huella" --> GW
-    GW -- "consulta en cada petición" --> LRV
-    GW -- "abrirSesion" --> SES
-    GW -- "crear pedido" --> PED
-    GW -- "consultar · descargar" --> INV
-    SES -. "«event» sesion.abierta" .-> VDI
-    VDI -. "«event» alerta.seguridad" .-> NOT
-    PED -. "«event» escritura.realizada" .-> DET
-    INV -. "«event» escritura.realizada" .-> DET
-    DET -- "permisosVigentes" --> SES
-    DET -- "reaccionar" --> REA
-    REA -- "revocar sesión y actor" --> LRV
-    REA -- "bloquear" --> SES
-    REA -. "compensar" .-> ICOM
-    ICOM --- PED
-    ICOM --- INV
-    REA -. "«event» alerta.seguridad" .-> NOT
-    PED -- "iniciar cadena" --> COO
-    COO <-. "«event» etapa.ejecutar · etapa.completada" .-> ETA
-    MON -- "vencidas · reanudar por cola" --> COO
-    MON -- "sondeo de salud" --> ETA
-    COO -. "«event» cadena.escalada" .-> BES
-    COO -. "«event» pedido.listo" .-> LOG
-
-    N1>"ADR-001 · +1 salto por bróker en cada «event»"]
-    N1 -.- NOT
-    classDef tactica fill:#fff4d6,stroke:#b8860b
-    class GW,LRV,SES,VDI,NOT,PED,DET,REA,COO,MON,FAC,INV,DES tactica
-```
 
 ---
 
@@ -178,99 +121,8 @@ Los demás quedan como caja negra. El Gestor de sesión fija t0 y el Detector fi
 
 **Qué muestra:** que ni el inicio de sesión ni la escritura esperan el control de seguridad. El Gestor y las dos funciones que escriben publican su evento, y el Verificador y el Detector deciden después. Dentro de la Reacción, la revocación sale primero por ClienteIdentidad y la compensación va al final. · **Decisión que refleja:** ADR-007 a ADR-010 sobre el estilo por eventos de ADR-001. · **Qué no muestra:** el tendero, que no tiene dispositivo suministrado (R-007a), ni quién usa `IRegistroDispositivo` para registrar un cambio legítimo de equipo, que el ADR deja abierto.
 
-**Tamaño (AP-09, 34 elementos).** El diagrama pasa el tope de 20 porque junta dos caminos y abre dos componentes en el mismo dibujo. Es el precio de dejar la vista en tres diagramas. Se lee por franjas: la de arriba es ASR-1 y la de abajo es ASR-2.
+**Tamaño.** El diagrama tiene 34 elementos. El diagrama pasa el tope de 20 porque junta dos caminos y abre dos componentes en el mismo dibujo. Es el precio de dejar la vista en tres diagramas. Se lee por franjas: la de arriba es ASR-1 y la de abajo es ASR-2.
 
-### Copia en Mermaid
-
-```mermaid
----
-title: "DG-CMP-002 · ASR-1 y ASR-2: qué detecta la sesión ajena y la escritura indebida, y cómo reacciona"
-config:
-  layout: elk
-  theme: default
-  look: classic
----
-%% id: DG-CMP-002 | tipo: componentes | asr: [ASR-1, ASR-2] | adr: [ADR-001, ADR-007, ADR-008, ADR-009, ADR-010] | estado: propuesta
-%% leyenda: documento · copia del original en drawio/vista-componentes.drawio · cajas blancas en sitio
-flowchart LR
-    APP["«component» T1<br/>App móvil"]
-    GW["«component» T5<br/>Puerta de entrada de la API"]
-    SES["«component» T1<br/>Gestor de sesión"]
-    LRV["«datastore» T5<br/>Lista de revocación"]
-    EVS(("«event»<br/>sesion.abierta"))
-    subgraph VDI["«component» Verificador de dispositivo"]
-        pSUS["«port» pSesiones"]
-        pREG["«port» pRegistro"]
-        CONS["«boundary»<br/>ConsumidorSesiones"]
-        CMPH["«control» T2<br/>ComparadorHuella"]
-        RDIS["«entity»<br/>RegistroDispositivos"]
-        CTRR["«boundary»<br/>ControladorRegistro"]
-        PUB1["«adapter»<br/>PublicadorAlertas"]
-        pALE1["«port» pAlerta"]
-    end
-    EVA(("«event»<br/>alerta.seguridad"))
-    NOT["«component» T3<br/>Notificador a seguridad"]
-    AREA["«external»<br/>Área de seguridad"]
-    PED["«component» T4<br/>Pedidos"]
-    INV["«component» T4<br/>Inventario"]
-    EVE(("«event»<br/>escritura.realizada"))
-    DET["«component» T6<br/>Detector de escrituras indebidas"]
-    subgraph REA["«component» Reacción ante acceso indebido"]
-        pREA["«port» pReaccion"]
-        ORQ["«control» T7<br/>OrquestadorReaccion"]
-        RREG["«entity»<br/>RegistroReacciones"]
-        CID["«adapter»<br/>ClienteIdentidad"]
-        CCO["«adapter»<br/>ClienteCompensacion"]
-        PUB2["«adapter»<br/>PublicadorAlertas"]
-        pLRV["«port» pRevocacion"]
-        pSES["«port» pSesion"]
-        pCOM["«port» pCompensacion"]
-        pALE2["«port» pAlerta"]
-    end
-
-    APP -- "con huella" --> GW
-    GW -- "abrirSesion" --> SES
-    GW -- "consulta en cada petición" --> LRV
-    GW -- "crear pedido" --> PED
-    SES -. "publica" .-> EVS
-    EVS -. "entrega" .-> pSUS
-    pSUS -- "«delegate»" --> CONS
-    CONS -- "comparar" --> CMPH
-    CMPH -- "huellaVigente" --> RDIS
-    CMPH -- "si no coincide" --> PUB1
-    pREG -- "«delegate»" --> CTRR
-    CTRR -- "registrar" --> RDIS
-    PUB1 -- "«delegate»" --> pALE1
-    pALE1 -. "publica" .-> EVA
-    EVA -. "entrega" .-> NOT
-    NOT -. "aviso" .-> AREA
-    PED -. "publica tras el commit" .-> EVE
-    INV -. "publica tras el commit" .-> EVE
-    EVE -. "entrega" .-> DET
-    DET -- "permisosVigentes" --> SES
-    DET -- "reaccionar" --> pREA
-    pREA -- "«delegate»" --> ORQ
-    ORQ -- "abrir · cerrar" --> RREG
-    ORQ -- "1 revocar · 2 bloquear" --> CID
-    ORQ -- "3 compensar" --> CCO
-    ORQ -- "4 avisar" --> PUB2
-    CID -- "«delegate»" --> pLRV
-    CID -- "«delegate»" --> pSES
-    CCO -- "«delegate»" --> pCOM
-    PUB2 -- "«delegate»" --> pALE2
-    pLRV -- "revocar sesión y actor" --> LRV
-    pSES -- "bloquear" --> SES
-    pCOM -- "compensar" --> PED
-    pCOM -- "compensar" --> INV
-    pALE2 -. "publica" .-> EVA
-
-    N1>"ADR-007 · aviso ≤ 2 s sin frenar el inicio de sesión"]
-    N1 -.- CMPH
-    N2>"ADR-010 · revocar, bloquear, compensar, avisar ≤ 5 s"]
-    N2 -.- ORQ
-    classDef tactica fill:#fff4d6,stroke:#b8860b
-    class APP,GW,SES,LRV,CMPH,NOT,PED,INV,DET,ORQ tactica
-```
 
 ---
 
@@ -291,7 +143,7 @@ flowchart LR
 | T5 | DIS-04 · DIS-03 | Plazo vencido por pedido y etapa, encontrado por un monitor que barre cada 5 s | BarridoPlazos | ADR-004 | Plazo corto da falsas alarmas y plazo largo incumple → ASR-3 (TO-004a). El Monitor también cae → ASR-3 (R-004a) |
 | T6 | DIS-01 | Sondeo de salud de las etapas, solo como apoyo | SondeoSalud | ADR-004 | Tráfico de sondeo, y no detecta la omisión que describe ASR-3 → desempeño |
 | T7 | DIS-14 | Degradación con gracia: lo que no se reanuda llega a una persona | Bandeja de pedidos escalados | ADR-006 | Carga manual sin cifra → usabilidad del responsable (R-006a) |
-| — | MOD-04 | Intermediario durable: el comando pendiente sobrevive a la caída de la etapa | Temas y Cola de reintentos | ADR-001 | Pieza común de los cuatro caminos (R-001a) |
+| — | MOD-04 | Intermediario durable: el comando pendiente sobrevive a la caída de la etapa | Broker de Eventos Cadena de Suministros (marcado T4 en el diagrama) · temas y Cola de reintentos | ADR-001 | Pieza común de los cuatro caminos (R-001a) |
 
 ### Por qué se abren estos dos componentes
 
@@ -315,107 +167,24 @@ Las etapas quedan como caja negra. Las tres siguen la misma receta de ADR-005: l
 | RegistroSenales | Monitor | «entity» | Una señal por pedido, etapa e intento |
 | ClienteCadena · ClienteSalud · PublicadorReintentos | Monitor | «adapter» | Salen por pEstado, pSalud y pReintentos |
 
-**Qué muestra:** la cadena corre por eventos y en orden. El Coordinador guarda el estado y el Monitor lo lee desde afuera. Lo que el reintento no resuelve termina en la Bandeja, por el tema `cadena.escalada` o por los mensajes fallidos de la Cola. · **Decisión que refleja:** ADR-001 a ADR-006. · **Qué no muestra:** la sincronización de la fila `CadenaEtapa` entre los hilos, que está en DG-CON-003, ni dónde guarda el Monitor sus señales, que ningún ADR decide.
+**Qué muestra:** la cadena corre por eventos y en orden. El Coordinador publica por su puerto pSalida en el Broker de Eventos de la cadena, que pone `etapa.ejecutar` a cada etapa. El Coordinador guarda el estado y el Monitor lo lee desde afuera. Lo que el reintento no resuelve termina en la Bandeja, por el tema `cadena.escalada` o por los mensajes fallidos de la Cola. · **Decisión que refleja:** ADR-001 a ADR-006. · **Qué no muestra:** la sincronización de la fila `CadenaEtapa` entre los hilos, que está en DG-CON-003, ni dónde guarda el Monitor sus señales, que ningún ADR decide.
 
-**Cambio frente a la v6.** El Coordinador tiene ahora dos puertos de entrada: pEntrada para `etapa.completada` y pReanudar para la Cola de reintentos. La Cola entrega directo al Reanudador, como ya lo dibujaba el diagrama de hilos de la v6. Es **propuesta**: ningún ADR fija la estructura interna del Coordinador.
+**Tamaño.** El diagrama tiene unos 39 elementos. Pasa el tope de 20 por la misma razón que DG-CMP-002. Se lee por franjas: arriba el Coordinador y las etapas, abajo el Monitor y la Cola.
 
-**Tamaño (AP-09, 38 elementos).** Pasa el tope de 20 por la misma razón que DG-CMP-002. Se lee por franjas: arriba el Coordinador y las etapas, abajo el Monitor y la Cola.
-
-### Copia en Mermaid
-
-```mermaid
 ---
-title: "DG-CMP-003 · ASR-3 y ASR-4: quién lleva la cadena, quién nota que se detuvo y quién la reanuda"
-config:
-  layout: elk
-  theme: default
-  look: classic
----
-%% id: DG-CMP-003 | tipo: componentes | asr: [ASR-3, ASR-4] | adr: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006] | estado: propuesta
-%% leyenda: documento · copia del original en drawio/vista-componentes.drawio · cajas blancas en sitio
-flowchart LR
-    PED["«component»<br/>Pedidos"]
-    IEST(("IEstadoCadena"))
-    subgraph COO["«component» Coordinador de la cadena"]
-        pEST["«port» pEstado"]
-        pENT["«port» pEntrada"]
-        pREAN["«port» pReanudar"]
-        CTL["«boundary»<br/>ControladorCadena"]
-        CON["«boundary»<br/>ConsumidorMensajes"]
-        ORQ["«control» T1<br/>OrquestadorCadena"]
-        RNA["«control» T2<br/>Reanudador"]
-        REP["«entity» T3<br/>RepositorioCadena"]
-        PUBC["«adapter»<br/>PublicadorComandos"]
-        pSAL["«port» pSalida"]
-    end
-    CMD(("«event»<br/>etapa.ejecutar"))
-    subgraph ETA["Etapas de la cadena"]
-        FAC["«component» T4<br/>Facturación"]
-        INV["«component» T4<br/>Inventario"]
-        DES["«component» T4<br/>Validación de despacho"]
-    end
-    RES(("«event»<br/>etapa.completada"))
-    ESC(("«event»<br/>cadena.escalada"))
-    LST(("«event»<br/>pedido.listo"))
-    BES["«component» T7<br/>Bandeja de pedidos escalados"]
-    RESP["«external»<br/>Responsable del pedido escalado"]
-    LOG["«external»<br/>Logística"]
-    subgraph MON["«component» Monitor de la cadena"]
-        pEST2["«port» pEstado"]
-        CCA["«adapter»<br/>ClienteCadena"]
-        BAR["«control» T5<br/>BarridoPlazos · cada 5 s"]
-        SON["«control» T6<br/>SondeoSalud · cada 5 s"]
-        SEN["«entity»<br/>RegistroSenales"]
-        CSA["«adapter»<br/>ClienteSalud"]
-        PUBR["«adapter»<br/>PublicadorReintentos"]
-        pSALU["«port» pSalud"]
-        pCOL["«port» pReintentos"]
-    end
-    ISAL(("ISalud"))
-    COL[("«queue»<br/>Cola de reintentos")]
 
-    PED -. "iniciar" .-> IEST
-    IEST --- pEST
-    pEST -- "«delegate»" --> CTL
-    CTL -- "iniciar · vencidas" --> ORQ
-    pENT -- "«delegate»" --> CON
-    CON -- "completada" --> ORQ
-    ORQ -- "estado y plazo" --> REP
-    ORQ -- "siguiente · listo" --> PUBC
-    pREAN -- "«delegate»" --> RNA
-    RNA -- "reintento · escalada" --> REP
-    RNA -- "reenvío · escalamiento" --> PUBC
-    PUBC -- "«delegate»" --> pSAL
-    pSAL -. "publica" .-> CMD
-    CMD -. "1" .-> FAC
-    CMD -. "2" .-> INV
-    CMD -. "3" .-> DES
-    ETA -. "publican" .-> RES
-    RES -. "entrega" .-> pENT
-    pSAL -. "si no reanuda" .-> ESC
-    pSAL -. "las tres cerradas" .-> LST
-    ESC -. "entrega" .-> BES
-    LST -. "entrega" .-> LOG
-    RESP -- "consulta" --> BES
-    BAR -- "vencidas(ahora)" --> CCA
-    CCA -- "«delegate»" --> pEST2
-    pEST2 -. "vencidas" .-> IEST
-    BAR -- "registrar" --> SEN
-    BAR -- "encolar" --> PUBR
-    SON -- "salud(etapa)" --> CSA
-    SON -- "adelantar(etapa caída)" --> BAR
-    CSA -- "«delegate»" --> pSALU
-    pSALU -. "sondeo" .-> ISAL
-    ISAL --- ETA
-    PUBR -- "«delegate»" --> pCOL
-    pCOL -. "encolar pedido señalado" .-> COL
-    COL -. "reanudar" .-> pREAN
-    COL -. "mensajes fallidos" .-> BES
+## Diferencias por resolver
 
-    N1>"ADR-004 · señal ≤ 30 s: plazo ≤ 25 s + barrido 5 s"]
-    N1 -.- BAR
-    N2>"ADR-006 · un reintento de 3 s, luego la Bandeja"]
-    N2 -.- RNA
-    classDef tactica fill:#fff4d6,stroke:#b8860b
-    class ORQ,RNA,REP,FAC,INV,DES,BAR,SON,BES tactica
-```
+El texto de esta página describe los diagramas tal como están dibujados. Estas diferencias quedan abiertas hasta que el equipo decida en el draw.io o en el ADR que corresponda.
+
+| Dónde | Qué dibuja el diagrama | Con qué choca |
+|---|---|---|
+| DG-CMP-001 | Una línea azul del Notificador a la Lista de revocación: «Registrar en lista de Revocación · ASR 5» | ASR-5 no existe; los ASR van de ASR-1 a ASR-4. ADR-009 deja a la Reacción como el único que escribe en la Lista |
+| DG-CMP-001 | La flecha de Pedidos a `escritura.realizada` lleva el rótulo «ASR 2» | Las aristas no llevan ASR en el resto de la vista; la trazabilidad va en la tabla |
+| DG-CMP-001 y DG-CMP-003 | El Broker de Eventos de la cadena es T8 en el panorama y T4 en DG-CMP-003 | En DG-CMP-003, T4 ya es la idempotencia de las etapas. Falta el ID del catálogo del Broker (T8) y de la Dead-Letter-Queue (T11) |
+| DG-CMP-001 | Facturación es T9 e Inventario y Validación de despacho son T10 | Las tres etapas aplican la misma táctica, DIS-17 de ADR-005, que antes era una sola marca |
+| DG-CMP-001 | El Monitor se llama «Monitor» | En las demás vistas se llama «Monitor de la cadena» |
+| DG-CMP-001 | El Monitor avisa al Coordinador «Notificación Falla status Servicios» | ADR-004 y DG-CMP-003 dicen que el Monitor pide las etapas vencidas al Coordinador (`vencidas(ahora)`) y encola la señal en la Cola de reintentos |
+| DG-CMP-003 | El Monitor tiene dos celdas `ClienteSalud` superpuestas | Es la misma parte dibujada dos veces; al mover una, aparece la otra |
+| Rótulos | «Verificación Cadena Sumistro {PinEco}» | Erratas: «Suministro» y «ping/echo» |
+

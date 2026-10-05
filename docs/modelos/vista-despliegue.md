@@ -8,7 +8,7 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta. La pila (Java 21 y Spring Boot 3, PostgreSQL, RabbitMQ y Redis) es el supuesto SUP-01 de ese documento: ningún producto viene del enunciado. La portada de los diagramas está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md).
 
-**Fuente: draw.io.** El original es [vista-despliegue.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-despliegue.drawio), que se abre en draw.io web ([descargar](drawio/vista-despliegue.drawio)). La imagen se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
+**Fuente: draw.io.** El diagrama vive en [vista-despliegue.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-despliegue.drawio), que se abre en draw.io web ([descargar](drawio/vista-despliegue.drawio)). La imagen de esta página se exporta de ese archivo; un cambio se hace en el draw.io y después se vuelve a exportar.
 
 ## Leyenda
 
@@ -18,7 +18,7 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 | Cubo «executionEnvironment» | Entorno de ejecución; aquí, la JVM 21 que corre cada servicio, o el Docker de la observabilidad |
 | Cubo gris «external» | Actor o sistema fuera del alcance que recibe algo del sistema: el Área de seguridad y el Sistema de logística |
 | «artifact» (hoja con esquina doblada) | Lo que se despliega en el nodo. Dentro de RabbitMQ son los vhosts con sus temas; dentro de PostgreSQL, los «schema» de cada servicio |
-| ×N | Número de instancias que corren a la vez, las de DG-CON-001. ×1 marca una pieza sin réplica. En los dispositivos, ×N indica que hay muchos |
+| ×N | Número de instancias que corren a la vez, las mismas de DG-CON-002 y DG-CON-003. ×1 marca una pieza sin réplica. En los dispositivos, ×N o 1..N indica que hay muchos |
 | Línea negra continua | «HTTPS»: llamada síncrona, con la operación que invoca |
 | Línea azul discontinua | «AMQP»: el servicio publica o consume en el bróker |
 | Línea verde continua | «JDBC»: el servicio escribe y lee en su esquema de la base |
@@ -30,7 +30,6 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 | Marco «Red interna de CCP» | Lo que corre dentro de la red de CCP. Los dispositivos, el balanceador y los externos quedan fuera |
 | Nota | ADR, riesgo o propuesta anclada al nodo |
 | Franja «Por dónde pasa cada ASR» | El recorrido de cada ASR, nodo por nodo, con su medida |
-| Aproximación en la copia Mermaid | Mermaid no dibuja el cubo 3D del nodo UML; el marco con «device» o «executionEnvironment» lo reemplaza |
 
 ---
 
@@ -44,7 +43,7 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 
 | Nodo | Instancias | Componentes que corren ahí | De dónde sale |
 |---|---|---|---|
-| Teléfono del vendedor | ×N | App móvil, que calcula la huella del dispositivo. Lo suministra CCP (R-2, R-11) | contexto · ADR-007 |
+| Teléfono del vendedor | 1..N | App móvil, que calcula la huella del dispositivo. Lo suministra CCP (R-2, R-11) | contexto · ADR-007 |
 | Teléfono del tendero | ×N | App móvil. Es del tendero (R-8, R-11) | contexto |
 | Equipo del usuario interno | ×N | Cliente de consulta del perfil de solo consulta (S-8). Es el origen de la escritura indebida | contexto · S-8 |
 | Consola del responsable del pedido escalado | ×N | Navegador con el que el soporte de CCP atiende la Bandeja (HU-14) | **propuesta** |
@@ -69,7 +68,7 @@ Esta página dibuja dónde corre cada componente, con qué tecnología, por qué
 | PostgreSQL | ×1 | Base transaccional con un esquema por servicio: `CadenaEtapa` en el del Coordinador, `EtapaProcesada` y el efecto en el de cada etapa, la bitácora y el outbox en los de Pedidos e Inventario, `Reaccion`, `DispositivoRegistrado`, `Senal` y el registro de eventos para medir (R-12) | ADR-001 · ADR-002 · ADR-005 · ADR-008 · ADR-010 |
 | Observabilidad | ×1 | Prometheus y Grafana, con las métricas de cada JVM | **propuesta** · R-12 |
 
-Las ×2 de los servicios salen de DG-CON-001; ningún ADR fija ese número.
+Las ×2 de los servicios son las mismas de DG-CON-002 y DG-CON-003; ningún ADR fija ese número. DG-CON-001 dibuja otra política de réplicas por grupo de procesos, que queda en «Diferencias por resolver».
 
 | ID | Táctica (curso) | Nodo | ADR | Precio → cobra a |
 |---|---|---|---|---|
@@ -81,8 +80,17 @@ Las ×2 de los servicios salen de DG-CON-001; ningún ADR fija ese número.
 | MOD-04 · DIS-12 · DIS-14 | Colas durables; lo que la Cola de reintentos no entrega va a `cola.fallidos`, que consume la Bandeja | RabbitMQ · vhost `/cadena` | ADR-001 · ADR-006 | Pieza común de los cuatro caminos (R-001a) |
 
 
-**Qué muestra:** los servicios sin estado en memoria corren con dos instancias, y todo su estado vive en tres piezas únicas: la base, el bróker y la Lista de revocación. El Coordinador y el Monitor corren como instancia única, y ese es el precio que ADR-002 y ADR-004 aceptaron. · **Decisión que refleja:** ADR-001 (bróker y base), ADR-002 (Coordinador ×1), ADR-004 (Monitor ×1 y el sondeo), ADR-005 (la clave única en la base de cada etapa), ADR-006 (la Cola de reintentos y la Bandeja), ADR-008 (el outbox) y ADR-009 (la Lista consultada desde el borde). · **Qué no muestra:** la nube, el orquestador de contenedores, la red y la redundancia de la base, el bróker y la Lista, porque S-3 deja las fallas de infraestructura fuera del alcance. Tampoco muestra Logística, cuyo protocolo de entrada no está definido, ni la ruta del Monitor a la base, que ningún conector de los ADR fija.
+**Qué muestra:** los servicios sin estado en memoria corren con dos instancias, y todo su estado vive en tres piezas únicas: la base, el bróker y la Lista de revocación. El Coordinador, el Monitor y la Bandeja corren como instancia única. Es el precio que ADR-002 y ADR-004 aceptaron (R-002a, R-004a), y la nota del diagrama lo extiende a la Bandeja. · **Decisión que refleja:** ADR-001 (bróker y base), ADR-002 (Coordinador ×1), ADR-004 (Monitor ×1 y el sondeo), ADR-005 (la clave única en la base de cada etapa), ADR-006 (la Cola de reintentos y la Bandeja), ADR-008 (el outbox) y ADR-009 (la Lista consultada desde el borde). · **Qué no muestra:** la nube, el orquestador de contenedores y la redundancia de la base, el bróker y la Lista, porque S-3 deja las fallas de infraestructura fuera del alcance. El Sistema de logística aparece como externo que desencola `pedido.listo` por «AMQP», y la ruta «JDBC» del Monitor a su esquema es **propuesta**: ningún conector de los ADR la fija.
 
 **Por qué no se dibuja redundancia en el Coordinador ni en el Monitor.** El catálogo del curso pide, para disponibilidad, un despliegue con la redundancia visible. Aquí la redundancia visible es la de los servicios ×2; la de las dos piezas centrales no existe todavía. ADR-004 deja abierta la opción de dos Monitores con un candado en la base (R-004a), y ningún ADR propone un segundo Coordinador. Cuando uno lo decida, este diagrama cambia.
 
+## Diferencias por resolver
+
+El texto de esta página describe el diagrama tal como está dibujado. Estas diferencias quedan abiertas hasta que el equipo decida en el draw.io o en el ADR que corresponda.
+
+| Dónde | Qué dibuja el diagrama | Con qué choca |
+|---|---|---|
+| DG-DEP-001 | Seguridad ×2 por servicio; Coordinador, Monitor y Bandeja ×1 sin respaldo | DG-CON-001 dibuja seguridad y vigilancia con 1 activo + 1 en espera, el Gestor con N réplicas y la cadena con P réplicas ≤ particiones |
+| DG-DEP-001 | El Monitor sondea la salud de Facturación, Inventario y Validación de despacho | DG-CMP-003 y DG-CON-003 sondean solo Facturación y Validación de despacho |
+| Rótulos | «estadoy motivo», «dos en epera», «eleccion de lider» | Erratas: «estado y motivo», «dos en espera», «elección de líder» |
 

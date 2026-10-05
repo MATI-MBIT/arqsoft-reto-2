@@ -9,13 +9,14 @@ helix_section: "Experiments → Results & analysis"
 H1 se sostiene y H2 cae. El micro de sesiones avisó a seguridad en las 50
 aperturas desde un dispositivo no registrado, con 120 ms en el peor caso. No
 dio ninguna falsa alarma en 17 832 sesiones desde el dispositivo registrado.
-El sondeo del Monitor detectó las etapas caídas en unos 6 s, pero no vio
-ninguno de los 30 pedidos congelados dentro de una etapa viva.
+El sondeo del Monitor detectó las etapas caídas en unos 6 s. Pero no vio
+ninguno de los 30 pedidos congelados dentro de una etapa viva, ni los pedidos
+que ventas envió mientras la etapa caída arrancaba.
 
 | Experimento | Hipótesis | Escenario | Veredicto | Decisión |
 |---|---|---|---|---|
 | E01 — Seguridad | H1: el micro de sesiones compara la huella del dispositivo al abrir la sesión | ASR-1 | Se sostiene en S1, S2 y S3 | Aceptar ADR-007 |
-| E02 — Disponibilidad | H2: el Monitor de la cadena sondea las etapas y encola el pedido detenido | ASR-3 | Cae en D3 y en D2; pasa D1 | Confirmar ADR-004 |
+| E02 — Disponibilidad | H2: el Monitor de la cadena sondea las etapas y encola el pedido detenido | ASR-3 | Cae en D3. D2 pasa con el criterio literal y falla al contar todos los pedidos detenidos | Confirmar ADR-004 |
 
 El diseño de cada experimento, sus fases y su tabla de decisiones están en
 [Experimentos E01 y E02](experiments.md). Esta página da lo que salió de las
@@ -109,8 +110,14 @@ medir.
 
 H1 se sostiene en S1, S2 y S3, así que la tabla de decisiones de E01 lleva a
 **aceptar ADR-007**. La comparación de la huella se queda dentro del micro de
-sesiones. Ninguna de las otras filas aplica: no hubo aviso tarde ni falso, y S4
-no se atrasó por debajo de tres veces la tasa normal.
+sesiones. Ninguna de las otras filas aplica: no hubo aviso tarde ni falso, y en
+S4 la demora no creció a 3 ni a 5 veces la tasa normal.
+
+Aceptarlo así pide ajustar el texto de ADR-007. Su decisión describe un
+Verificador de dispositivo aparte, que consume cada apertura como evento del
+bróker. El experimento probó la otra forma, la del
+[diagrama de alcance del equipo](experiments.md#el-prototipo), y es esa la que
+queda validada. [PREGUNTA] ¿Quién ajusta ADR-007 y para cuándo?
 
 ---
 
@@ -120,20 +127,23 @@ no se atrasó por debajo de tres veces la tasa normal.
 
 | Fase | Casos | Cumplen | Fallan | Veredicto |
 |---|---|---|---|---|
-| D1 · ≤ 1 falsa alarma por hora, sin fallas | 1 h | 0 falsas alarmas | 0 | **Pasa** |
-| D2 · todo pedido de una etapa caída en la cola en ≤ 30 s | 1 522 | 1 513 | 9 | **Falla** |
-| D3 · todo pedido congelado en una etapa viva en la cola en ≤ 30 s | 30 | 0 | 30 | **Falla** |
-| D2 · cada pedido que llegó a la cola entró una sola vez | 1 522 | 1 522 | 0 | **Pasa**: 0 duplicados |
+| D1 · ≤ 1 falsa alarma por hora, en 1 h sin fallas | 0 declaraciones | — | 0 | **Pasa** |
+| D2 · los pedidos en curso al caer la etapa, en la cola en ≤ 30 s | 91 | 91 | 0 | **Pasa**: demora máxima de 6,4 s |
+| D2 · todos los pedidos detenidos, en la cola en ≤ 30 s | 1 537 | 1 512 | 25 | **Falla**: 23 tarde y 2 nunca |
+| D3 · el pedido congelado en una etapa viva, en la cola en ≤ 30 s | 30 | 0 | 30 | **Falla** |
+| D2 · cada pedido que llegó a la cola entró una sola vez | 1 535 | 1 535 | 0 | **Pasa**: 0 duplicados |
 
-Las 30 caídas de D2 dejaron 1 522 pedidos detenidos, unos 50 por caída. Son
-los que la etapa tenía en curso al morir y los que ventas le envió mientras
-estaba caída. El criterio se evalúa sobre todos ellos, y no sobre un pedido por caída.
+`experiments.md` cuenta en D2 «los 30 pedidos» de las 30 caídas, y el
+inyector mata la etapa «con pedidos en curso». Esos son los 91 de la segunda
+fila. Las caídas de 45 s, con un pedido por segundo, dejaron detenidos además 1 446
+pedidos que ventas envió con la etapa ya caída. La tercera fila los cuenta a
+todos.
 
 | Demora hasta la cola en D2 | Detenidos | Mediana | p95 | Máximo |
 |---|---|---|---|---|
-| Despacho | 483 | 1,1 s | 4,7 s | 35,4 s |
-| Facturación | 518 | 1,1 s | 5,8 s | 37,9 s |
-| Inventario | 521 | 1,1 s | 5,4 s | 38,1 s |
+| Despacho | 487 | 1,1 s | 4,8 s | 35,4 s |
+| Facturación | 520 | 1,1 s | 5,8 s | 37,9 s |
+| Inventario | 530 | 1,1 s | 5,5 s | 38,1 s |
 
 ### Analysis of results
 
@@ -149,17 +159,23 @@ falla exacta que describe ASR-3: la etapa sigue viva y responde, pero el pedido
 no avanza. El equipo lo previó en ADR-004, y por eso eligió allí un plazo por
 pedido y etapa.
 
-D2 también falla. Los 9 pedidos tardíos salieron de
-ventas entre 0,3 y 1,9 s antes de que su etapa volviera a responder, y el envío
-de ventas a la etapa falló. El Monitor solo encola los pendientes de una etapa
-mientras la tiene declarada detenida. En el ciclo siguiente la etapa ya
-respondía, el Monitor la dio por recuperada, y esos 9 quedaron detenidos sin
-señal.
+D2 tiene su propio punto ciego, al final de cada caída. Los 25 pedidos que
+fallan salieron de ventas en una ventana de hasta 8 s alrededor del reinicio de
+su etapa. En esa ventana, el proceso ya respondía al sondeo pero aún rechazaba
+trabajos. El envío falló, y el Monitor dio la etapa por recuperada apenas el
+sondeo respondió.
 
-Llegaron a la cola entre 34,7 y 38,1 s después de la caída solo por una
-coincidencia del montaje. La caída inyectada siguiente en la misma etapa hizo
-que el Monitor encolara todos sus pendientes. En operación no habría esa caída,
-y serían pedidos perdidos.
+El Monitor solo encola los pendientes de una etapa mientras la tiene declarada
+detenida. Por eso esos 25 quedaron detenidos sin señal. Veintitrés llegaron a
+la cola entre 32 y 38 s después, por una coincidencia del montaje: la caída
+inyectada siguiente en la misma etapa hizo encolar todos sus pendientes. Los otros 2 nunca llegaron.
+
+Esa ventana dejó además 53 mensajes de más en la cola. Durante esos segundos,
+el Monitor encoló 53 pedidos que la etapa sí procesó y que llegaron a
+logística. `experiments.md` cuenta cada uno de esos mensajes como falsa alarma.
+El criterio de D1, que cuenta declaraciones de etapa detenida, da 0 en D2, y
+los 53 mensajes quedan fuera de él. Pero con un consumidor real de la cola, el
+de ASR-4, serían 53 reanudaciones de pedidos que no estaban detenidos.
 
 Las dos fallas tienen la misma raíz: el sondeo mira si la etapa responde, no si
 cada pedido avanzó. Un plazo por pedido vencería en los dos casos, sin importar
@@ -182,17 +198,32 @@ supuesto S-11, no de etapas reales, y así debe leerse.
 
 ### La decisión
 
-La tabla de decisiones de E02 no tiene una fila para este resultado exacto. La
-más cercana es «H2 pasa D1 y D2 pero falla D3», y aquí D2 también falló. Pero
-falló por la causa de D3, así que la decisión es la de esa fila:
-**confirmar ADR-004**. El plazo vencido por pedido y etapa es el mecanismo de
-detección de ASR-3. El sondeo del Monitor queda como apoyo para adelantar la
-señal cuando cae una etapa entera.
+Con el criterio de `experiments.md`, D1 y D2 pasan y D3 falla. Es la fila
+«H2 pasa D1 y D2 pero falla D3», que lleva a **confirmar ADR-004**. El plazo
+vencido por pedido y etapa es el mecanismo de detección de ASR-3. El sondeo del
+Monitor queda como apoyo para adelantar la señal cuando cae una etapa entera.
 
-La fila de D2 prevé buscar en D4 otra combinación de T y N cuando el Monitor no
-detecta a tiempo la etapa caída. Aquí la detectó en 6,3 s en el peor caso. Lo
-que falló fue la ventana al recuperarse, y ninguna combinación de T y N la
-cierra: la cierra el plazo por pedido.
+El conteo completo de D2 no cambia la decisión: la refuerza. La fila de D2
+prevé buscar en D4 otra combinación de T y N cuando el Monitor no detecta a
+tiempo la etapa caída. Aquí la detectó en 6,3 s en el peor caso. Lo que
+falló fue la ventana al recuperarse, y ninguna combinación de T y N la cierra:
+la cierra el plazo por pedido.
+
+---
+
+## Dónde la medición se apartó de experiments.md
+
+Cuatro reglas de medición no estaban escritas o no se podían aplicar al pie de
+la letra. Están en el
+[plan de implementación](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/notas/plan-implementacion-experimentos.md)
+y no cambian ninguna decisión.
+
+| Tema | `experiments.md` | Lo que se midió | Efecto |
+|---|---|---|---|
+| Pedidos de D2 | «Los 30 pedidos» de las 30 caídas | Los 91 en curso al caer la etapa, y aparte los 1 537 detenidos | El literal pasa; el conteo completo falla |
+| Reloj de D2 | Arranca cuando el inyector detiene la etapa | Para el pedido que llega con la etapa caída, arranca cuando ventas se lo envía | Medido desde la caída, 527 pedidos pasarían de 30 s solo por llegar tarde a una caída de 45 s |
+| Falsa alarma | Cada mensaje sobre un pedido que llegó a logística | El criterio de D1 cuenta declaraciones de etapa detenida; los mensajes se informan aparte | D1 da 0 por las dos vías; D2 da 0 declaraciones y 53 mensajes |
+| Tasa de aperturas de S4 | 1, 3 y 5 veces la del Ambiente A, que no la fija | S-10: 2 aperturas por segundo | El límite de H1 queda por encima de 10 por segundo |
 
 ---
 
@@ -204,7 +235,8 @@ cierra: la cierra el plazo por pedido.
 - **Duraciones supuestas.** Las etapas duran lo que fija S-11. Antes de aceptar
   ADR-004, su plazo se tiene que calibrar con etapas reales. [PREGUNTA] ¿Quién
   consigue esas duraciones y para cuándo?
-- **D4 no corrió.** No cambia la decisión de E02, porque la falla de H2 no
+- **D4 no corrió.** Falta el número que E02 debía entregar: el menor N sin
+  falsas alarmas, y su N × T. No cambia la decisión, porque la falla de H2 no
   depende de T ni de N. [PREGUNTA] ¿Se corre D4 y, si se corre, cuándo?
 - **El plazo por pedido no se probó.** E02 confirma que el sondeo solo no basta;
   no mide el mecanismo de ADR-004. [PREGUNTA] ¿Quién arma ese experimento y para

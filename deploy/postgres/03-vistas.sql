@@ -23,27 +23,40 @@ LEFT JOIN LATERAL (
 WHERE s.tipo = 'sesion.abierta';
 
 -- E02 ---------------------------------------------------------------------
--- Cada caída inyectada (D2) con su ventana: desde la falla hasta que la etapa
--- volvió a responder.
+-- Cada caída inyectada (D2) con su ventana. Empieza en la falla y termina
+-- cuando la etapa vuelve a recibir trabajo, que es lo último entre dos hechos:
+-- el reinicio (el inyector ve /salud) y la recuperación que declara el Monitor.
+-- El reinicio solo no basta: justo después, /salud responde pero la etapa aún
+-- rechaza trabajos, y los pedidos que ventas le envía en ese lapso se detienen.
 CREATE OR REPLACE VIEW registro.e02_caidas AS
 SELECT f.id AS falla_id, f.etapa, f.ts AS falla,
        (SELECT min(r.ts) FROM registro.evento r
-        WHERE r.tipo = 'etapa.reiniciada' AND r.etapa = f.etapa AND r.ts > f.ts) AS reinicio
+        WHERE r.tipo = 'etapa.reiniciada' AND r.etapa = f.etapa AND r.ts > f.ts) AS reinicio,
+       greatest(
+         (SELECT min(r.ts) FROM registro.evento r
+          WHERE r.tipo = 'etapa.reiniciada' AND r.etapa = f.etapa AND r.ts > f.ts),
+         (SELECT min(r.ts) FROM registro.evento r
+          WHERE r.tipo = 'etapa.recuperada' AND r.etapa = f.etapa AND r.ts > f.ts)) AS fin
 FROM registro.evento f
 WHERE f.tipo = 'falla.inyectada' AND f.datos ->> 'tipo' = 'matar';
 
 -- Los pedidos detenidos. D2: los que la etapa tenía en curso al morir y los que
--- ventas le envió mientras estaba caída (D-4); t0 es el mayor entre la falla y
+-- ventas le envió hasta que volvió a recibir trabajo (D-4); t0 es el mayor entre la falla y
 -- el envío (D-5). Se miran 30 s hacia atrás porque ninguna etapa dura más de
 -- 25 s (S-11): un pedido confirmado antes y sin cierre de esa etapa estaba en
--- curso. D3: el pedido congelado, con t0 cuando entró a la etapa.
+-- curso. La ventana no retrocede más allá del fin de la caída anterior de la
+-- misma etapa: un pedido detenido allí nunca cierra la etapa, y sin ese límite
+-- se contaría otra vez en la caída siguiente. D3: el pedido congelado, con t0
+-- cuando entró a la etapa.
 CREATE OR REPLACE VIEW registro.e02_detenidos AS
 SELECT 'D2'::text AS falla, c.falla_id, c.etapa, p.pedido_id, greatest(c.falla, p.ts) AS t0
 FROM registro.e02_caidas c
 JOIN registro.evento p
   ON p.tipo = 'pedido.confirmado'
- AND p.ts >= c.falla - interval '30 seconds'
- AND p.ts <  coalesce(c.reinicio, 'infinity')
+ AND p.ts >= greatest(c.falla - interval '30 seconds',
+                      (SELECT max(a.fin) FROM registro.e02_caidas a
+                       WHERE a.etapa = c.etapa AND a.falla < c.falla))
+ AND p.ts <  coalesce(c.fin, 'infinity')
 WHERE NOT EXISTS (SELECT 1 FROM registro.evento x
                   WHERE x.tipo = 'etapa.completada' AND x.pedido_id = p.pedido_id AND x.etapa = c.etapa)
 UNION ALL
@@ -71,7 +84,7 @@ CREATE OR REPLACE VIEW registro.e02_declaraciones AS
 SELECT d.id, d.ts, d.etapa,
        EXISTS (SELECT 1 FROM registro.e02_caidas c
                WHERE c.etapa = d.etapa AND d.ts >= c.falla
-                 AND d.ts <= coalesce(c.reinicio, 'infinity') + interval '5 seconds') AS justificada
+                 AND d.ts <= coalesce(c.fin, 'infinity') + interval '5 seconds') AS justificada
 FROM registro.evento d
 WHERE d.tipo = 'etapa.declarada.detenida';
 

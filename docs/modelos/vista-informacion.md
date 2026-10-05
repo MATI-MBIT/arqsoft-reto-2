@@ -8,7 +8,7 @@ Esta página dibuja los datos que sostienen las tácticas y el ciclo de vida de 
 
 **Estado: propuesta.** Los diez ADR de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) están en estado Propuesta. La portada de los diagramas, con la matriz de trazabilidad y los huecos, está en [diagramas-ccp-reto2.md](diagramas-ccp-reto2.md). Las partes que son dueñas de cada dato están en la [vista de componentes](vista-componentes.md).
 
-**Fuente: draw.io.** El original es [vista-informacion.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-informacion.drawio), que se abre en draw.io web ([descargar](drawio/vista-informacion.drawio)), con una pestaña por diagrama. La imagen de cada sección se exporta de ese archivo, y el bloque Mermaid que la sigue es una copia.
+**Fuente: draw.io.** Los diagramas viven en [vista-informacion.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-informacion.drawio), que se abre en draw.io web ([descargar](drawio/vista-informacion.drawio)), con una pestaña por diagrama. Cada imagen de esta página se exporta de ese archivo; un cambio se hace en el draw.io y después se vuelve a exportar.
 
 ## Cómo leer esta página
 
@@ -52,78 +52,6 @@ Esta página dibuja los datos que sostienen las tácticas y el ciclo de vida de 
 
 **Qué muestra:** qué fila sostiene cada táctica y en qué base vive. `CadenaEtapa` vive en la base del Coordinador; `EtapaProcesada`, en la de cada etapa, junto a su efecto; `Senal`, en la del Monitor. La relación entre las tres es por clave lógica. · **Decisión que refleja:** ADR-002 (estado por etapa), ADR-004 (la señal única) y ADR-005 (la clave única). · **Qué no muestra:** las columnas de negocio del pedido, la factura y la orden, ni el descargue de Inventario, que usa la misma `EtapaProcesada` con la etapa INVENTARIO. Tampoco resuelve dónde guarda el Monitor sus señales: la base del Monitor está dibujada, pero ningún ADR la decide.
 
-### Copia en Mermaid
-
-```mermaid
----
-title: "DG-CLS-001 · ¿Qué datos sostienen la detección y la reanudación de la cadena?"
-config:
-  layout: dagre
-  theme: default
-  look: classic
----
-%% id: DG-CLS-001 | tipo: clases | asr: [ASR-3, ASR-4] | adr: [ADR-002, ADR-004, ADR-005] | estado: propuesta
-%% leyenda: documento · copia del original en drawio/vista-informacion.drawio · los marcos de base no tienen equivalente en Mermaid
-classDiagram
-    class CadenaEtapa {
-        <<entity>>
-        +idPedido
-        +etapa : Etapa
-        +estado : EstadoEtapa
-        +intento : 0 o 1
-        +iniciadaEn
-        +plazoEn
-    }
-    class Senal {
-        <<entity>>
-        +idPedido
-        +etapa : Etapa
-        +intento
-        +detectadaEn
-    }
-    class EtapaProcesada {
-        <<entity>>
-        +idPedido
-        +etapa : Etapa
-        +procesadaEn
-    }
-    class Factura {
-        <<entity>>
-        +id
-        +idPedido
-    }
-    class OrdenDespacho {
-        <<entity>>
-        +id
-        +idPedido
-    }
-    class Etapa {
-        <<enumeration>>
-        FACTURACION
-        INVENTARIO
-        DESPACHO
-    }
-    class EstadoEtapa {
-        <<enumeration>>
-        PENDIENTE
-        EN_CURSO
-        EN_REINTENTO
-        COMPLETADA
-        ESCALADA
-        TERMINADA_A_MANO
-        CANCELADA
-    }
-    CadenaEtapa "1" .. "0..2" Senal : se señala en · clave lógica
-    CadenaEtapa "1" .. "0..1" EtapaProcesada : misma clave
-    EtapaProcesada "1" -- "0..1" Factura : misma transacción
-    EtapaProcesada "1" -- "0..1" OrdenDespacho : misma transacción
-    CadenaEtapa ..> Etapa
-    CadenaEtapa ..> EstadoEtapa
-    note for CadenaEtapa "ADR-002 · índice (estado, plazoEn)"
-    note for EtapaProcesada "ADR-005 · clave única (idPedido, etapa)"
-    note for Senal "ADR-004 · clave única (idPedido, etapa, intento)"
-```
-
 ---
 
 ## DG-CLS-002 · Los datos de identidad, de la bitácora y de la reacción
@@ -150,105 +78,6 @@ classDiagram
 
 **La bitácora frente al catálogo.** El registro de auditoría del curso (SEG-18) pide una traza separada, que solo crece y que queda fuera del alcance del atacante. Esta bitácora solo crece, pero vive en la misma base del servicio que el actor escribió. Cumple lo que ASR-2 necesita, que es el estado anterior para compensar, y no cumple la separación, que queda en los huecos de la portada.
 
-### Copia en Mermaid
-
-```mermaid
----
-title: "DG-CLS-002 · ¿Qué datos sostienen la huella, la revocación y la compensación de la escritura indebida?"
-config:
-  layout: dagre
-  theme: default
-  look: classic
----
-%% id: DG-CLS-002 | tipo: clases | asr: [ASR-1, ASR-2] | adr: [ADR-007, ADR-008, ADR-009, ADR-010] | estado: propuesta
-%% leyenda: documento · copia del original en drawio/vista-informacion.drawio · los marcos de base no tienen equivalente en Mermaid
-classDiagram
-    class Actor {
-        <<entity>>
-        +idActor
-        +perfil : VENDEDOR o TENDERO o CONSULTA
-        +estado : ACTIVO o BLOQUEADO
-    }
-    class Permiso {
-        <<entity>>
-        +operacion
-        +alcance
-    }
-    class Sesion {
-        <<entity>>
-        +jti
-        +huella
-        +abiertaEn
-        +venceEn
-    }
-    class DispositivoRegistrado {
-        <<entity>>
-        +idVendedor
-        +huella
-        +vigenteDesde
-        +vigenteHasta
-    }
-    class Revocacion {
-        <<entity>>
-        +clave : jti o idActor
-        +venceEn
-    }
-    class Reaccion {
-        <<entity>>
-        +idEscritura
-        +tDet
-        +revocadaEn
-        +bloqueadaEn
-        +compensadaEn
-        +estado
-    }
-    class BitacoraEscritura {
-        <<entity>>
-        +id
-        +actor
-        +jti
-        +permisoUsado
-        +operacion : REGISTRO_PEDIDO o DESCARGUE o COMPENSACION
-        +idEntidad
-        +cantidadAplicada
-        +estadoAnterior
-        +registradaEn
-    }
-    class Outbox {
-        <<entity>>
-        +id
-        +tipo
-        +carga
-        +enviadoEn
-    }
-    class Compensacion {
-        <<interface>>
-        +compensar(idEscritura)
-    }
-    class CompensacionPedido {
-        +compensar(idEscritura)
-    }
-    class CompensacionDescargue {
-        +compensar(idEscritura)
-    }
-    Actor "1" -- "1..*" Permiso : tiene vigentes
-    Actor "1" -- "0..*" Sesion : abre
-    Actor "1" .. "0..*" DispositivoRegistrado : registra
-    Sesion "1" .. "0..1" Revocacion : revocada por jti
-    Actor "1" .. "0..1" Revocacion : revocado por idActor
-    Reaccion "0..1" ..> "1" BitacoraEscritura : reacciona a · clave lógica
-    BitacoraEscritura "1" -- "1" Outbox : misma transacción
-    Compensacion <|.. CompensacionPedido
-    Compensacion <|.. CompensacionDescargue
-    CompensacionPedido ..> BitacoraEscritura : lee estadoAnterior
-    CompensacionDescargue ..> BitacoraEscritura : lee cantidadAplicada
-    note for Sesion "ADR-007 · la huella viaja en la sesión"
-    note for DispositivoRegistrado "ADR-007 · una sola huella vigente por vendedor"
-    note for Revocacion "ADR-009 · la clave vive al menos lo que el token"
-    note for BitacoraEscritura "ADR-008 · solo se inserta, nunca se actualiza"
-    note for Reaccion "ADR-010 · una reacción por escritura"
-```
-
 ---
 
 ## DG-STM-001 · Los estados de cada etapa de un pedido
@@ -270,33 +99,3 @@ classDiagram
 
 **Qué muestra:** el camino de fallo completo de ASR-3 y ASR-4 en una sola fila: en curso, plazo vencido, un reintento y escalamiento. Cada transición de fallo tiene su guarda numérica. · **Decisión que refleja:** ADR-002 (el estado se guarda), ADR-004 (la guarda del plazo) y ADR-006 (un reintento de 3 s). · **Qué no muestra:** qué pasa si la etapa confirma cuando la fila ya está Escalada. Ningún ADR lo decide, y la actualización condicional de DG-CON-003 hoy la ignora (ver Huecos).
 
-### Copia en Mermaid
-
-```mermaid
----
-title: "DG-STM-001 · ¿Por qué estados pasa cada etapa de un pedido y qué dispara cada transición?"
-config:
-  theme: default
-  look: classic
----
-%% id: DG-STM-001 | tipo: estados | asr: [ASR-3, ASR-4] | adr: [ADR-002, ADR-004, ADR-006] | estado: propuesta
-%% copia del original en drawio/vista-informacion.drawio
-stateDiagram-v2
-    [*] --> Pendiente
-    Pendiente --> EnCurso : iniciar o anterior completada / enviar etapa, plazoEn = ahora + plazo
-    EnCurso --> Completada : etapa.completada
-    EnCurso --> EnReintento : barrido [ahora ≥ plazoEn] / reenviar, plazoEn = ahora + 3 s
-    EnReintento --> Completada : etapa.completada
-    EnReintento --> Escalada : vence el intento [3 s sin confirmar] / publicar cadena.escalada
-    Escalada --> TerminadaAMano : terminar(idPedido)
-    Escalada --> Cancelada : cancelar(idPedido)
-    Completada --> [*] : el Coordinador cierra la fila
-    TerminadaAMano --> [*] : el Coordinador cierra la fila
-    Cancelada --> [*] : el Coordinador cierra la fila
-    note right of EnCurso
-        ADR-004 · plazo ≤ 25 s
-    end note
-    note right of EnReintento
-        ADR-006 · un solo reintento
-    end note
-```

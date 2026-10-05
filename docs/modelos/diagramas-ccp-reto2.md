@@ -6,7 +6,7 @@ title: Diagramas de arquitectura — Reto 2 CCP (v7)
 
 Versión 7 del 3 de octubre de 2026. Dibuja las diez decisiones de [adrs-ccp-reto2.md](adrs-ccp-reto2.md) en cuatro vistas: componentes, concurrencia, información y despliegue. Tiene diez diagramas, entre uno y tres por vista, y cada ASR tiene un diagrama de estructura, uno de comportamiento con su medida y uno de datos.
 
-**Fuente: draw.io.** Desde esta versión, el original de cada diagrama es un archivo draw.io por vista, en [drawio/](https://github.com/MATI-MBIT/arqsoft-reto-2/tree/main/docs/modelos/drawio). Los enlaces de la tabla los abren en draw.io web. Las imágenes de `png-v7/` se exportan de esos archivos, y el bloque Mermaid que acompaña cada imagen es una copia. Un cambio se hace primero en el draw.io, se exporta la imagen y después se copia al Mermaid.
+**Fuente: draw.io.** Desde esta versión, el original de cada diagrama es un archivo draw.io por vista, en [drawio/](https://github.com/MATI-MBIT/arqsoft-reto-2/tree/main/docs/modelos/drawio). Los enlaces de la tabla los abren en draw.io web. Las imágenes de `png-v7/` se exportan de esos archivos: un cambio se hace en el draw.io y después se vuelve a exportar la imagen.
 
 **Estado: propuesta.** Los diez ADR están en estado Propuesta, así que cada diagrama también lo está. Lo que aparece dibujado sin un ADR que lo respalde está marcado **propuesta** en el texto y listado en los huecos.
 
@@ -15,7 +15,7 @@ Versión 7 del 3 de octubre de 2026. Dibuja las diez decisiones de [adrs-ccp-ret
 | Vista | Qué responde | Diagramas | Archivo draw.io | Página |
 |---|---|---|---|---|
 | **Componentes** | Qué componentes hay, por dónde se hablan y cómo funcionan por dentro los que sostienen cada ASR | DG-CMP-001 panorama · DG-CMP-002 seguridad · DG-CMP-003 cadena del pedido | [vista-componentes.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-componentes.drawio) | [vista-componentes.md](vista-componentes.md) |
-| **Concurrencia** | Profundiza la vista de componentes: qué proceso corre cada componente, qué hilos corren dentro, por qué temas y colas del bróker pasa cada paso y en qué orden | DG-CON-001 panorama · DG-CON-002 seguridad · DG-CON-003 cadena del pedido | [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio) | [vista-concurrencia.md](vista-concurrencia.md) |
+| **Concurrencia** | Profundiza la vista de componentes: qué grupos de procesos corren y con cuántas réplicas, qué hilos corren dentro, por qué canales, temas y colas del bróker pasa cada paso y en qué orden | DG-CON-001 vista general · DG-CON-002 seguridad · DG-CON-003 cadena del pedido | [vista-concurrencia.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-concurrencia.drawio) | [vista-concurrencia.md](vista-concurrencia.md) |
 | **Información** | Qué datos sostienen cada táctica, en qué base viven y por qué estados pasa la etapa | DG-CLS-001 cadena · DG-CLS-002 seguridad · DG-STM-001 estados de la etapa | [vista-informacion.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-informacion.drawio) | [vista-informacion.md](vista-informacion.md) |
 | **Despliegue** | Dónde corre cada componente, con qué tecnología y qué queda como instancia única | DG-DEP-001 | [vista-despliegue.drawio](https://app.diagrams.net/#Uhttps%3A%2F%2Fraw.githubusercontent.com%2FMATI-MBIT%2Farqsoft-reto-2%2Fmain%2Fdocs%2Fmodelos%2Fdrawio%2Fvista-despliegue.drawio) | [vista-despliegue.md](vista-despliegue.md) |
 
@@ -34,7 +34,7 @@ La v6 tenía 40 diagramas: un panorama, tres cajas negras, diez cajas blancas co
 | La secuencia del orden de las etapas (DG-SEQ-013) | El orden queda en DG-CMP-003 (las entregas 1, 2 y 3) y en DG-STM-001 (Pendiente pasa a EnCurso cuando la anterior completa) |
 | Tres diagramas de clases | Dos: la cadena (DG-CLS-001) y la seguridad (DG-CLS-002), que junta identidad, bitácora y reacción |
 | Los estados de la sesión y del actor (DG-STM-002) | Atributos en DG-CLS-002 y orden en DG-CMP-002 |
-| Dos despliegues | Uno, con el bróker y la base como barras compartidas |
+| Dos despliegues | Uno, con cada servicio en su propio nodo y el bróker, la base y la Lista de revocación como piezas compartidas |
 
 Los ID se renumeran: DG-CMP-001 sigue siendo el panorama, pero el resto de los números no coinciden con los de la v6. Las líneas «Diagramas afectados» del final traen los ID nuevos para cada ADR.
 
@@ -111,20 +111,21 @@ Estos términos aparecen en las secuencias y en la vista de información.
 | **t0 · t_det · t_stop · t_señal** | Apertura de la sesión (ASR-1), detección de la escritura indebida (ASR-2), instante en que la etapa deja de avanzar y instante de la señal (ASR-3). Desde ahí corren las medidas |
 | **p99** | La duración que solo el 1 % de las ejecuciones supera |
 
-## Validación
+## Diferencias entre diagramas por resolver
 
-Las tres puertas de la skill `diagramar-uml-arquitectura` 1.2.0 se corrieron sobre las copias Mermaid, y la revisión visual sobre las imágenes exportadas del draw.io.
+Las páginas describen cada diagrama tal como está dibujado en el draw.io. Cuando un diagrama choca con un ADR o con otro diagrama, la página de su vista lo lista en su sección «Diferencias por resolver». Estas son las que piden una decisión del equipo:
 
-| Vista | Diagramas | Sintaxis (mmdc 12.0.0) | Lint | Revisión visual del draw.io |
-|---|---|---|---|---|
-| Componentes | 3 | 3 compilan | 2 errores y 4 avisos, todos de tamaño o de eclosión | Sin solapes. DG-CMP-001 cruza dos aristas largas; DG-CMP-002 y DG-CMP-003 cruzan una cada uno |
-| Concurrencia | 3 | 3 compilan | Paridad 0 · errores de tamaño (26, 39 y 40 elementos) y de grado del bróker, justificados en la página | Cruces marcados con arco; el `.drawio` sale de un generador propio con los estilos de la skill |
-| Información | 3 | 3 compilan | 0 errores | Sin solapes |
-| Despliegue | 1 | 1 compila | 0 errores | Sin solapes. Los cruces de rutas se marcan con un arco |
+| Diferencia | Diagramas | Qué hay que decidir |
+|---|---|---|
+| Dónde corre el Reanudador | DG-CON-001 lo pone en el grupo de vigilancia, junto al Monitor; ADR-006, DG-CMP-003 y DG-CON-003 lo ponen dentro del Coordinador | En qué proceso vive, y corregir el ADR o los diagramas |
+| Cómo detecta el Detector | DG-CON-001 le da un «scheduled thread» cada 1 s; ADR-008 y DG-CON-002 lo hacen consumir `escritura.realizada` | Si detecta por evento o por barrido |
+| Cuántas réplicas corre cada proceso | DG-CON-001 usa grupos con N réplicas, 1 activo + 1 en espera y P réplicas ≤ particiones; DG-DEP-001 usa ×2 y ×1 sin respaldo | Una sola política de réplicas para las dos vistas |
+| Qué tipo de bróker hay | DG-CON-001 a 003 dibujan canales con clave de partición; ADR-001 y DG-DEP-001 usan RabbitMQ con colas durables | Si hay particiones, y en qué ADR se decide |
+| Qué hace el Monitor | DG-CMP-001 avisa al Coordinador las fallas; ADR-004 y DG-CMP-003 piden las vencidas y encolan la señal. DG-DEP-001 sondea tres etapas; DG-CMP-003 y DG-CON-003, dos | La interacción del Monitor y qué etapas sondea |
+| Una flecha a un ASR que no existe | DG-CMP-001 rotula «ASR 5» la escritura del Notificador en la Lista de revocación | Si esa escritura existe, qué ASR la pide y qué ADR la decide |
+| Marcas de táctica | El Broker de la cadena es T8 en DG-CMP-001 y T4 en DG-CMP-003, y las etapas pasan a T9 y T10 | Una marca por táctica y el ID del catálogo del Broker y de la Dead-Letter-Queue |
 
-**Lo que el lint no acepta y por qué se deja.** DG-CMP-002 tiene 34 elementos y DG-CMP-003 tiene 38, y el lint bloquea desde 20 (AP-09). El lint también espera la caja blanca en un diagrama aparte con `refina:` (AP-20), y aquí va abierta dentro del diagrama del camino. Las dos cosas son el precio de dejar la vista de componentes en tres diagramas. La alternativa es volver a partir cada camino en caja negra, caja blanca y secuencia interna, como en la v6.
-
-El sitio publica las copias Mermaid con Mermaid 11.4.1 (`docs/_config.yml`), y la validación local corrió con mmdc 12.0.0. El layout `elk` depende de un complemento de Mermaid; si el sitio no lo carga, la copia puede salir con otra disposición. La imagen que manda es la exportada del draw.io.
+Las erratas y las conexiones sueltas de cada diagrama están en la sección de su vista.
 
 ## Matriz ASR × ADR × diagrama
 
@@ -160,7 +161,7 @@ Las preguntas abiertas no van dentro de los diagramas; están aquí.
 - ¿Por qué protocolo recibe Logística el pedido listo?
 - ¿Cuántos hilos consumidores necesita cada componente con la carga del Ambiente A?
 
-**Dibujado sin ADR que lo respalde.** Las dos instancias de los servicios sin estado y la agrupación de componentes por nodo (DG-DEP-001), la Bandeja junto al Coordinador, la actualización condicional, la deduplicación del aviso y los dos puertos de entrada del Coordinador.
+**Dibujado sin ADR que lo respalde.** Las dos instancias de los servicios sin estado, el balanceador y la observabilidad (DG-DEP-001); la actualización condicional, la deduplicación del aviso y los dos puertos de entrada del Coordinador; el Broker de Eventos de la cadena, la Dead-Letter-Queue y el soporte de CCP que la atiende (DG-CMP-001 y DG-CMP-003); y los grupos de procesos con su política de réplicas y los canales de eventos con clave de partición (DG-CON-001 a 003).
 
 ## Líneas «Diagramas afectados» para las Consecuencias de cada ADR
 

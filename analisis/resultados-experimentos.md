@@ -71,9 +71,9 @@ Redactado en [docs/results.md](../docs/results.md).
 | Fase | Corrida | Casos | Cumplen | Fallan | Veredicto |
 |---|---|---|---|---|---|
 | D1 · ≤ 1 falsa alarma por hora | `e02-d1-20261004-180236` | 0 | — | 0 | **PASA** · 0 declaraciones de etapa detenida y 0 sondeos fallidos en 1 h |
-| D2 · todo detenido en la cola en ≤ 30 s | `e02-d2-20261004-180236` | 1 522 | 1 513 | 9 | **FALLA** · mediana 1,1 s, p95 ≤ 5,8 s; 9 pedidos entre 34,7 y 38,1 s |
+| D2 · todo detenido en la cola en ≤ 30 s | `e02-d2-20261004-180236` | 1 537 | 1 512 | 25 | **FALLA** · 23 tarde (32–38 s) y 2 nunca; los 91 en curso al caer, todos ≤ 6,4 s |
 | D3 · el congelado en la cola en ≤ 30 s | `e02-d3-20261004-180236` | 30 | 0 | 30 | **FALLA** · ninguno llegó a la cola |
-| Todas · 0 perdidos y 0 duplicados | `e02-d2-20261004-180236` | 1 522 | 1 522 | 0 | **PASA** · cada pedido encolado una sola vez |
+| Todas · 0 duplicados | `e02-d2-20261004-180236` | 1 535 | 1 535 | 0 | **PASA** · cada pedido encolado una sola vez; 53 mensajes por pedidos que llegaron a logística |
 
 ### Analysis of results
 
@@ -109,3 +109,11 @@ Redactado en [docs/results.md](../docs/results.md).
   30 llegó a la cola. Al final de la corrida, ventas los seguía teniendo en
   curso: detenidos sin señal, la falla exacta que describe ASR-3. Es lo que
   ADR-004 predijo del sondeo solo.
+- **Corrección del 2026-10-05.** La primera versión del cruce cerraba la ventana
+  de cada caída en el reinicio de la etapa. Justo después del reinicio, la
+  etapa responde al sondeo pero aún rechaza trabajos, así que quedaban fuera
+  pedidos detenidos en ese lapso. La vista corregida
+  (`deploy/postgres/03-vistas.sql`) cierra la ventana cuando el Monitor declara
+  la etapa recuperada, y no retrocede más allá de la caída anterior de la misma
+  etapa. D2 pasó de 9 de 1 522 a 25 de 1 537. Los veredictos de E02 se
+  recalcularon con ella.
