@@ -24,8 +24,8 @@ clave es el contrato: si una sección de Helix no tiene página, no tiene fuente
 | `constraints.md` | `Constraints` | Un bloque por restricción, en `Business` o `Technology` |
 | `requirements.md` | `Requirements & Quality` | Árbol Epic → Feature → Story |
 | `quality-attributes.md` | Escenarios de calidad colgados de las historias | Ver abajo |
-| *(falta)* | `Objective → Glossary` | El vocabulario ya está fijado; falta la página |
-| `experiments.md` | `Experiments`, un experimento por hipótesis (E01 y E02) | Título · `Planning` (hipótesis, escenarios enlazados, tácticas, diseño, recursos, elementos, esfuerzo) · `Results & analysis` |
+| `glossary.md` | `Objective → Glossary` | Un solo editor; los títulos `##` entran como `###` |
+| `experiments.md` | `Experiments`, un experimento por hipótesis (E01 y E02) | Título · `Planning` (hipótesis, escenarios enlazados, tácticas, diseño, recursos, elementos, esfuerzo) |
 
 Los nombres de sección salieron del recorrido del 2026-09-19 y están
 verificados contra la interfaz. El detalle completo de cada formulario está en
@@ -83,10 +83,10 @@ el TPS y la medida.
 
 | ASR | Atributo en Helix | De qué historia cuelga |
 |---|---|---|
-| ASR-1 | Security · Detection | `[PREGUNTA]` |
-| ASR-2 | Security · Reaction | `[PREGUNTA]` |
-| ASR-3 | Availability · Detection | `[PREGUNTA]` |
-| ASR-4 | Availability · Recovery | `[PREGUNTA]` |
+| ASR-1 | Security · Detection | HU-01 |
+| ASR-2 | Security · Reaction | HU-13 |
+| ASR-3 | Availability · Detection | HU-03 |
+| ASR-4 | Availability · Recovery | HU-14 |
 
 Los cuatro caben en el formulario desde que Nicolás replanteó ASR-4 de 5 min a
 5 s, el 2026-09-19. Lo que no cabe son las medidas que no son de tiempo: «cero
@@ -215,4 +215,47 @@ Cada uno repite el montaje común (carga, cruce de entradas y salidas,
 limitaciones comunes) para leerse solo. Los dos tienen `External report` con el
 enlace al wiki. Para reemplazar el contenido de un editor enriquecido sirvió
 hacer clic en el editor, `Cmd+A`, `Backspace` y luego `Import Markdown`.
+
+---
+
+## Estado de la réplica al 2026-10-06
+
+Se sincronizó solo la parte documental. No se cargan en Helix las vistas, los
+modelos, los ADR ni `results.md`: viven en `docs/modelos/` y en el wiki.
+
+| Sección | Qué cambió |
+|---|---|
+| `Stakeholders` | 10: entran «Cliente institucional» y «Actor de solo consulta», y se alinean «Facturación», «Logística» y «Despacho» |
+| `Objective` | `Statement`, `In scope`, `Out of scope`, `Purpose` y `Glossary` reemplazados por el texto del 2026-09-29 |
+| `Constraints` | Sin cambios: R-1 a R-11 coinciden con la página |
+| Escenarios de calidad | Los cuatro con `TPS` = 11 y el ambiente con la carga de A (60 pedidos/min y 600 consultas/min); ASR-2 alinea la redacción de su artefacto |
+| `Experiments` | Sin cambios. `Results & analysis` sigue vacío, salvo `Code repository` y `External report` |
+
+El `[PREGUNTA]` del `TPS` del 2026-09-19 queda resuelto: el campo pide pasos de
+10, pero acepta y guarda 11.
+
+R-12 a R-14 siguen sin cargar. Son restricciones del proyecto y Helix solo
+admite `Business` y `Technology`.
+
+El Utility Tree marca «Undefined parts: Artifact» en los cuatro escenarios
+aunque el campo `Artifact` tiene texto y persiste. Es una falla de Helix, no de
+la carga.
+
+### Cómo se cargó
+
+Todos los editores de `Objective` y de `Experiments` tienen el panel de
+`Import Markdown`. El panel solo abre con un clic real sobre el botón: un
+`click()` desde un script no lo abre. Para reemplazar un campo sirvió hacer
+clic en el editor, `Cmd+A`, `Backspace`, clic en `Import Markdown`, pegar en el
+cuadro y `Insert`. Los cambios se guardan solos; se verificaron recargando la
+página.
+
+### Actualización del 2026-10-06: diagramas de los experimentos
+
+E01 y E02 se actualizaron en Helix con los diagramas DG-CMP-004 y DG-CMP-005.
+El campo `Experiment Design` de cada uno empieza con la imagen exportada de
+draw.io, enlazada a su URL en GitHub Pages (`modelos/png-v7/11-DG-CMP-004.png`
+y `12-DG-CMP-005.png`); se ve cuando el wiki publica el PNG. Títulos nuevos:
+E01 «… con el Verificador de dispositivo» y E02 «Validar la detección del
+pedido detenido con el Monitor de la cadena y su envío a la Dead-Letter-Queue».
 

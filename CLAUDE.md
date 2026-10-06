@@ -91,6 +91,17 @@ otra. `docs/experiments.md` tiene una sección de montaje común y luego E01
 (seguridad, ASR-1) y E02 (disponibilidad, ASR-3). En Helix son dos
 experimentos, cada uno legible solo.
 
+El 2026-10-06 cada experimento recibió su diagrama de componentes en draw.io,
+acotado y congruente con el panorama DG-CMP-001: DG-CMP-004 (E01) y DG-CMP-005
+(E02), en `docs/modelos/drawio/experimentos.drawio`, exportados a
+`docs/modelos/png-v7/11-…` y `12-…`. En `experiments.md` va solo la imagen
+exportada de draw.io, sin Mermaid. Decisiones de Nicolás: en E01 compara la
+huella el **Verificador de dispositivo** (usuario no válido), no el micro de
+sesiones; en E02 el Monitor notifica al Coordinador (micro ventas), que envía
+el pedido detenido por el bróker T8 a la **Dead-Letter-Queue T11** (nodo de
+contingencia). Esto contradice ADR-004/DG-CMP-003 (Monitor encola en la cola de
+reintentos, CN-36): está declarado en la página.
+
 
 `docs/experiments.md` espeja el formulario `Experiments` de Helix (pestañas
 `Planning` y `Results & analysis`, leídas el 2026-10-03 del E01 del reto 1). Las
