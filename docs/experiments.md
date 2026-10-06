@@ -51,9 +51,6 @@ Grafana sirve para mirar la corrida; el veredicto de cada criterio sale del
 registro de eventos, que conserva el identificador de cada operación y de cada
 pedido.
 
-[PREGUNTA] ¿Dónde vive el código del prototipo: en este repositorio o en uno
-aparte, como en el reto 1?
-
 ### La carga
 
 Toda la carga es la del Ambiente A, fijada en el supuesto S-4 de los
@@ -127,8 +124,7 @@ legítimo.
 
 El cambio legítimo de dispositivo no dispara el aviso porque se registra antes
 del primer uso: en el prototipo, el micro Onboarding registra el dispositivo
-nuevo. [PREGUNTA] ¿Quién lo registra en la operación real? ADR-007 lo dejó
-abierto.
+nuevo.
 
 Lo que la refutaría, cualquiera de tres casos:
 
