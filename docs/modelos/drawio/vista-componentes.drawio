@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="ccp-reto2-v7" pages="3">
   <diagram id="cmp-1" name="DG-CMP-001 · Panorama">
-    <mxGraphModel dx="3154" dy="698" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="860" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="3154" dy="761" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="860" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -76,8 +76,8 @@
         <mxCell id="COO_ic" parent="COO" style="shape=component;jettyWidth=6;jettyHeight=3;html=1;fillColor=#FFFFFF;strokeColor=#2B3642;" value="" vertex="1">
           <mxGeometry height="14" width="14" x="168" y="6" as="geometry" />
         </mxCell>
-        <mxCell id="MON" parent="1" style="rounded=0;html=1;whiteSpace=wrap;fillColor=#FFF4D6;strokeColor=#B8860B;fontFamily=Helvetica;fontSize=12;fontColor=#1F2A36;" value="«component» T7&lt;br&gt;&lt;b&gt;Monitor&lt;/b&gt;" vertex="1">
-          <mxGeometry height="64" width="190" x="1220" y="650" as="geometry" />
+        <mxCell id="MON" parent="1" style="rounded=0;html=1;whiteSpace=wrap;fillColor=#FFF4D6;strokeColor=#B8860B;fontFamily=Helvetica;fontSize=12;fontColor=#1F2A36;" value="«component» T7&lt;br&gt;&lt;b&gt;Monitor de la cadena&lt;/b&gt;" vertex="1">
+          <mxGeometry height="64" width="190" x="1220" y="649" as="geometry" />
         </mxCell>
         <mxCell id="MON_ic" parent="MON" style="shape=component;jettyWidth=6;jettyHeight=3;html=1;fillColor=#FFFFFF;strokeColor=#2B3642;" value="" vertex="1">
           <mxGeometry height="14" width="14" x="168" y="6" as="geometry" />
@@ -134,11 +134,6 @@
         </mxCell>
         <mxCell id="e41" edge="1" parent="1" source="PED" style="html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;fontSize=10;fontFamily=Helvetica;fontColor=#1F2A36;labelBackgroundColor=#FFFFFF;strokeColor=#2B3642;endArrow=open;endFill=0;dashed=1;dashPattern=6 4;endSize=10;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.2;entryY=1;entryDx=0;entryDy=0;" target="DET" value="«event» escritura.realizada">
           <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="q6hjk7NORKF-JR9MaWCq-1" connectable="0" parent="e41" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="ASR 2" vertex="1">
-          <mxGeometry relative="1" x="0.6308" y="-1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
         </mxCell>
         <mxCell id="e42" edge="1" parent="1" source="ETA" style="html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;fontSize=10;fontFamily=Helvetica;fontColor=#1F2A36;labelBackgroundColor=#FFFFFF;strokeColor=#2B3642;endArrow=open;endFill=0;dashed=1;dashPattern=6 4;endSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="DET" value="«event» escritura.realizada">
           <mxGeometry relative="1" x="0.1854" y="-5" as="geometry">
@@ -214,7 +209,7 @@
         <mxCell id="e58" edge="1" parent="1" source="N1" style="html=1;rounded=0;fontSize=10;fontFamily=Helvetica;fontColor=#1F2A36;labelBackgroundColor=#FFFFFF;strokeColor=#2B3642;endArrow=none;dashed=1;dashPattern=2 3;strokeColor=#9A8B4F;" target="NOT" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Jb59KBPYYIr0BHhL305u-3" edge="1" parent="1" source="NOT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;endArrow=open;endFill=0;strokeColor=#0066CC;">
+        <mxCell id="Jb59KBPYYIr0BHhL305u-3" edge="1" parent="1" source="NOT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;endArrow=open;endFill=0;strokeColor=light-dark(#000000,#000000);">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1595" y="130" />
@@ -227,11 +222,6 @@
         <mxCell id="Jb59KBPYYIr0BHhL305u-4" connectable="0" parent="Jb59KBPYYIr0BHhL305u-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Registrar en lista de Revocación" vertex="1">
           <mxGeometry relative="1" x="-0.1997" y="1" as="geometry">
             <mxPoint x="-284" y="-14" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="2JjGPwHi1Cc6rBAo4wpT-1" connectable="0" parent="Jb59KBPYYIr0BHhL305u-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="ASR 5" vertex="1">
-          <mxGeometry relative="1" x="0.0847" y="-3" as="geometry">
-            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="EaLUgWL7S6mF-R-zTGCG-16" edge="1" parent="1" source="EaLUgWL7S6mF-R-zTGCG-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" target="EaLUgWL7S6mF-R-zTGCG-17">
@@ -273,7 +263,7 @@
         <mxCell id="rincXxL91_sb7JhN4Ehv-1" edge="1" parent="1" source="MON" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.886;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;" target="ETA">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rincXxL91_sb7JhN4Ehv-2" connectable="0" parent="rincXxL91_sb7JhN4Ehv-1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Verificación Cadena Sumistro&lt;br&gt;{PinEco}" vertex="1">
+        <mxCell id="rincXxL91_sb7JhN4Ehv-2" connectable="0" parent="rincXxL91_sb7JhN4Ehv-1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Verificación Cadena Sumistro&lt;br&gt;&lt;span style=&quot;color: rgb(31, 42, 54); font-size: 12px; white-space: normal; background-color: rgb(236, 236, 236);&quot;&gt;«&lt;/span&gt;Ping/echo&lt;span style=&quot;color: rgb(31, 42, 54); font-size: 12px; white-space: normal; background-color: rgb(236, 236, 236);&quot;&gt;»&lt;/span&gt;" vertex="1">
           <mxGeometry relative="1" x="-0.1955" y="4" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -601,7 +591,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="cmp-3" name="DG-CMP-003 · Disponibilidad">
-    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1860" pageHeight="1040" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="975" dy="525" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1860" pageHeight="1040" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -836,9 +826,6 @@
           <mxGeometry height="46" width="180" x="480" y="120" as="geometry" />
         </mxCell>
         <mxCell id="CSA" parent="MON" style="rounded=0;html=1;whiteSpace=wrap;fontSize=11;fillColor=#FFFFFF;strokeColor=#2B3642;fontFamily=Helvetica;fontColor=#1F2A36;" value="«adapter»&lt;br&gt;&lt;b&gt;ClienteSalud&lt;/b&gt;" vertex="1">
-          <mxGeometry height="40" width="140" x="510" y="20" as="geometry" />
-        </mxCell>
-        <mxCell id="w0fCyTojuuFHK4vu7CIa-1" parent="MON" style="rounded=0;html=1;whiteSpace=wrap;fontSize=11;fillColor=#FFFFFF;strokeColor=#2B3642;fontFamily=Helvetica;fontColor=#1F2A36;" value="«adapter»&lt;br&gt;&lt;b&gt;ClienteSalud&lt;/b&gt;" vertex="1">
           <mxGeometry height="40" width="140" x="510" y="20" as="geometry" />
         </mxCell>
         <mxCell id="e66" edge="1" parent="1" source="BAR" style="html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;fontSize=10;fontFamily=Helvetica;fontColor=#1F2A36;labelBackgroundColor=#FFFFFF;strokeColor=#2B3642;endArrow=open;endFill=0;endSize=10;exitX=0.3;exitY=0;exitDx=0;exitDy=0;entryX=0.6;entryY=1;entryDx=0;entryDy=0;" target="CCA" value="vencidas(ahora)">
