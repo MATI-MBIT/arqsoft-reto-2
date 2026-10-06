@@ -71,7 +71,7 @@
             <mxPoint x="250" y="367" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="tCT7xx3-FDiM1OV3IifS-1" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;" value="«process»&lt;br&gt;&lt;u&gt;: AP GatewayI&lt;/u&gt; [2]" vertex="1">
+        <mxCell id="tCT7xx3-FDiM1OV3IifS-1" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;" value="«process»&lt;br&gt;&lt;u&gt;:API Gateway&lt;/u&gt; [2]" vertex="1">
           <mxGeometry height="60" width="220" x="590" y="160" as="geometry" />
         </mxCell>
         <mxCell id="iXZyB-kU1yRu-Kd1YN0s-1" edge="1" parent="1" source="kKEyt0iRQtvd4B6zCpAd-1" style="endArrow=open;endSize=10;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;fontFamily=Helvetica;jumpStyle=arc;jumpSize=8;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="tCT7xx3-FDiM1OV3IifS-1" value="token y huella">

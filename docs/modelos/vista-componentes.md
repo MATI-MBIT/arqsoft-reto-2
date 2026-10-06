@@ -55,7 +55,7 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 | Marca | ID | Táctica (curso) | Componente | ADR | Precio → cobra a |
 |---|---|---|---|---|---|
 | — | EST-03 · MOD-04 · DIS-17 | Estilo dirigido por eventos: intermediario durable entre componentes y transacción local en cada servicio | Todo el diagrama: las aristas «event» de seguridad pasan por el bróker, y las de la cadena, por el bróker de la cadena (T8) | ADR-001 | Un salto más por evento → latencia de ASR-1 y ASR-2 (TO-001a). El bróker es pieza común de los cuatro caminos (R-001a) |
-| T1 | SEG-02 · SEG-13 | Autenticar en el borde y revocar el acceso | Puerta de entrada · Lista de revocación | ADR-009 | Una consulta a la Lista por cada petición → disponibilidad del borde (R-1) |
+| T1 | SEG-02 · SEG-13 | Autenticar en el borde y revocar el acceso | API Gateway · Lista de revocación | ADR-009 | Una consulta a la Lista por cada petición → disponibilidad del borde (R-1) |
 | T2 | SEG-02 · SEG-09 · SEG-15 | Dispositivo como parte de la identidad, detectar la intrusión e informar | Gestor de sesión · Verificador · Notificador | ADR-007 | Cada cambio legítimo de equipo exige registro previo, o es falsa alarma → ASR-1 |
 | T3 | SEG-18 · DIS-17 | Bitácora de escrituras y evento en la misma transacción | Pedidos · Inventario | ADR-008 | Dos filas más por escritura → desempeño de la escritura |
 | T4 | SEG-09 | Detectar la escritura contra el permiso vigente | Detector | ADR-008 | Una consulta de permisos por escritura → ASR-2 si el Gestor tarda (R-008a) |
@@ -87,7 +87,7 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 | T2 | SEG-09 | Detectar intrusiones: comparar la huella de la sesión con la registrada | ComparadorHuella, dentro del Verificador | ADR-007 | Un cambio de equipo sin registro previo dispara el aviso → ASR-1 (≤ 1 falsa alarma por 100 cambios) |
 | T3 | SEG-15 | Informar al área de seguridad | Notificador a seguridad | ADR-007 | Ruido de alertas → costo operativo |
 | T4 | SEG-18 · DIS-17 · DIS-13 | Bitácora con el estado anterior y evento en la misma transacción; compensación de la escritura | Pedidos · Inventario | ADR-008 · ADR-010 | Dos filas más por escritura → desempeño de la escritura. Una operación inversa por tipo → modificabilidad |
-| T5 | SEG-02 · SEG-13 | Autenticar en el borde y revocar el acceso de la sesión viva | Puerta de entrada · Lista de revocación | ADR-009 | Una consulta por petición y una pieza más en el camino crítico → disponibilidad del borde (R-1) |
+| T5 | SEG-02 · SEG-13 | Autenticar en el borde y revocar el acceso de la sesión viva | API Gateway · Lista de revocación | ADR-009 | Una consulta por petición y una pieza más en el camino crítico → disponibilidad del borde (R-1) |
 | T6 | SEG-09 | Detectar la escritura contra el permiso vigente, no el del token | Detector de escrituras indebidas | ADR-008 | Una consulta de permisos por escritura → ASR-2 si el Gestor tarda (R-008a) |
 | T7 | SEG-13 · SEG-14 · DIS-13 · SEG-15 | Reacción ordenada: revocar, bloquear, compensar y avisar, en ese orden | OrquestadorReaccion, dentro de la Reacción | ADR-009 · ADR-010 | Si la compensación falla, el efecto residual puede pasar de 60 s → ASR-2 |
 | — | MOD-04 | Intermediario de mensajes (los temas «event») | Entre todos los componentes de los dos caminos | ADR-001 | Un salto más por evento → latencia de ASR-1 y ASR-2 |
@@ -95,7 +95,7 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 | STRIDE | Elemento que la mitiga | ID |
 |---|---|---|
 | S · Suplantación del vendedor | Gestor de sesión (la huella entra en la sesión) · ComparadorHuella (la compara) · Notificador (avisa) | SEG-02 · SEG-09 · SEG-15 |
-| E · Elevación de privilegios | Bitácora en Pedidos e Inventario (evidencia) · Detector (detecta) · OrquestadorReaccion (revoca, bloquea, compensa) · Puerta de entrada (hace efectiva la revocación) | SEG-18 · SEG-09 · SEG-13 · SEG-14 · DIS-13 |
+| E · Elevación de privilegios | Bitácora en Pedidos e Inventario (evidencia) · Detector (detecta) · OrquestadorReaccion (revoca, bloquea, compensa) · API Gateway (hace efectiva la revocación) | SEG-18 · SEG-09 · SEG-13 · SEG-14 · DIS-13 |
 
 ### Por qué se abren estos dos componentes
 

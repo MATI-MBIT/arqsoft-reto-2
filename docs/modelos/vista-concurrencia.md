@@ -65,7 +65,7 @@ La portada de los diagramas, con la matriz de trazabilidad y los huecos, está e
 
 ![DG-CON-001 · Grupos de procesos con sus réplicas, sus hilos y los canales que los llevan al bróker](png-v7/04-DG-CON-001.png)
 
-El diagrama arranca en los usuarios: vendedores y tenderos llegan en momentos aleatorios (arribo estocástico) y mandan solicitudes concurrentes a la App móvil, que corre en N teléfonos. La App pasa el token y la huella a la Puerta de entrada. La Puerta lee la Lista de revocación en cada petición, antes de abrir sesión o crear un pedido.
+El diagrama arranca en los usuarios: vendedores y tenderos llegan en momentos aleatorios (arribo estocástico) y mandan solicitudes concurrentes a la App móvil, que corre en N teléfonos. La App pasa el token y la huella al API Gateway. El API Gateway lee la Lista de revocación en cada petición, antes de abrir sesión o crear un pedido.
 
 **Los grupos de procesos.**
 
@@ -97,13 +97,13 @@ Cada mensaje cruza tres piezas: un canal de eventos con su clave (cilindro naran
 
 | Paso | Hilo que lo ejecuta | Qué hace |
 |---|---|---|
-| A1 · A2 | HiloPeticion de la Puerta y del Gestor | El usuario abre sesión desde la App con la huella; la Puerta la pasa al Gestor |
+| A1 · A2 | HiloPeticion del API Gateway y del Gestor | El usuario abre sesión desde la App con la huella; el API Gateway la pasa al Gestor |
 | A3 | HiloPeticion del Gestor | Publica la sesión abierta con t0, el instante en que se abrió, en el canal `sesiones-{status:abierta}`, que llega al tema `sesion.abierta`, y responde al usuario sin esperar |
 | A4 | Bróker | Enruta el tema a `cola.verificador` |
 | A5 · A6 · A7 | ConsumidorSesiones del Verificador | Desencola del canal de sesiones, compara la huella y lee la vigente en RegistroDispositivos |
 | A8 · A9 | ConsumidorSesiones, con PublicadorAlertas | Si no coincide, publica en el canal `sesiones-{status:alert Security}`, que llega al tema `alerta.seguridad` |
 | A10 · A11 · A12 | Bróker · ConsumidorAlertas del Notificador | Enruta a `cola.notificador`; el Notificador desencola del canal de alertas y avisa al Área de seguridad |
-| B1 | HiloPeticion de la Puerta y de Pedidos | El usuario con perfil de solo consulta, que no debería escribir, crea un pedido, y Pedidos lo escribe en su base |
+| B1 | HiloPeticion del API Gateway y de Pedidos | El usuario con perfil de solo consulta, que no debería escribir, crea un pedido, y Pedidos lo escribe en su base |
 | B2 | RelevoOutbox de Pedidos o de Inventario | Publica la escritura después del commit en el canal de alertas y escrituras, que llega al tema `escritura.realizada` |
 | B3 · B4 | Bróker · ConsumidorEscrituras del Detector | Enruta a `cola.detector`; el Detector desencola del canal |
 | B5 · B6 | ConsumidorEscrituras | Pide los permisos vigentes al Gestor y, si la escritura no cabía en esos permisos, pide la reacción (t_det, el instante de la detección) |
@@ -115,14 +115,14 @@ Cada mensaje cruza tres piezas: un canal de eventos con su clave (cilindro naran
 
 | Estado compartido | Quién escribe · quién lee | Cómo se protege | De dónde sale |
 |---|---|---|---|
-| :Lista de revocación | Escribe solo la Reacción · leen todos los hilos de petición de las dos instancias de la Puerta | Cada clave se escribe de forma atómica con su vencimiento; la lectura no toma lock. Un escritor y muchos lectores no necesitan exclusión mutua | ADR-009 |
+| :Lista de revocación | Escribe solo la Reacción · leen todos los hilos de petición de las dos instancias del API Gateway | Cada clave se escribe de forma atómica con su vencimiento; la lectura no toma lock. Un escritor y muchos lectores no necesitan exclusión mutua | ADR-009 |
 | :RegistroDispositivos | Escribe ControladorRegistro · lee ConsumidorSesiones | Una sola huella vigente por vendedor; el cambio se registra antes de usarse | ADR-007 |
 | :RegistroReacciones | Los consumidores del Detector pueden pedir dos veces la misma reacción si el bróker repite el evento | Clave única `idEscritura`: la segunda petición encuentra la reacción ya abierta | ADR-010 (NR-010a) |
 | Avisos entregados, dentro del Notificador | Una alerta repetida llega dos veces | Clave única `idAlerta`, registrada después de entregar | **propuesta**: ningún ADR decide la deduplicación |
 
 **Qué muestra:** que ningún control de seguridad corre en el hilo que atiende al usuario. La sesión y la escritura terminan, y su evento cruza un canal y el bróker hasta otro proceso, donde lo toma un hilo consumidor. El único estado que comparten el camino del usuario y el de la reacción es la Lista de revocación. · **Decisión que refleja:** ADR-001 (bróker), ADR-007 (huella), ADR-008 (outbox y detección), ADR-009 (la Lista) y ADR-010 (reacción ordenada). · **Qué no muestra:** el tamaño de cada pool de hilos, que depende de la prueba de carga con el Ambiente A.
 
-**Las medidas.** La medida de ASR-1 va de A3 a A12: ≤ 2 s desde t0. La de ASR-2 va de B6 a B12: ≤ 5 s desde t_det. Revocar va primero y toma milisegundos, así que desde B9 ninguna escritura del actor pasa la Puerta.
+**Las medidas.** La medida de ASR-1 va de A3 a A12: ≤ 2 s desde t0. La de ASR-2 va de B6 a B12: ≤ 5 s desde t_det. Revocar va primero y toma milisegundos, así que desde B9 ninguna escritura del actor pasa el API Gateway.
 
 ---
 
