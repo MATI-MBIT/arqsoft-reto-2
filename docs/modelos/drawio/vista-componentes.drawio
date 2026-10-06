@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="ccp-reto2-v7" pages="3">
   <diagram id="cmp-1" name="DG-CMP-001 · Panorama">
-    <mxGraphModel dx="3154" dy="761" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="860" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="3502" dy="1215" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="860" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -37,7 +37,7 @@
         <mxCell id="APP_ic" parent="APP" style="shape=component;jettyWidth=6;jettyHeight=3;html=1;fillColor=#FFFFFF;strokeColor=#2B3642;" value="" vertex="1">
           <mxGeometry height="14" width="14" x="168" y="6" as="geometry" />
         </mxCell>
-        <mxCell id="GW" parent="1" style="rounded=0;html=1;whiteSpace=wrap;fillColor=#FFF4D6;strokeColor=#B8860B;fontFamily=Helvetica;fontSize=12;fontColor=#1F2A36;" value="«component» T1&lt;br&gt;&lt;b&gt;Puerta de entrada de la API&lt;/b&gt;" vertex="1">
+        <mxCell id="GW" parent="1" style="rounded=0;html=1;whiteSpace=wrap;fillColor=#FFF4D6;strokeColor=#B8860B;fontFamily=Helvetica;fontSize=12;fontColor=#1F2A36;" value="«component» T1&lt;br&gt;&lt;b&gt;&amp;nbsp;API Gateway&lt;/b&gt;" vertex="1">
           <mxGeometry height="64" width="190" x="300" y="340" as="geometry" />
         </mxCell>
         <mxCell id="GW_ic" parent="GW" style="shape=component;jettyWidth=6;jettyHeight=3;html=1;fillColor=#FFFFFF;strokeColor=#2B3642;" value="" vertex="1">
@@ -272,7 +272,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="cmp-2" name="DG-CMP-002 · Seguridad">
-    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1780" pageHeight="930" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="1796" dy="1238" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1780" pageHeight="930" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -288,7 +288,7 @@
         <mxCell id="APP_ic" parent="APP" style="shape=component;jettyWidth=6;jettyHeight=3;html=1;fillColor=#FFFFFF;strokeColor=#2B3642;" value="" vertex="1">
           <mxGeometry height="14" width="14" x="148" y="6" as="geometry" />
         </mxCell>
-        <mxCell id="GW" parent="1" style="rounded=0;html=1;whiteSpace=wrap;fillColor=#FFF4D6;strokeColor=#B8860B;fontFamily=Helvetica;fontSize=12;fontColor=#1F2A36;" value="«component» T5&lt;br&gt;&lt;b&gt;Puerta de entrada de la API&lt;/b&gt;" vertex="1">
+        <mxCell id="GW" parent="1" style="rounded=0;html=1;whiteSpace=wrap;fillColor=#FFF4D6;strokeColor=#B8860B;fontFamily=Helvetica;fontSize=12;fontColor=#1F2A36;" value="«component» T5&lt;br&gt;&lt;b&gt;API Gateway&lt;/b&gt;" vertex="1">
           <mxGeometry height="64" width="190" x="310" y="200" as="geometry" />
         </mxCell>
         <mxCell id="GW_ic" parent="GW" style="shape=component;jettyWidth=6;jettyHeight=3;html=1;fillColor=#FFFFFF;strokeColor=#2B3642;" value="" vertex="1">
@@ -591,7 +591,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="cmp-3" name="DG-CMP-003 · Disponibilidad">
-    <mxGraphModel dx="975" dy="525" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1860" pageHeight="1040" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="2123" dy="1464" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1860" pageHeight="1040" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />

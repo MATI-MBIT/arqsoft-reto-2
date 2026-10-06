@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="ccp-reto2-v7" pages="3">
   <diagram id="hfqODjthcQQkpgwIk5c5" name="DG-CON-001-General">
-    <mxGraphModel dx="975" dy="525" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1557" dy="1073" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -71,7 +71,7 @@
             <mxPoint x="250" y="367" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="tCT7xx3-FDiM1OV3IifS-1" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;" value="«process»&lt;br&gt;&lt;u&gt;:Puerta de entrada de la API&lt;/u&gt; [2]" vertex="1">
+        <mxCell id="tCT7xx3-FDiM1OV3IifS-1" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;" value="«process»&lt;br&gt;&lt;u&gt;: AP GatewayI&lt;/u&gt; [2]" vertex="1">
           <mxGeometry height="60" width="220" x="590" y="160" as="geometry" />
         </mxCell>
         <mxCell id="iXZyB-kU1yRu-Kd1YN0s-1" edge="1" parent="1" source="kKEyt0iRQtvd4B6zCpAd-1" style="endArrow=open;endSize=10;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;fontFamily=Helvetica;jumpStyle=arc;jumpSize=8;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="tCT7xx3-FDiM1OV3IifS-1" value="token y huella">
@@ -360,7 +360,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="con-2" name="DG-CON-002 · Seguridad">
-    <mxGraphModel dx="1414" dy="761" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1200" background="#FFFFFF" math="0" shadow="0">
+    <mxGraphModel dx="1153" dy="795" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1200" background="#FFFFFF" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -373,7 +373,7 @@
         <mxCell id="APP" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;" value="«process»&lt;br&gt;&lt;u&gt;:App móvil&lt;/u&gt; [N]" vertex="1">
           <mxGeometry height="64" width="150" x="10" y="158" as="geometry" />
         </mxCell>
-        <mxCell id="GW" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;verticalAlign=top;align=left;spacingLeft=14;container=1;collapsible=0;" value="«process»&lt;br&gt;&lt;u&gt;:Puerta de entrada de la API&lt;/u&gt; [2]" vertex="1">
+        <mxCell id="GW" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;verticalAlign=top;align=left;spacingLeft=14;container=1;collapsible=0;" value="«process»&lt;br&gt;&lt;u&gt;:API Gateway&lt;/u&gt; [2]" vertex="1">
           <mxGeometry height="130" width="230" x="270" y="105" as="geometry" />
         </mxCell>
         <mxCell id="GWH" parent="GW" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.06;fillColor=#FFFFFF;strokeColor=#000000;fontSize=12;fontSize=11;" value="«thread»&lt;br&gt;&lt;u&gt;:HiloPeticion&lt;/u&gt; [1..*]" vertex="1">
