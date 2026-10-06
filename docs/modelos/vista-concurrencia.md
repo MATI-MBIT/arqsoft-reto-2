@@ -172,17 +172,3 @@ En este diagrama, la cadena usa un solo canal de eventos, `pedidos-status`, con 
 **Las medidas.** La medida de ASR-3 va de la detención de la etapa a R5: plazo ≤ 25 s más un barrido de 5 s, ≤ 30 s. La de ASR-4 va de R6 a R11: un intento de 3 s y el escalamiento, ≤ 5 s, sin duplicados. Sumados dan los 35 s del presupuesto conjunto.
 
 ---
-
-## Diferencias por resolver
-
-El texto de esta página describe los diagramas tal como están dibujados. Estas diferencias quedan abiertas hasta que el equipo decida en el draw.io o en el ADR que corresponda.
-
-| Dónde | Qué dibuja el diagrama | Con qué choca |
-|---|---|---|
-| DG-CON-001 y DG-CON-003 | En DG-CON-001, el Reanudador es un proceso propio dentro del grupo de la cadena; en DG-CON-003 es un hilo dentro del Coordinador | ADR-006 y DG-CMP-003 lo ponen dentro del Coordinador |
-| DG-CON-001, DG-CON-002 y DG-DEP-001 | Seguridad con 1 activo + 1 en espera y vigilancia con 1 líder + 1 en espera; el Gestor con N réplicas; la cadena con P réplicas ≤ particiones, y el Coordinador y la Bandeja [1] | DG-DEP-001 despliega ×2 los servicios de seguridad, el Coordinador y la Bandeja, 1..3 el Monitor y ×1 la Puerta, que DG-CON-002 dibuja en [2] |
-| DG-CON-001 | Los canales tienen clave de partición y la cadena escala por particiones | El bróker de ADR-001 y de DG-DEP-001 es RabbitMQ con colas durables; ningún ADR decide particiones ni claves |
-| DG-CON-002 | El mismo canal `sesiones-{status:alert Security} {Escritura Realizada}` lleva las alertas y las escrituras | Son dos temas distintos del bróker, `alerta.seguridad` y `escritura.realizada`, con suscriptores distintos |
-| DG-CON-003 | El Monitor publica los reintentos en el canal con clave `vendedor` (R5), y el Reanudador desencola del canal con clave `{pedido}` (R6) | El reintento que se publica en un canal debería desencolarse del mismo |
-| DG-CON-001 y DG-CON-003 | En DG-CON-001, la cadena publica y Logística desencola por `pedidos-status` con clave `vendedor`; en DG-CON-003, los comandos van con clave `{pedido}` y Logística desencola de la clave `{error}` | La clave de cada flujo de la cadena tiene que ser la misma en los dos diagramas |
-| DG-CON-001 | `:Coordinador de la cadena [1]`, `:reanudador de la cadena [1]` y `:Bandeja de pedidos escalados [1]` están dentro del grupo de P réplicas ≤ particiones | Un proceso único no escala con las particiones de su grupo |

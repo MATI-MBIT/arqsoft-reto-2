@@ -172,18 +172,3 @@ Las etapas quedan como caja negra. Las tres siguen la misma receta de ADR-005: l
 **Tamaño.** El diagrama tiene unos 39 elementos. Pasa el tope de 20 por la misma razón que DG-CMP-002. Se lee por franjas: arriba el Coordinador y las etapas, abajo el Monitor y la Cola.
 
 ---
-
-## Diferencias por resolver
-
-El texto de esta página describe los diagramas tal como están dibujados. Estas diferencias quedan abiertas hasta que el equipo decida en el draw.io o en el ADR que corresponda.
-
-| Dónde | Qué dibuja el diagrama | Con qué choca |
-|---|---|---|
-| DG-CMP-001 | Una línea azul del Notificador a la Lista de revocación: «Registrar en lista de Revocación» | ADR-009 deja a la Reacción como el único que escribe en la Lista, y ningún ASR pide que el Notificador escriba en ella |
-| DG-CMP-001 y DG-CMP-003 | El bróker de la cadena es T8 en el panorama y T4 en DG-CMP-003 | En DG-CMP-003, T4 ya es la idempotencia de las etapas. Falta el ID del catálogo del bróker de la cadena (T8) y de la cola de mensajes fallidos (T11) |
-| DG-CMP-001 | El soporte de CCP atiende la cola de mensajes fallidos | [PREGUNTA] ¿Es el mismo actor que el Responsable del pedido escalado, que atiende la Bandeja? |
-| DG-CMP-001 | Facturación es T9 e Inventario y Validación de despacho son T10 | Las tres etapas aplican la misma táctica, DIS-17 de ADR-005, que antes era una sola marca |
-| DG-CMP-001 | El Monitor avisa al Coordinador «Notificación Falla status Servicios» | ADR-004 y DG-CMP-003 dicen que el Monitor pide las etapas vencidas al Coordinador (`vencidas(ahora)`) y encola la señal en la Cola de reintentos |
-| DG-CMP-003 | El Monitor sondea la salud de Facturación y de Validación de despacho por `ISalud` | DG-DEP-001 sondea también Inventario |
-| Rótulos | «Verificación Cadena Sumistro» | Errata: «Suministro» |
-
