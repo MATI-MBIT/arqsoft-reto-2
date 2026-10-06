@@ -26,7 +26,7 @@ tendero puede además pedir por su cuenta, sin esperar a que alguien pase. De ah
 en adelante el pedido recorre tres etapas (facturación, descargue de inventario
 y validación de despacho) antes de llegar a logística.
 
-En los dos atributos de calidad, seguridad y disponibilidad, lo difícil **reconocer situaciones anómalas que el sistema trata como operación
+En los dos atributos de calidad, seguridad y disponibilidad, lo difícil es **reconocer situaciones anómalas que el sistema trata como operación
 normal**. En ninguno de los dos casos se lanza una excepción que se pueda
 capturar.
 
