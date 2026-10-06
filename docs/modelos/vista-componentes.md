@@ -61,7 +61,7 @@ Los ID de táctica (DIS-17, SEG-13…) son los del catálogo del curso. La porta
 | T4 | SEG-09 | Detectar la escritura contra el permiso vigente | Detector | ADR-008 | Una consulta de permisos por escritura → ASR-2 si el Gestor tarda (R-008a) |
 | T5 | SEG-13 · SEG-14 · DIS-13 · SEG-15 | Reacción ordenada: revocar, bloquear, compensar y avisar | Reacción | ADR-009 · ADR-010 | Una operación inversa por tipo de escritura → modificabilidad |
 | T6 | INT-08 · DIS-15 · INT-10 · DIS-12 · DIS-14 | Orquestar la cadena con estado por etapa, en orden, con un reintento y escalamiento | Coordinador | ADR-002 · ADR-003 · ADR-006 | Punto central (R-002a) → ASR-4. La cadena dura la suma de las tres etapas (R-003a) |
-| T7 | DIS-04 · DIS-03 · DIS-01 | Plazo vencido por pedido, monitor que barre y sondeo de salud (ping/echo) de apoyo | Monitor: avisa al Coordinador la falla de estado de los servicios y verifica las etapas por ping/echo | ADR-004 | Plazo por calibrar → falsas alarmas de ASR-3 (TO-004a). Punto único (R-004a) |
+| T7 | DIS-04 · DIS-03 · DIS-01 | Plazo vencido por pedido, monitor que barre y sondeo de salud (ping/echo) de apoyo | Monitor de la cadena: avisa al Coordinador la falla de estado de los servicios y verifica las etapas por ping/echo | ADR-004 | Plazo por calibrar → falsas alarmas de ASR-3 (TO-004a). Punto único (R-004a) |
 | T8 | [PREGUNTA] | Bróker de la cadena: recibe `etapa.ejecutar` y `etapa.completada` del Coordinador, los enruta a las etapas y manda lo que falla a la cola de mensajes fallidos | Bróker de la cadena (rótulo «Broker de Eventos Cadena de suministros») | ADR-001 · ADR-006 | [PREGUNTA] |
 | T9 · T10 | DIS-17 | Idempotencia por pedido y etapa con clave única en la transacción del efecto | Facturación (T9) · Inventario y Validación de despacho (T10) | ADR-005 | Una fila más por pedido y etapa → almacenamiento |
 | T11 | [PREGUNTA] | Cola de mensajes fallidos de la cadena, que atiende el soporte de CCP | Cola de mensajes fallidos (rótulo «Dead-Letter-Queue») | ADR-006 | [PREGUNTA] |
@@ -179,13 +179,11 @@ El texto de esta página describe los diagramas tal como están dibujados. Estas
 
 | Dónde | Qué dibuja el diagrama | Con qué choca |
 |---|---|---|
-| DG-CMP-001 | Una línea azul del Notificador a la Lista de revocación: «Registrar en lista de Revocación · ASR 5» | ASR-5 no existe; los ASR van de ASR-1 a ASR-4. ADR-009 deja a la Reacción como el único que escribe en la Lista |
-| DG-CMP-001 | La flecha de Pedidos a `escritura.realizada` lleva el rótulo «ASR 2» | Las aristas no llevan ASR en el resto de la vista; la trazabilidad va en la tabla |
+| DG-CMP-001 | Una línea azul del Notificador a la Lista de revocación: «Registrar en lista de Revocación» | ADR-009 deja a la Reacción como el único que escribe en la Lista, y ningún ASR pide que el Notificador escriba en ella |
 | DG-CMP-001 y DG-CMP-003 | El bróker de la cadena es T8 en el panorama y T4 en DG-CMP-003 | En DG-CMP-003, T4 ya es la idempotencia de las etapas. Falta el ID del catálogo del bróker de la cadena (T8) y de la cola de mensajes fallidos (T11) |
 | DG-CMP-001 | El soporte de CCP atiende la cola de mensajes fallidos | [PREGUNTA] ¿Es el mismo actor que el Responsable del pedido escalado, que atiende la Bandeja? |
 | DG-CMP-001 | Facturación es T9 e Inventario y Validación de despacho son T10 | Las tres etapas aplican la misma táctica, DIS-17 de ADR-005, que antes era una sola marca |
-| DG-CMP-001 | El Monitor se llama «Monitor» | En las demás vistas se llama «Monitor de la cadena» |
 | DG-CMP-001 | El Monitor avisa al Coordinador «Notificación Falla status Servicios» | ADR-004 y DG-CMP-003 dicen que el Monitor pide las etapas vencidas al Coordinador (`vencidas(ahora)`) y encola la señal en la Cola de reintentos |
-| DG-CMP-003 | El Monitor tiene dos celdas `ClienteSalud` superpuestas | Es la misma parte dibujada dos veces; al mover una, aparece la otra |
-| Rótulos | «Verificación Cadena Sumistro {PinEco}» | Erratas: «Suministro» y «ping/echo» |
+| DG-CMP-003 | El Monitor sondea la salud de Facturación y de Validación de despacho por `ISalud` | DG-DEP-001 sondea también Inventario |
+| Rótulos | «Verificación Cadena Sumistro» | Errata: «Suministro» |
 

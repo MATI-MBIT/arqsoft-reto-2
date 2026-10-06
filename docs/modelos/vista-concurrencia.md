@@ -72,14 +72,14 @@ El diagrama arranca en los usuarios: vendedores y tenderos llegan en momentos al
 | Grupo | Réplicas | Procesos y hilos que contiene | Qué publica o consume |
 |---|---|---|---|
 | Gestor · ASR-1 y ASR-2 | N réplicas | `:Gestor de sesión [2]`, con un «thread pool» de un hilo por solicitud, que entrega cada evento a un Productor de eventos «thread» de envío asíncrono | Publica `SesionAbierta` en el canal `sesiones-{status:abierta}`, que llega al tema `sesion.abierta` |
-| seguridad · ASR-1 y ASR-2 | 1 activo + 1 en espera | `:Verificador de dispositivo [2]` con su «thread» consumidor · `:Detector de escrituras indebidas [2]` con un «scheduled thread» cada 1 s · `:Reacción ante acceso indebido [2]` · `:Notificador a seguridad [2]` con su «thread» | El Verificador desencola del canal de sesiones. El grupo publica «Dispositivo {no válido}» en el canal `sesiones-{status:alert Security}`, que llega al tema `alerta.seguridad`. La Reacción revoca en la Lista y el Notificador avisa al Área de seguridad |
-| cadena-pedido, entrada · ASR-3 y ASR-4 | P réplicas ≤ particiones | `:Pedidos [2]`, con un «thread pool» 1..P de un pedido por hilo | Publica en el canal `pedidos-confirmados` (`key = pedido`), que llega al tema `escritura.realizada` |
-| cadena-pedido, etapas · ASR-3 y ASR-4 | P réplicas ≤ particiones | `:Coordinador de la cadena [1]`, que hace llamadas asíncronas con plazo por etapa · `:Facturación [2]`, `:Inventario [2]` y `:Validación de despacho [2]`, cada una con un «thread pool» 1..P · `:Bandeja de pedidos escalados [1]` | Publica `etapa.ejecutar`, `cadena.escalada` y `pedido.listo`, y desencola `etapa.completada` y `cola.reintentos`, por el canal `pedidos-status` (`key = vendedor`) |
-| vigilancia · ASR-3 y ASR-4 | 1 líder + 1 en espera | `:Monitor de la cadena [1]`, con un «scheduled thread» que barre cada 5 s · `:reanudador de la cadena [1]`, con su «thread» consumidor | Publica los eventos de reintento en el canal `pedidos-status`, avisa al Coordinador las etapas fallidas y sondea las etapas |
+| seguridad · ASR-1 y ASR-2 | 1 activo + 1 en espera | `:Verificador de dispositivo [2]` con su «thread» consumidor · `:Detector de escrituras indebidas [2]` con su «thread» · `:Reacción ante acceso indebido [2]` · `:Notificador a seguridad [2]` con su «thread» | El Verificador desencola del canal de sesiones. El grupo publica «Dispositivo {no válido}» en el canal `sesiones-{status:alert Security}`, que llega al tema `alerta.seguridad`. La Reacción revoca en la Lista y el Notificador avisa al Área de seguridad |
+| cadena-pedido, entrada · ASR-3 y ASR-4 | P réplicas ≤ particiones | `:Pedidos [2]`, con un «thread pool» 1..P de un pedido por hilo | Publica en el canal `pedidos-confirmados`, con clave `pedido`, que llega al tema `escritura.realizada` |
+| cadena-pedido, etapas · ASR-3 y ASR-4 | P réplicas ≤ particiones | `:Coordinador de la cadena [1]`, que hace llamadas asíncronas con plazo por etapa · `:Facturación [2]`, `:Inventario [2]` y `:Validación de despacho [2]`, cada una con un «thread pool» 1..P · `:reanudador de la cadena [1]`, con su «thread» consumidor · `:Bandeja de pedidos escalados [1]` | Publica `etapa.ejecutar`, `cadena.escalada` y `pedido.listo`, y desencola `etapa.completada` y `cola.reintentos`, por el canal `pedidos-status` con clave `vendedor`. La Bandeja desencola de ese canal `cadena.escalada` y los mensajes fallidos |
+| vigilancia · ASR-3 y ASR-4 | 1 líder + 1 en espera | `:Monitor de la cadena [1]`, con un «scheduled thread» que barre cada 5 s | Publica los eventos de reintento en el canal `pedidos-status`, avisa al Coordinador las etapas fallidas y sondea las etapas |
 
 **El bróker.** `:Bróker de mensajes [1]` tiene los temas de seguridad sueltos (`sesion.abierta`, `alerta.seguridad`, `escritura.realizada`) y los de la cadena en un grupo de eventos: `etapa.ejecutar`, `etapa.completada`, `cadena.escalada`, `pedido.listo` y la cola `cola.reintentos`. Logística desencola `pedido.listo` del canal `pedidos-status`.
 
-**Qué muestra:** cómo se escala cada camino. La seguridad y la vigilancia corren con un activo y uno en espera, el Gestor con N réplicas y la cadena con tantas réplicas como particiones tenga su canal. Todo lo asíncrono pasa por un canal con clave antes de llegar al bróker. · **Decisión que refleja:** ADR-001 (bróker durable), ADR-002 y ADR-004 (Coordinador y Monitor ×1) y las rutas de las demás decisiones. · **Qué no muestra:** los hilos internos de cada componente abierto, que están en DG-CON-002 y DG-CON-003.
+**Qué muestra:** cómo se escala cada camino. La seguridad corre con un activo y uno en espera, la vigilancia con un líder y uno en espera, el Gestor con N réplicas y la cadena con tantas réplicas como particiones tenga su canal. El Reanudador corre en el grupo de la cadena, junto al Coordinador. Todo lo asíncrono pasa por un canal con clave antes de llegar al bróker. · **Decisión que refleja:** ADR-001 (bróker durable), ADR-002 y ADR-004 (Coordinador y Monitor ×1) y las rutas de las demás decisiones. · **Qué no muestra:** los hilos internos de cada componente abierto, que están en DG-CON-002 y DG-CON-003.
 
 ---
 
@@ -98,7 +98,7 @@ Cada mensaje cruza tres piezas: un canal de eventos con su clave (cilindro naran
 | Paso | Hilo que lo ejecuta | Qué hace |
 |---|---|---|
 | A1 · A2 | HiloPeticion de la Puerta y del Gestor | El usuario abre sesión desde la App con la huella; la Puerta la pasa al Gestor |
-| A3´ | HiloPeticion del Gestor | Publica la sesión abierta con t0, el instante en que se abrió, en el canal `sesiones-{status:abierta}`, que llega al tema `sesion.abierta`, y responde al usuario sin esperar |
+| A3 | HiloPeticion del Gestor | Publica la sesión abierta con t0, el instante en que se abrió, en el canal `sesiones-{status:abierta}`, que llega al tema `sesion.abierta`, y responde al usuario sin esperar |
 | A4 | Bróker | Enruta el tema a `cola.verificador` |
 | A5 · A6 · A7 | ConsumidorSesiones del Verificador | Desencola del canal de sesiones, compara la huella y lee la vigente en RegistroDispositivos |
 | A8 · A9 | ConsumidorSesiones, con PublicadorAlertas | Si no coincide, publica en el canal `sesiones-{status:alert Security}`, que llega al tema `alerta.seguridad` |
@@ -122,7 +122,7 @@ Cada mensaje cruza tres piezas: un canal de eventos con su clave (cilindro naran
 
 **Qué muestra:** que ningún control de seguridad corre en el hilo que atiende al usuario. La sesión y la escritura terminan, y su evento cruza un canal y el bróker hasta otro proceso, donde lo toma un hilo consumidor. El único estado que comparten el camino del usuario y el de la reacción es la Lista de revocación. · **Decisión que refleja:** ADR-001 (bróker), ADR-007 (huella), ADR-008 (outbox y detección), ADR-009 (la Lista) y ADR-010 (reacción ordenada). · **Qué no muestra:** el tamaño de cada pool de hilos, que depende de la prueba de carga con el Ambiente A.
 
-**Las medidas.** La medida de ASR-1 va de A3´ a A12: ≤ 2 s desde t0. La de ASR-2 va de B6 a B12: ≤ 5 s desde t_det. Revocar va primero y toma milisegundos, así que desde B9 ninguna escritura del actor pasa la Puerta.
+**Las medidas.** La medida de ASR-1 va de A3 a A12: ≤ 2 s desde t0. La de ASR-2 va de B6 a B12: ≤ 5 s desde t_det. Revocar va primero y toma milisegundos, así que desde B9 ninguna escritura del actor pasa la Puerta.
 
 ---
 
@@ -140,7 +140,7 @@ En este diagrama, la cadena usa un solo canal de eventos, `pedidos-status`, con 
 |---|---|
 | `key = {pedido}` | Los comandos a las etapas y sus confirmaciones |
 | `key = vendedor` | Los reintentos que publica el Monitor |
-| `key = {error}` | Lo escalado, lo fallido y lo que va a Logística |
+| `key = {error}` | Lo escalado, lo fallido y `pedido.listo`, que va a Logística (rótulo «{fallidos}-{listo}») |
 
 **El orden del flujo.**
 
@@ -179,14 +179,10 @@ El texto de esta página describe los diagramas tal como están dibujados. Estas
 
 | Dónde | Qué dibuja el diagrama | Con qué choca |
 |---|---|---|
-| DG-CON-001 | El Detector corre con un «scheduled thread» cada 1 s | ADR-008 decide detectar por evento, y DG-CON-002 dibuja al Detector desencolando de `cola.detector` |
-| DG-CON-001 | El reanudador de la cadena corre en el grupo de vigilancia, junto al Monitor | ADR-006, DG-CMP-003 y DG-CON-003 lo ponen dentro del Coordinador de la cadena |
-| DG-CON-001 | Seguridad y vigilancia corren con 1 activo + 1 en espera; el Gestor con N réplicas; la cadena con P réplicas ≤ particiones | DG-DEP-001 despliega ×2 los servicios de seguridad y ×1 sin respaldo el Coordinador y el Monitor, y su nota descarta el respaldo en espera por estar fuera del alcance |
-| DG-CON-001 | Los canales tienen clave de partición (`key = vendedor`, `key = pedido`) y la cadena escala por particiones | El bróker de ADR-001 y de DG-DEP-001 es RabbitMQ con colas durables; ningún ADR decide particiones ni claves |
-| DG-CON-001 | Una flecha «Use Sondeo» sin origen ni destino; «desencola cadena.escalada y mensajes fallidos» va de la Bandeja a Logística | El sondeo sale del Monitor hacia las etapas, y lo escalado lo desencola la Bandeja, no Logística |
+| DG-CON-001 y DG-CON-003 | En DG-CON-001, el Reanudador es un proceso propio dentro del grupo de la cadena; en DG-CON-003 es un hilo dentro del Coordinador | ADR-006 y DG-CMP-003 lo ponen dentro del Coordinador |
+| DG-CON-001, DG-CON-002 y DG-DEP-001 | Seguridad con 1 activo + 1 en espera y vigilancia con 1 líder + 1 en espera; el Gestor con N réplicas; la cadena con P réplicas ≤ particiones, y el Coordinador y la Bandeja [1] | DG-DEP-001 despliega ×2 los servicios de seguridad, el Coordinador y la Bandeja, 1..3 el Monitor y ×1 la Puerta, que DG-CON-002 dibuja en [2] |
+| DG-CON-001 | Los canales tienen clave de partición y la cadena escala por particiones | El bróker de ADR-001 y de DG-DEP-001 es RabbitMQ con colas durables; ningún ADR decide particiones ni claves |
 | DG-CON-002 | El mismo canal `sesiones-{status:alert Security} {Escritura Realizada}` lleva las alertas y las escrituras | Son dos temas distintos del bróker, `alerta.seguridad` y `escritura.realizada`, con suscriptores distintos |
-| DG-CON-003 | Logística desencola del canal `key = {error}` (fallidos) | Logística recibe `pedido.listo`, que no es un error |
-| DG-CON-003 | El Monitor publica los reintentos en el canal `key = vendedor` (R5), y el Reanudador desencola del canal `key = {pedido}` (R6) | El reintento que se publica en un canal debería desencolarse del mismo |
-| DG-CON-001 y DG-CON-003 | En DG-CON-001, la cadena publica y Logística desencola por `pedidos-status` con `key = vendedor`; en DG-CON-003, los comandos van con `key = {pedido}` y Logística desencola de `key = {error}` | La clave de cada flujo de la cadena tiene que ser la misma en los dos diagramas |
-| DG-CON-001 | `:Coordinador de la cadena [1]` y `:Bandeja de pedidos escalados [1]` están dentro del grupo de P réplicas ≤ particiones | Un proceso único no escala con las particiones de su grupo |
-| Rótulos | «Disposito {no valido}», «A3´» | Erratas: «Dispositivo {no válido}» y «A3» |
+| DG-CON-003 | El Monitor publica los reintentos en el canal con clave `vendedor` (R5), y el Reanudador desencola del canal con clave `{pedido}` (R6) | El reintento que se publica en un canal debería desencolarse del mismo |
+| DG-CON-001 y DG-CON-003 | En DG-CON-001, la cadena publica y Logística desencola por `pedidos-status` con clave `vendedor`; en DG-CON-003, los comandos van con clave `{pedido}` y Logística desencola de la clave `{error}` | La clave de cada flujo de la cadena tiene que ser la misma en los dos diagramas |
+| DG-CON-001 | `:Coordinador de la cadena [1]`, `:reanudador de la cadena [1]` y `:Bandeja de pedidos escalados [1]` están dentro del grupo de P réplicas ≤ particiones | Un proceso único no escala con las particiones de su grupo |

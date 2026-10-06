@@ -117,12 +117,11 @@ Las páginas describen cada diagrama tal como está dibujado en el draw.io. Cuan
 
 | Diferencia | Diagramas | Qué hay que decidir |
 |---|---|---|
-| Dónde corre el Reanudador | DG-CON-001 lo pone en el grupo de vigilancia, junto al Monitor; ADR-006, DG-CMP-003 y DG-CON-003 lo ponen dentro del Coordinador | En qué proceso vive, y corregir el ADR o los diagramas |
-| Cómo detecta el Detector | DG-CON-001 le da un «scheduled thread» cada 1 s; ADR-008 y DG-CON-002 lo hacen consumir `escritura.realizada` | Si detecta por evento o por barrido |
-| Cuántas réplicas corre cada proceso | DG-CON-001 usa grupos con N réplicas, 1 activo + 1 en espera y P réplicas ≤ particiones, y deja procesos ×1 dentro del grupo de P réplicas; DG-DEP-001 usa ×2 y ×1 sin respaldo | Una sola política de réplicas para las dos vistas |
+| Dónde corre el Reanudador | DG-CON-001 lo dibuja como proceso propio dentro del grupo de la cadena; ADR-006, DG-CMP-003 y DG-CON-003 lo ponen dentro del Coordinador | Si es un proceso o un hilo del Coordinador, y corregir el ADR o los diagramas |
+| Cuántas réplicas corre cada proceso | DG-CON-001 usa grupos con N réplicas, 1 activo + 1 en espera y P réplicas ≤ particiones, con el Coordinador y la Bandeja en [1]; DG-DEP-001 despliega ×2 el Coordinador y la Bandeja, 1..3 el Monitor y ×1 la Puerta, que DG-CON-002 dibuja en [2]. ADR-002 fija un solo Coordinador | Una sola política de réplicas para las dos vistas, y el ADR que la respalde |
 | Qué tipo de bróker hay | DG-CON-001 a 003 dibujan canales con clave de partición, y la clave de cada flujo de la cadena cambia entre DG-CON-001 y DG-CON-003; ADR-001 y DG-DEP-001 usan RabbitMQ con colas durables | Si hay particiones, y en qué ADR se decide |
 | Qué hace el Monitor | DG-CMP-001 avisa al Coordinador las fallas; ADR-004 y DG-CMP-003 piden las vencidas y encolan la señal. DG-DEP-001 sondea tres etapas; DG-CMP-003 y DG-CON-003, dos | La interacción del Monitor y qué etapas sondea |
-| Una flecha a un ASR que no existe | DG-CMP-001 rotula «ASR 5» la escritura del Notificador en la Lista de revocación | Si esa escritura existe, qué ASR la pide y qué ADR la decide |
+| Quién escribe en la Lista de revocación | DG-CMP-001 dibuja al Notificador registrando en la Lista; ADR-009 deja a la Reacción como el único que escribe | Si el Notificador escribe en la Lista, y qué ASR y qué ADR lo piden |
 | Marcas de táctica | El bróker de la cadena es T8 en DG-CMP-001 y T4 en DG-CMP-003, y las etapas pasan a T9 y T10 | Una marca por táctica y el ID del catálogo del bróker de la cadena y de la cola de mensajes fallidos |
 
 Las erratas y las conexiones sueltas de cada diagrama están en la sección de su vista.
@@ -163,7 +162,7 @@ Las preguntas abiertas no van dentro de los diagramas; están aquí.
 
 **Dibujado sin ADR que lo respalde.**
 
-- DG-DEP-001: las dos instancias de los servicios sin estado, el balanceador y la observabilidad.
+- DG-DEP-001: las dos instancias de los servicios sin estado salvo la Puerta, el segundo Coordinador y la segunda Bandeja, las instancias adicionales del Monitor, de Redis y de RabbitMQ, el balanceador y la observabilidad.
 - DG-CON-003: la actualización condicional de la fila `CadenaEtapa`.
 - DG-CON-002: la deduplicación del aviso.
 - DG-CMP-003: los dos puertos de entrada del Coordinador.
