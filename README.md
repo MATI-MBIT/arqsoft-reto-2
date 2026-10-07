@@ -15,6 +15,20 @@ make smoke     # humo de ~7 min, con veredicto
 make help      # todos los comandos
 ```
 
+### En Windows
+
+`make.bat` y `make.ps1` son el equivalente del Makefile, con los mismos
+objetivos y la misma sintaxis. En `cmd`, `make smoke` encuentra `make.bat` en la
+carpeta; en PowerShell se escribe `.\make smoke`. El orquestador y el e2e tienen
+su versión en PowerShell (`load\experimento.ps1` y `load\e2e.ps1`), y lo que
+corre dentro de los contenedores es el mismo.
+
+Requiere Docker Desktop con contenedores Linux (WSL 2), JDK 21, k6
+(`winget install k6`) y Python 3, este último solo para `make e2e` y
+`make tableros`. Funciona con el Windows PowerShell 5.1 que trae Windows y con
+PowerShell 7. El repositorio fija con `.gitattributes` el fin de línea LF de los
+`.sh`: el inyector copia `inyectar.sh` a una imagen Linux y con CRLF no corre.
+
 El plan, los supuestos y lo que mostró el humo están en
 [`notas/plan-implementacion-experimentos.md`](notas/plan-implementacion-experimentos.md).
 

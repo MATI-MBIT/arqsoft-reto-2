@@ -1,0 +1,12 @@
+# Fin de línea por tipo de archivo, para que el repositorio funcione igual al
+# clonarlo en Windows. Los .sh corren dentro de contenedores Linux (inyectar.sh
+# se copia a la imagen del inyector) o en bash: con CRLF fallan. Los .bat, .cmd
+# y .ps1 son de Windows.
+* text=auto
+*.sh      text eol=lf
+gradlew   text eol=lf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.ps1     text eol=crlf
+*.png     binary
+*.jar     binary
