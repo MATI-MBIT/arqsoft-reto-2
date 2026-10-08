@@ -1,5 +1,5 @@
 spring:
   application:
-    name: usuario-no-valido
+    name: verificador
   config:
     import: classpath:comun.yml

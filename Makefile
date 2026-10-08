@@ -9,7 +9,7 @@
 
 COMPOSE := docker compose -f deploy/docker-compose.yml
 PSQL    := $(COMPOSE) exec -T postgres psql -U reto2 -d reto2
-MICROS  := 8081 8082 8083 8084 8090 8091 8092 8093 8094 8095 8096
+MICROS  := 8081 8082 8083 8084 8090 8091 8092 8093 8094 8095 8096 8097
 
 .DEFAULT_GOAL := help
 
@@ -80,7 +80,7 @@ tableros: ## Regenera los JSON de los tableros desde deploy/observabilidad/gener
 .PHONY: estado
 estado: ## Salud de cada micro y de la infraestructura
 	@for p in $(MICROS); do printf "  :%s  " $$p; curl -s -m 2 localhost:$$p/actuator/health || printf "sin respuesta"; echo; done
-	@$(COMPOSE) ps --format '  {{.Name}}\t{{.State}}' | grep -vE 'reto2-(sesiones|usuario|receptor|onboarding|ventas|logistica|monitor|auditor)' || true
+	@$(COMPOSE) ps --format '  {{.Name}}\t{{.State}}' | grep -vE 'reto2-(sesiones|usuario|receptor|onboarding|ventas|logistica|monitor|auditor|notificador)' || true
 
 ##@ Fallas a mano — para probar el montaje, no para medir
 
@@ -99,7 +99,7 @@ carga: ## Solo la carga de fondo del Ambiente A, hasta Ctrl-C (para mirar el tab
 ##@ Topología
 
 .PHONY: up
-up: imagenes ## Levanta todo y espera a que los 11 micros respondan
+up: imagenes ## Levanta todo y espera a que los 12 micros respondan
 	$(COMPOSE) up -d
 	@printf "esperando a los micros"; for p in $(MICROS); do \
 	  for i in $$(seq 1 90); do curl -fs -m 1 localhost:$$p/actuator/health >/dev/null && break; printf "."; sleep 1; done; \

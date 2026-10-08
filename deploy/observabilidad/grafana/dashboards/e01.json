@@ -1,7 +1,7 @@
 {
   "uid": "e01",
   "title": "E01 · Detección del dispositivo no registrado (H1, ASR-1)",
-  "description": "Si el micro de sesiones compara la huella del dispositivo al abrir la sesión, seguridad recibe el aviso en ≤ 2 s.",
+  "description": "Si el Verificador de dispositivo compara la huella apenas el Gestor de sesión publica la apertura, seguridad recibe el aviso en ≤ 2 s.",
   "tags": [
     "reto2",
     "e01"
@@ -295,7 +295,7 @@
     {
       "type": "stat",
       "title": "Demora p95 del aviso",
-      "description": "Desde que el micro de sesiones registra la apertura hasta que el receptor del SMS recibe el aviso.",
+      "description": "Desde que el Gestor de sesión registra la apertura hasta que el receptor del SMS recibe el aviso: pasa por el bróker dos veces.",
       "gridPos": {
         "x": 16,
         "y": 1,
@@ -566,7 +566,7 @@
     {
       "type": "timeseries",
       "title": "Aperturas, sospechas y avisos por segundo",
-      "description": "Lo que cuentan los micros. Sospechas y avisos deben ir juntos.",
+      "description": "Lo que cuentan el Gestor de sesión, el Verificador de dispositivo y el receptor. Sospechas y avisos deben ir juntos.",
       "gridPos": {
         "x": 0,
         "y": 15,
@@ -590,8 +590,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(sesiones_huella_no_coincide_total[15s]))",
-          "legendFormat": "huella no coincide",
+          "expr": "sum(rate(verificador_huella_no_coincide_total[15s]))",
+          "legendFormat": "huella no coincide (Verificador)",
           "range": true
         },
         {
@@ -636,7 +636,7 @@
     {
       "type": "timeseries",
       "title": "Comparación de la huella: p95 y p99 (ms)",
-      "description": "La lectura del dispositivo registrado en la base. Es la parte de H1 que depende de la carga.",
+      "description": "La lectura del dispositivo registrado en la base, en el Verificador de dispositivo.",
       "gridPos": {
         "x": 8,
         "y": 15,
@@ -650,7 +650,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(sesiones_huella_comparacion_seconds_bucket[30s]))) * 1000",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(verificador_huella_comparacion_seconds_bucket[30s]))) * 1000",
           "legendFormat": "p95",
           "range": true
         },
@@ -660,7 +660,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(sesiones_huella_comparacion_seconds_bucket[30s]))) * 1000",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(verificador_huella_comparacion_seconds_bucket[30s]))) * 1000",
           "legendFormat": "p99",
           "range": true
         }
@@ -695,8 +695,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Latencia HTTP p95 por micro (ms)",
-      "description": "Cada salto del camino del aviso.",
+      "title": "Mensajes esperando en las colas de E01",
+      "description": "sesion.abierta esperando al Verificador y alerta.seguridad esperando al Notificador. Si crecen, el aviso se atrasa en el bróker y no en la comparación.",
       "gridPos": {
         "x": 16,
         "y": 15,
@@ -710,8 +710,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_server_requests_seconds_bucket{application=~\"sesiones|usuario-no-valido|receptor-sms|onboarding\"}[30s]))) * 1000",
-          "legendFormat": "{{application}}",
+          "expr": "max by (queue) (rabbitmq_queue_messages{queue=~\"verificador.sesiones|notificador.alertas\"})",
+          "legendFormat": "{{queue}}",
           "range": true
         }
       ],
@@ -721,14 +721,15 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ms",
+          "unit": "none",
           "custom": {
             "drawStyle": "line",
             "pointSize": 6,
             "lineWidth": 2,
             "showPoints": "never",
             "spanNulls": false
-          }
+          },
+          "min": 0
         },
         "overrides": []
       },

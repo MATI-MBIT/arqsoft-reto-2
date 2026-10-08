@@ -1,0 +1,38 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                          variables                                                          |            inicio             |              fin              |    duracion     | valida 
+------------------------+-------------+------+-----------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
+ e01-s3-20261007-181235 | E01         | S3   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "-", "caidas": 0, "caida_s": 45, "congelar": 0, "espera_ms": 500, "tasa_base": 2} | 2026-10-08 00:23:09.471756+00 | 2026-10-08 00:29:10.044468+00 | 00:06:00.572712 | t
+
+
+== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
+ valida | motivo | hueco_maximo_s 
+--------+--------+----------------
+ t      | —      |            9.4
+
+CREATE VIEW
+
+== Criterios de H1
+                                criterio                                | casos | cumplen | fallan | veredicto 
+------------------------------------------------------------------------+-------+---------+--------+-----------
+ S1 · 50 intrusos con aviso en ≤ 2 s y con vendedor, dispositivo y hora |     0 |       0 |      0 | NO APLICA
+ S2 · ≤ 1 aviso por cada 100 cambios legítimos                          |     0 |       0 |      0 | NO APLICA
+ S3 · 0 avisos en aperturas a menos de 1 s del registro                 |    20 |      20 |      0 | PASA
+ Todas · 0 avisos por sesiones desde el dispositivo registrado          |   720 |     720 |      0 | PASA
+
+
+== Demora del aviso por fase (ms), solo sesiones de intruso
+ fase | intrusos | con_aviso | escapes | mediana | p95 | maximo 
+------+----------+-----------+---------+---------+-----+--------
+
+
+== S4 · aperturas por segundo logradas en cada nivel (número desconocido de H1)
+ fase | aperturas | por_segundo 
+------+-----------+-------------
+
+
+== Avisos fuera de lo esperado (escapes y falsas alarmas)
+ sesion_id | tipo | vendedor | dispositivo | abierta | demora_ms | completo 
+-----------+------+----------+-------------+---------+-----------+----------
+

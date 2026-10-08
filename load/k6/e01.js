@@ -107,9 +107,10 @@ export const options = {
 };
 
 function abrir(prefijo, tipo, v, dispositivo) {
-  // Escenario e iteración global: únicos en toda la corrida. (vu.idInTest con
-  // vu.iterationInInstance se repetía y el micro rechazaba la sesión duplicada.)
-  const sesionId = `${prefijo}-${tipo}-${CORRIDA}-${exec.scenario.name}-${exec.scenario.iterationInTest}`;
+  // Fase, escenario e iteración: únicos en toda la corrida. La fase va porque el
+  // calentamiento y la fase son dos procesos de k6 con los mismos escenarios, y
+  // sin ella sus identificadores chocaban y el micro rechazaba la sesión.
+  const sesionId = `${prefijo}-${tipo}-${CORRIDA}-${FASE}-${exec.scenario.name}-${exec.scenario.iterationInTest}`;
   const r = postJson(`${SESIONES}/sesiones`,
     { sesionId, vendedorId: v, password: `clave-${v}`, dispositivoId: dispositivo },
     { tipo: tipo.toLowerCase(), name: 'abrir sesion' });

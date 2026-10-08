@@ -8,6 +8,13 @@ spring:
   threads:
     virtual:
       enabled: true
+  # El bróker lleva los eventos de E01 (seguridad) y de E02 (la cadena, T8).
+  # La confirmación del bróker es la que da por enviado un pedido detenido.
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    username: ${RABBIT_USER:reto2}
+    password: ${RABBIT_PASSWORD:reto2}
+    publisher-confirm-type: correlated
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/reto2}
     username: ${DB_USER:reto2}

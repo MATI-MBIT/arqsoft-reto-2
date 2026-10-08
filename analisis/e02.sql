@@ -7,8 +7,19 @@
 
 \echo
 \echo '== Corrida'
-SELECT id, experimento, fase, variables, inicio, fin, fin - inicio AS duracion
+SELECT id, experimento, fase, variables, inicio, fin, fin - inicio AS duracion, valida
 FROM registro.corrida WHERE id = :'corrida';
+
+\echo
+\echo '== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)'
+SELECT c.valida, c.motivo,
+       round(extract(epoch FROM max(x.hueco))::numeric, 1) AS hueco_maximo_s
+FROM registro.corrida c
+LEFT JOIN LATERAL (
+    SELECT e.ts - lag(e.ts) OVER (ORDER BY e.ts) AS hueco FROM registro.evento e
+    WHERE e.tipo = 'pedido.confirmado' AND e.ts BETWEEN c.arranque AND c.fin) x ON true
+WHERE c.id = :'corrida'
+GROUP BY c.valida, c.motivo;
 
 CREATE TEMP VIEW w AS SELECT inicio, fin FROM registro.corrida WHERE id = :'corrida';
 CREATE TEMP VIEW x AS SELECT c.* FROM registro.e02_cruce c, w WHERE c.t0 BETWEEN w.inicio AND w.fin;

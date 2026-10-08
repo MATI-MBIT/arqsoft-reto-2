@@ -3,7 +3,7 @@
 # lo mismo que load/e2e.sh; si se cambia uno, se cambia el otro.
 #
 # Verifica que todo lo que el veredicto necesita existe y fluye: compila y pasa
-# las pruebas, levanta la topología, Prometheus raspa a los 11 micros y a
+# las pruebas, levanta la topología, Prometheus raspa a los 12 micros y a
 # RabbitMQ, las consultas de los tableros responden, el humo de E01 y E02 corre,
 # cada tipo de evento llega al registro y cada criterio tiene casos.
 #
@@ -49,7 +49,7 @@ Write-Titulo '2. Topología'
 $logUp = Join-Path $Temp 'e2e-up.log'
 Write-Utf8 $logUp (& (Join-Path $Raiz 'make.ps1') up 2>&1)
 $caidos = @($Micros | Where-Object { -not (Test-Salud "http://localhost:$_/actuator/health" 2) })
-if ($caidos.Count -eq 0) { Write-Ok 'los 11 micros responden /actuator/health' }
+if ($caidos.Count -eq 0) { Write-Ok 'los 12 micros responden /actuator/health' }
 else { Write-Falla ("no responden: " + ($caidos -join ', ') + ". Ver $logUp"); exit 1 }
 
 Write-Titulo '3. Observabilidad'
@@ -58,7 +58,7 @@ try {
     $objetivos = (Invoke-RestMethod -Uri 'http://localhost:9090/api/v1/targets' -TimeoutSec 10).data.activeTargets
     $vivos = @($objetivos | Where-Object { $_.health -eq 'up' })
     $muertos = @($objetivos | Where-Object { $_.health -ne 'up' } | ForEach-Object { $_.labels.instance })
-    if ($vivos.Count -eq @($objetivos).Count -and $vivos.Count -ge 12) {
+    if ($vivos.Count -eq @($objetivos).Count -and $vivos.Count -ge 13) {
         Write-Ok "Prometheus raspa $($vivos.Count) de $(@($objetivos).Count) objetivos"
     } else {
         Write-Falla "Prometheus raspa $($vivos.Count) de $(@($objetivos).Count) objetivos; caídos: $($muertos -join ' ')"
@@ -89,13 +89,13 @@ foreach ($corrida in "humo-e01-$Stamp", "humo-e02-$Stamp") {
 
 # Cada tipo de evento que el veredicto cruza tiene que haber llegado en la corrida.
 $esperados = @('sesion.abierta', 'huella.comparada', 'aviso.emitido', 'aviso.recibido', 'dispositivo.registrado',
-    'pedido.confirmado', 'etapa.completada', 'pedido.listo', 'pedido.en.logistica', 'etapa.envio.fallido',
+    'pedido.confirmado', 'etapa.completada', 'pedido.listo', 'pedido.en.logistica', 'alerta.notificada',
     'falla.inyectada', 'sondeo.fallido', 'etapa.declarada.detenida', 'pedido.encolado', 'mensaje.en.cola',
     'etapa.reiniciada', 'etapa.recuperada', 'falla.congelada')
 $presentes = @(Invoke-Sql -c ("SELECT DISTINCT e.tipo FROM registro.evento e, registro.corrida c " +
     "WHERE c.id LIKE 'humo-%-$Stamp' AND e.ts BETWEEN c.arranque AND c.fin + interval '60 seconds'") | ForEach-Object { "$_".Trim() })
 $faltan = @($esperados | Where-Object { $presentes -notcontains $_ })
-if ($faltan.Count -eq 0) { Write-Ok 'los 18 tipos de evento llegaron al registro' }
+if ($faltan.Count -eq 0) { Write-Ok "los $($esperados.Count) tipos de evento llegaron al registro" }
 else { Write-Falla ('faltan eventos: ' + ($faltan -join ' ')) }
 
 $vE02 = Join-Path $resultados "humo-e02-$Stamp\veredicto.txt"

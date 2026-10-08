@@ -1,3 +1,1 @@
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-amqp")
-}
+// Las dependencias comunes vienen del build raíz y de services:comun.

@@ -1,5 +1,6 @@
 package co.mati.reto2.ventas;
 
+import co.mati.reto2.comun.Bus;
 import co.mati.reto2.comun.Registro;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -7,6 +8,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,14 +17,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Micro de ventas en el papel del Coordinador de la cadena (EL-16): guarda el
- * estado de cada pedido por etapa (CN-41), envía el trabajo a las tres etapas y
- * le dice al Monitor qué pedidos tiene pendientes en cada una. No detecta ni
- * encola nada: eso es del Monitor (CN-36).
+ * Micro de ventas en el papel del Coordinador de la cadena (EL-16, T6 en
+ * DG-CMP-005): guarda el estado de cada pedido por etapa (CN-41), envía el
+ * trabajo a las tres etapas por el bróker y recibe su cierre. No detecta nada:
+ * cuando el Monitor le avisa que una etapa cayó, envía sus pedidos pendientes a
+ * la Dead-Letter-Queue (ver EnvioALaDeadLetterQueue).
  */
 @RestController
 class PedidoController {
@@ -45,8 +47,6 @@ class PedidoController {
     }
 
     record NuevoPedido(String pedidoId) {}
-
-    record Pendiente(String pedidoId, Instant enviadoEn) {}
 
     @PostMapping("/pedidos")
     ResponseEntity<Map<String, String>> confirmar(@RequestBody NuevoPedido p) {
@@ -79,35 +79,27 @@ class PedidoController {
         return ResponseEntity.ok(Map.of("pedidoId", pedidoId, "etapas", filas));
     }
 
-    @PostMapping("/pedidos/{pedidoId}/etapas/{etapa}/completada")
-    ResponseEntity<Void> completada(@PathVariable String pedidoId, @PathVariable String etapa) {
+    record EtapaCompletada(String pedidoId, String etapa) {}
+
+    @RabbitListener(queues = Bus.COLA_COMPLETADAS, concurrency = "4")
+    void completada(EtapaCompletada c) {
         int filas = jdbc.update("""
                 UPDATE operacion.pedido_etapa SET estado = 'COMPLETADA', completado_en = now()
-                WHERE pedido_id = ? AND etapa = ? AND estado = 'EN_CURSO'""", pedidoId, etapa);
+                WHERE pedido_id = ? AND etapa = ? AND estado = 'EN_CURSO'""", c.pedidoId(), c.etapa());
         if (filas == 0) {
-            return ResponseEntity.ok().build();
+            return;
         }
-        registro.pedido("etapa.completada", pedidoId, etapa, Map.of());
-        // Solo una de las tres respuestas encuentra las tres etapas cerradas y cierra el pedido.
+        registro.pedido("etapa.completada", c.pedidoId(), c.etapa(), Map.of());
+        // Solo uno de los tres cierres encuentra las tres etapas cerradas y cierra el pedido.
         int cerrado = jdbc.update("""
                 UPDATE operacion.pedido SET estado = 'LISTO'
                 WHERE id = ? AND estado = 'EN_CURSO'
                   AND NOT EXISTS (SELECT 1 FROM operacion.pedido_etapa
-                                  WHERE pedido_id = ? AND estado <> 'COMPLETADA')""", pedidoId, pedidoId);
+                                  WHERE pedido_id = ? AND estado <> 'COMPLETADA')""", c.pedidoId(), c.pedidoId());
         if (cerrado == 1) {
-            registro.pedido("pedido.listo", pedidoId, null, Map.of());
+            registro.pedido("pedido.listo", c.pedidoId(), null, Map.of());
             listos.increment();
-            despachador.aLogistica(pedidoId);
+            despachador.aLogistica(c.pedidoId());
         }
-        return ResponseEntity.ok().build();
-    }
-
-    /** Lo que el Monitor le pregunta cuando declara detenida una etapa. */
-    @GetMapping("/pendientes")
-    List<Pendiente> pendientes(@RequestParam String etapa) {
-        return jdbc.query("""
-                SELECT pedido_id, enviado_en FROM operacion.pedido_etapa
-                WHERE etapa = ? AND estado = 'EN_CURSO' ORDER BY enviado_en""",
-                (rs, i) -> new Pendiente(rs.getString(1), rs.getTimestamp(2).toInstant()), etapa);
     }
 }

@@ -9,7 +9,7 @@ El código de los dos experimentos vive en este repositorio: los micros en
 `load/`, y el veredicto en `analisis/`. Requiere Docker, Java 21, k6 y `make`.
 
 ```bash
-make up        # levanta los 11 micros, PostgreSQL, RabbitMQ, Prometheus y Grafana
+make up        # levanta los 12 micros, PostgreSQL, RabbitMQ, Prometheus y Grafana
 make tablero   # abre los tableros de Grafana de E01 y E02
 make smoke     # humo de ~7 min, con veredicto
 make help      # todos los comandos

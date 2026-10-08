@@ -3,8 +3,3 @@ spring:
     name: monitor
   config:
     import: classpath:comun.yml
-  rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    username: ${RABBIT_USER:reto2}
-    password: ${RABBIT_PASSWORD:reto2}
-    publisher-confirm-type: correlated

@@ -118,7 +118,7 @@ Add-Objetivo $GObs 'estado' 'Salud de cada micro y de la infraestructura' {
         }
     }
     Invoke-Compose ps --format '  {{.Name}}\t{{.State}}' |
-        Where-Object { $_ -notmatch 'reto2-(sesiones|usuario|receptor|onboarding|ventas|logistica|monitor|auditor)' }
+        Where-Object { $_ -notmatch 'reto2-(sesiones|usuario|receptor|onboarding|ventas|logistica|monitor|auditor|notificador)' }
 }
 
 Add-Objetivo $GFal 'matar' 'Mata una etapa y la levanta: make matar ETAPA=despacho CAIDA=20' {
@@ -168,7 +168,7 @@ function Invoke-Up {
     Write-Host 'Grafana http://localhost:3000 · Prometheus http://localhost:9090 · RabbitMQ http://localhost:15672 (reto2/reto2)'
 }
 
-Add-Objetivo $GTop 'up' 'Levanta todo y espera a que los 11 micros respondan' { Invoke-Up }
+Add-Objetivo $GTop 'up' 'Levanta todo y espera a que los 12 micros respondan' { Invoke-Up }
 Add-Objetivo $GTop 'down' 'Detiene la topología; conserva la base y el histórico de Prometheus' { Invoke-Compose down --remove-orphans }
 Add-Objetivo $GTop 'ps' 'Estado de los contenedores' { Invoke-Compose ps }
 Add-Objetivo $GTop 'logs' 'Sigue los logs: make logs S=monitor' {

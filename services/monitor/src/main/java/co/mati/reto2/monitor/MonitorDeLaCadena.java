@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +26,12 @@ import org.springframework.web.client.RestClient;
  * Monitor de la cadena (EL-17), en la forma que pone a prueba H2: el sondeo de
  * salud de las etapas es el único mecanismo de detección.
  *
- * <p>Cada T sondea las tres etapas en paralelo, con un tiempo de espera menor que
- * T, para que una etapa que no contesta no atrase el sondeo de las otras. Cuando
- * una etapa suma N sondeos sin respuesta la declara detenida y, en ese ciclo y en
- * cada uno mientras siga detenida, encola sus pedidos pendientes (CN-36).
+ * <p>Cada T sondea las tres etapas en paralelo («ping/echo»), con un tiempo de
+ * espera menor que T, para que una etapa que no contesta no atrase el sondeo de
+ * las otras. Cuando una etapa suma N sondeos sin respuesta la declara detenida y,
+ * en ese ciclo y en cada uno mientras siga detenida, le notifica la falla al
+ * Coordinador de la cadena (el micro de ventas), que envía sus pedidos
+ * pendientes a la Dead-Letter-Queue (DG-CMP-005).
  *
  * <p>T, N y el tiempo de espera vienen de variables de entorno para variarlos en
  * D4 sin tocar código: SONDEO_T_MS, SONDEO_N y SONDEO_ESPERA_MS.
@@ -44,14 +45,14 @@ class MonitorDeLaCadena {
     private final int n;
     private final Map<String, RestClient> etapas = new LinkedHashMap<>();
     private final Map<String, CuentaDeSondeos> cuentas = new ConcurrentHashMap<>();
-    private final Map<String, AtomicBoolean> encolando = new ConcurrentHashMap<>();
-    private final Encolador encolador;
+    private final RestClient ventas;
     private final Registro registro;
     private final MeterRegistry metricas;
     private final ScheduledExecutorService ciclo = Executors.newSingleThreadScheduledExecutor();
     private final ExecutorService trabajo = Executors.newVirtualThreadPerTaskExecutor();
 
-    MonitorDeLaCadena(Encolador encolador, Registro registro, MeterRegistry metricas,
+    MonitorDeLaCadena(Registro registro, MeterRegistry metricas,
+                      @Value("${VENTAS_URL:http://localhost:8090}") String ventas,
                       @Value("${SONDEO_T_MS:2000}") long tMs,
                       @Value("${SONDEO_N:3}") int n,
                       @Value("${SONDEO_ESPERA_MS:500}") long esperaMs,
@@ -63,7 +64,7 @@ class MonitorDeLaCadena {
         }
         this.tMs = tMs;
         this.n = n;
-        this.encolador = encolador;
+        this.ventas = Http.cliente(ventas, Duration.ofSeconds(2));
         this.registro = registro;
         this.metricas = metricas;
         Duration espera = Duration.ofMillis(esperaMs);
@@ -73,7 +74,6 @@ class MonitorDeLaCadena {
         etapas.keySet().forEach(e -> {
             CuentaDeSondeos cuenta = new CuentaDeSondeos(n);
             cuentas.put(e, cuenta);
-            encolando.put(e, new AtomicBoolean());
             Gauge.builder("monitor.etapa.detenida", cuenta, c -> c.detenida() ? 1 : 0).tag("etapa", e).register(metricas);
             Gauge.builder("monitor.sondeos.fallidos_seguidos", cuenta, CuentaDeSondeos::fallidosSeguidos)
                     .tag("etapa", e).register(metricas);
@@ -142,17 +142,20 @@ class MonitorDeLaCadena {
             }
             case NINGUNO -> { }
         }
-        // Mientras siga detenida, cada ciclo encola los pendientes nuevos. Si el ciclo
-        // anterior aún está encolando, este no lanza otro: la clave única evita
-        // duplicados, pero dos encolados a la vez solo generarían trabajo inútil.
-        if (cuenta.detenida() && encolando.get(etapa).compareAndSet(false, true)) {
-            trabajo.submit(() -> {
-                try {
-                    encolador.encolarPendientes(etapa);
-                } finally {
-                    encolando.get(etapa).set(false);
-                }
-            });
+        // Mientras siga detenida, cada ciclo le notifica la falla al Coordinador.
+        // El aviso no espera la respuesta: el envío a la Dead-Letter-Queue no
+        // debe atrasar el sondeo siguiente.
+        if (cuenta.detenida()) {
+            trabajo.submit(() -> notificar(etapa));
+        }
+    }
+
+    private void notificar(String etapa) {
+        try {
+            ventas.post().uri("/fallas/etapa").body(Map.of("etapa", etapa)).retrieve().toBodilessEntity();
+            metricas.counter("monitor.fallas.notificadas", "etapa", etapa).increment();
+        } catch (RuntimeException ex) {
+            log.warn("ventas no recibió el aviso de {}: {}", etapa, ex.getMessage());
         }
     }
 }

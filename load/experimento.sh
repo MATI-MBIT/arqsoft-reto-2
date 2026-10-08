@@ -33,8 +33,26 @@ export K6_PROMETHEUS_RW_TREND_STATS="${K6_PROMETHEUS_RW_TREND_STATS:-p(50),p(95)
 export K6_PROMETHEUS_RW_PUSH_INTERVAL="${K6_PROMETHEUS_RW_PUSH_INTERVAL:-5s}"
 K6_OUT=(-o experimental-prometheus-rw)
 
-# Una corrida de D4 dura horas: que el portátil no se duerma a mitad.
-command -v caffeinate >/dev/null && caffeinate -i -w $$ &
+# Una corrida suspendida queda contaminada: la máquina de Docker se congela, k6
+# deja de generar llegadas y los relojes saltan. caffeinate evita la suspensión
+# por inactividad, pero no con batería ni con la tapa cerrada: con batería no se
+# arranca, salvo FORZAR_BATERIA=1. El 2026-10-06 una corrida nocturna con batería
+# se suspendió y hubo que repetir E01 entero.
+if command -v pmset >/dev/null && pmset -g batt | grep -q "Battery Power" && [ "${FORZAR_BATERIA:-0}" != 1 ]; then
+  echo "El equipo está con batería y macOS lo suspenderá a mitad de la corrida." >&2
+  echo "Conéctalo a la corriente, o corre con FORZAR_BATERIA=1 bajo tu propio riesgo." >&2
+  exit 1
+fi
+command -v caffeinate >/dev/null && caffeinate -dims -w $$ &
+
+# Hueco máximo admitido entre dos pedidos de la carga de fondo (1 por segundo).
+# En corridas sanas no pasa de 13 s; uno mayor que el plazo de ASR-3 (30 s) solo
+# sale si la máquina se congeló. En macOS se mira además el registro de
+# suspensiones. Una corrida contaminada no se retoma: se marca inválida y el
+# ciclo completo vuelve a empezar desde la primera corrida, hasta REINTENTOS
+# veces, para que todas las corridas de un ciclo corran seguidas.
+HUECO_MAX_S="${HUECO_MAX_S:-30}"
+REINTENTOS="${REINTENTOS:-1}"
 
 log() { printf '\033[1m[%s]\033[0m %s\n' "$(date +%H:%M:%S)" "$*"; }
 
@@ -48,12 +66,19 @@ esperar_salud() { # puerto
   log "el micro del puerto $1 no respondió en 90 s"; return 1
 }
 
+MICROS="8081 8082 8083 8084 8090 8091 8092 8093 8094 8095 8096 8097"
+
 preparar() {
-  docker start etapa-facturacion etapa-inventario etapa-despacho >/dev/null
-  for p in 8091 8092 8093; do esperar_salud "$p" || return 1; done
+  # Toda la topología arriba, no solo las etapas: si Docker se reinició (una
+  # actualización automática lo hizo a mitad de una corrida el 2026-10-07), la
+  # base y el bróker también cayeron.
+  "${COMPOSE[@]}" up -d >/dev/null 2>&1
+  for p in $MICROS; do esperar_salud "$p" || return 1; done
   sql -c "SELECT operacion.reiniciar()" >/dev/null
-  "${COMPOSE[@]}" exec -T rabbitmq rabbitmqctl -q purge_queue reintentos >/dev/null 2>&1 || true
-  "${COMPOSE[@]}" exec -T rabbitmq rabbitmqctl -q purge_queue reintentos.auditoria >/dev/null 2>&1 || true
+  # Las colas se vacían para que el trabajo pendiente de una corrida no llegue a la siguiente.
+  for cola in verificador.sesiones notificador.alertas etapa.facturacion etapa.inventario etapa.despacho ventas.completadas logistica.pedidos dead-letter-queue dead-letter-queue.auditoria; do
+    "${COMPOSE[@]}" exec -T rabbitmq rabbitmqctl -q purge_queue "$cola" >/dev/null 2>&1 || true
+  done
   # El Monitor se recrea en cada corrida: arranca sin cuentas viejas y con el T y N de la fila.
   SONDEO_T_MS="$SONDEO_T_MS" SONDEO_N="$SONDEO_N" SONDEO_ESPERA_MS="$SONDEO_ESPERA_MS" \
     "${COMPOSE[@]}" up -d --force-recreate --no-deps monitor >/dev/null 2>&1
@@ -160,6 +185,32 @@ correr() { # grupo id experimento fase criterio vars pregunta
   printf 'tablero  http://localhost:3000/d/%s?from=%s&to=%s\nkiosco   http://localhost:3000/d/%s?from=%s&to=%s&kiosk\n' \
     "$tab" "$desde" "$hasta" "$tab" "$desde" "$hasta" >"$dir/tablero.txt"
 
+  # Validez: si la máquina se congeló, la carga de fondo deja un hueco.
+  local hueco
+  hueco=$(sql -c "SELECT coalesce(round(extract(epoch FROM max(hueco))::numeric, 1), 0) FROM (SELECT e.ts - lag(e.ts) OVER (ORDER BY e.ts) AS hueco FROM registro.evento e, registro.corrida c WHERE c.id = '$corrida' AND e.tipo = 'pedido.confirmado' AND e.ts BETWEEN c.arranque AND c.fin) x")
+  local suspensiones=0 desde_local hasta_local
+  local epoch_arranque
+  epoch_arranque=$(sql -c "SELECT extract(epoch FROM arranque)::bigint FROM registro.corrida WHERE id = '$corrida'" 2>/dev/null)
+  # Sin respuesta de la base, la corrida no se puede validar: se da por contaminada.
+  [ -n "$hueco" ] || hueco=9999
+  if command -v pmset >/dev/null && [ -n "$epoch_arranque" ]; then
+    desde_local=$(date -r "$epoch_arranque" '+%Y-%m-%d %H:%M:%S')
+    hasta_local=$(date '+%Y-%m-%d %H:%M:%S')
+    suspensiones=$(pmset -g log | awk -v a="$desde_local" -v b="$hasta_local" \
+      'substr($0, 1, 19) >= a && substr($0, 1, 19) <= b && / Sleep  / && /Entering Sleep/' | wc -l | tr -d ' ')
+  fi
+  # La carga también tiene que ser la del diseño: si un k6 de la medición tuvo
+  # más de 1 % de solicitudes fallidas, la corrida no midió el Ambiente A.
+  local fallidas
+  fallidas=$(grep -h 'http_req_failed' "$dir/k6-cadena.txt" "$dir/k6-$fase.txt" 2>/dev/null \
+    | awk '{ for (i = 1; i <= NF; i++) if ($i ~ /%$/) { gsub("%", "", $i); v = $i + 0; if (v > m) m = v } } END { print m + 0 }')
+  if [ "$suspensiones" -gt 0 ] || awk -v h="$hueco" -v m="$HUECO_MAX_S" -v f="$fallidas" 'BEGIN { exit !(h > m || f > 1) }'; then
+    sql -c "UPDATE registro.corrida SET valida = false, motivo = 'corrida inválida: hueco de $hueco s en la carga de fondo, $suspensiones suspensiones del equipo, $fallidas % de solicitudes de k6 fallidas' WHERE id = '$corrida'"
+    mv "$dir" "$dir-contaminada"
+    log "  CONTAMINADA: hueco de ${hueco} s (máximo ${HUECO_MAX_S} s), $suspensiones suspensiones, ${fallidas} % de solicitudes fallidas (máximo 1 %). Se descarta: ${dir#"$ROOT"/}-contaminada"
+    return 2
+  fi
+
   grep -E '\| (PASA|FALLA|NO APLICA) *$' "$dir/veredicto.txt" | while IFS= read -r linea; do
     printf '%s\t%s\t%s\t%s\n' "$corrida" "$criterio" "$fase" "$linea" >>"$RESUMEN"
   done
@@ -176,14 +227,31 @@ pertenece() {
   return 1
 }
 
-log "resultados en analisis/resultados/ · resumen en ${RESUMEN#"$ROOT"/}"
-# El plan se lee por el descriptor 3: docker compose exec lee la entrada
-# estándar y se comería las filas siguientes.
-while IFS=$'\t' read -r -u 3 grupo id experimento fase criterio vars pregunta; do
-  [[ -z "$grupo" || "$grupo" == \#* ]] && continue
-  pertenece "$grupo" || continue
-  correr "$grupo" "$id" "$experimento" "$fase" "$criterio" "$vars" "$pregunta"
-done 3< <(grep -v '^#' "$PLAN")
+# Un ciclo recorre el plan en orden. Si una corrida sale contaminada, devuelve 2
+# y el ciclo entero se repite con un sello nuevo.
+ciclo() {
+  log "resultados en analisis/resultados/ · resumen en ${RESUMEN#"$ROOT"/}"
+  # El plan se lee por el descriptor 3: docker compose exec lee la entrada
+  # estándar y se comería las filas siguientes.
+  while IFS=$'\t' read -r -u 3 grupo id experimento fase criterio vars pregunta; do
+    [[ -z "$grupo" || "$grupo" == \#* ]] && continue
+    pertenece "$grupo" || continue
+    correr "$grupo" "$id" "$experimento" "$fase" "$criterio" "$vars" "$pregunta"
+    if [ $? -eq 2 ]; then return 2; fi
+  done 3< <(grep -v '^#' "$PLAN")
+  return 0
+}
+
+BASE="$STAMP"
+for intento in $(seq 0 "$REINTENTOS"); do
+  if [ "$intento" -gt 0 ]; then
+    STAMP="$BASE-r$intento"
+    RESUMEN="$RESULTADOS/resumen-$STAMP.tsv"
+    log "== se reinicia el ciclo completo (reintento $intento de $REINTENTOS)"
+  fi
+  ciclo && break
+  [ "$intento" -lt "$REINTENTOS" ] || log "el ciclo sigue contaminado tras $REINTENTOS reintentos: no hay veredicto válido"
+done
 
 log "listo. Resumen:"
 [ -f "$RESUMEN" ] && column -t -s$'\t' "$RESUMEN"

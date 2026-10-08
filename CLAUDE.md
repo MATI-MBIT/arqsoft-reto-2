@@ -125,20 +125,30 @@ al experimento. Stack fijado: local, Java
 Prometheus y Grafana para ver la corrida, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
-Resultados (corridas del 2026-10-04, en `docs/results.md`): H1 se sostiene en
-S1, S2 y S3 → aceptar ADR-007. H2 cae en D3 (0 de 30 congelados detectados). D2
-pasa con el criterio literal (91 pedidos en curso, ≤ 6,4 s) y falla al contar
-los 1 537 detenidos (25 en la ventana ciega al recuperarse la etapa) →
-confirmar ADR-004. D4 no corrió. Aceptar ADR-007 pide ajustar su texto: el
-experimento validó la comparación dentro del micro de sesiones, no un
-Verificador aparte.
+Resultados (ciclo del 2026-10-07, 18:17–22:32, en `docs/results.md`), con el
+diseño de DG-CMP-004 y DG-CMP-005: H1 se sostiene en S1, S2 y S3 (50 de 50
+avisos, máximo 115 ms; 0 falsas alarmas en 17 893 sesiones) → aceptar ADR-007
+tal como está. H2 pasa D1 y D2 (655 de 655 detenidos en la Dead-Letter-Queue,
+máximo 6,4 s) y cae en D3 (0 de 30 congelados) → confirmar ADR-004. D4 no
+corrió. Con el bróker, 908 pedidos que se recuperaron solos también llegaron a
+la Dead-Letter-Queue: ASR-4 necesita la idempotencia de ADR-005. No se guarda el
+histórico de corridas: `analisis/resultados/` tiene solo el ciclo vigente.
 
 ### El prototipo
 
-Vive en este repositorio: `services/` (micros), `deploy/` (Compose, Grafana,
-Prometheus, inyector), `load/` (k6, `plan.tsv`, `experimento.sh`) y `analisis/`
-(veredicto en SQL, resultados por corrida, capturas). `make help` lista todo;
-`make e2e` verifica el montaje; `make experimentos` corre E01 y E02 (~4 h 20 min).
+Vive en este repositorio: `services/` (12 micros; los eventos van por RabbitMQ
+como en DG-CMP-004 y DG-CMP-005), `deploy/` (Compose, Grafana, Prometheus,
+inyector), `load/` (k6, `plan.tsv`, `experimento.sh` y sus versiones `.ps1`
+para Windows) y `analisis/` (veredicto en SQL y resultados del ciclo vigente).
+`make help` lista todo; `make e2e` verifica el montaje; `make experimentos`
+corre E01 y E02 (~4 h 20 min). En Windows, `make.bat` con los mismos objetivos.
+
+El orquestador invalida una corrida si la carga de fondo tiene un hueco de más
+de 30 s, si el equipo se suspendió o si k6 pasa del 1 % de solicitudes
+fallidas, y entonces reinicia el ciclo completo: Nicolás pidió el 2026-10-07 no
+reanudar nunca un ciclo a medias. Con batería no arranca (`FORZAR_BATERIA=1`
+para forzarlo). Hay que desactivar las actualizaciones automáticas de Docker
+Desktop: una reinició Docker a mitad de una corrida.
 El plan y los supuestos S-10 y S-11 están en `notas/plan-implementacion-experimentos.md`.
 No abrir Grafana mientras una corrida de E02 mide: su carga llegó a vencer
 sondeos del Monitor.

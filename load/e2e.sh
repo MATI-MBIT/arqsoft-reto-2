@@ -3,7 +3,7 @@
 # Prueba de punta a punta del MONTAJE, no de las hipótesis.
 #
 # Verifica que todo lo que el veredicto necesita existe y fluye: compila y pasa
-# las pruebas, levanta la topología, Prometheus raspa a los 11 micros y a
+# las pruebas, levanta la topología, Prometheus raspa a los 12 micros y a
 # RabbitMQ, las consultas de los tableros responden, el humo de E01 y E02 corre,
 # cada tipo de evento llega al registro y cada criterio tiene casos.
 #
@@ -37,7 +37,7 @@ else
 fi
 
 titulo "2. Topología"
-if make -s up >/tmp/e2e-up.log 2>&1; then ok "los 11 micros responden /actuator/health"; else
+if make -s up >/tmp/e2e-up.log 2>&1; then ok "los 12 micros responden /actuator/health"; else
   falla "make up: ver /tmp/e2e-up.log"; tail -20 /tmp/e2e-up.log; exit 1; fi
 
 titulo "3. Observabilidad"
@@ -48,7 +48,7 @@ t=json.load(sys.stdin)["data"]["activeTargets"]
 caidos=[x["labels"]["instance"] for x in t if x["health"]!="up"]
 print(len(t)-len(caidos), len(t), " ".join(caidos))')
 read -r vivos total caidos <<<"$arriba"
-if [ "$vivos" = "$total" ] && [ "$total" -ge 12 ]; then ok "Prometheus raspa $vivos de $total objetivos"
+if [ "$vivos" = "$total" ] && [ "$total" -ge 13 ]; then ok "Prometheus raspa $vivos de $total objetivos"
 else falla "Prometheus raspa $vivos de $total objetivos; caídos: $caidos"; fi
 for uid in e01 e02; do
   if curl -fs "localhost:3000/api/dashboards/uid/$uid" >/dev/null; then ok "tablero $uid aprovisionado en Grafana"
@@ -71,14 +71,14 @@ done
 
 # Cada tipo de evento que el veredicto cruza tiene que haber llegado en la corrida.
 esperados="sesion.abierta huella.comparada aviso.emitido aviso.recibido dispositivo.registrado
-pedido.confirmado etapa.completada pedido.listo pedido.en.logistica etapa.envio.fallido
+pedido.confirmado etapa.completada pedido.listo pedido.en.logistica alerta.notificada
 falla.inyectada sondeo.fallido etapa.declarada.detenida pedido.encolado mensaje.en.cola
 etapa.reiniciada etapa.recuperada falla.congelada"
 presentes=$(sql "SELECT DISTINCT e.tipo FROM registro.evento e, registro.corrida c
                  WHERE c.id LIKE 'humo-%-$STAMP' AND e.ts BETWEEN c.arranque AND c.fin + interval '60 seconds'")
 faltan=""
 for t in $esperados; do grep -qx "$t" <<<"$presentes" || faltan="$faltan $t"; done
-if [ -z "$faltan" ]; then ok "los 18 tipos de evento llegaron al registro"; else falla "faltan eventos:$faltan"; fi
+if [ -z "$faltan" ]; then ok "los $(echo $esperados | wc -w | tr -d ' ') tipos de evento llegaron al registro"; else falla "faltan eventos:$faltan"; fi
 
 dup=$(grep -E '^ *Todas · cada pedido encolado' "analisis/resultados/humo-e02-$STAMP/veredicto.txt" | grep -c 'PASA')
 [ "$dup" = 1 ] && ok "E02: cero perdidos y cero duplicados en la cola" || falla "E02: hay pedidos perdidos o duplicados en la cola"

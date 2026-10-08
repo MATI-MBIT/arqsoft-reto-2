@@ -1,7 +1,7 @@
 {
   "uid": "e02",
-  "title": "E02 · Detección y encolado del pedido detenido (H2, ASR-3)",
-  "description": "Si el Monitor sondea cada etapa y encola los pedidos de la que no responde N sondeos seguidos, todo pedido detenido llega a la cola de reintentos en ≤ 30 s.",
+  "title": "E02 · Detección del pedido detenido y envío a la Dead-Letter-Queue (H2, ASR-3)",
+  "description": "Si el Monitor sondea cada etapa y avisa a ventas cuando una no responde N sondeos seguidos, y ventas envía sus pedidos pendientes a la Dead-Letter-Queue, todo pedido detenido llega a ella en ≤ 30 s.",
   "tags": [
     "reto2",
     "e02"
@@ -142,7 +142,7 @@
     {
       "type": "stat",
       "title": "Pedidos detenidos",
-      "description": "D2: los que la etapa tenía en curso al caer y los que recibió caída. D3: el pedido congelado.",
+      "description": "Pedidos cuya etapa no cerró en los 30 s de ASR-3. D2: los que la etapa tenía en curso o recibió caída. D3: el pedido congelado.",
       "gridPos": {
         "x": 3,
         "y": 1,
@@ -201,7 +201,7 @@
     {
       "type": "stat",
       "title": "En la cola ≤ 30 s",
-      "description": "Detenidos cuyo mensaje confirmó el bróker en ≤ 30 s desde la falla.",
+      "description": "Detenidos cuyo mensaje confirmó el bróker en la Dead-Letter-Queue en ≤ 30 s desde la falla.",
       "gridPos": {
         "x": 6,
         "y": 1,
@@ -453,7 +453,7 @@
     {
       "type": "stat",
       "title": "Mensajes sin pedido detenido",
-      "description": "Mensajes encolados por pedidos que no estaban detenidos; casi siempre llegan después a logística.",
+      "description": "Mensajes en la Dead-Letter-Queue por pedidos cuya etapa sí cerró en 30 s.",
       "gridPos": {
         "x": 18,
         "y": 1,
@@ -516,7 +516,7 @@
     {
       "type": "stat",
       "title": "Demora p95 hasta la cola",
-      "description": "Desde la falla, o desde el envío si el pedido llegó con la etapa ya caída (D-5), hasta la confirmación del bróker.",
+      "description": "Desde la falla, o desde el envío si el pedido llegó con la etapa ya caída (D-5), hasta la confirmación del bróker en la Dead-Letter-Queue.",
       "gridPos": {
         "x": 21,
         "y": 1,
@@ -772,8 +772,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Mensajes en la cola de reintentos",
-      "description": "reintentos no tiene consumidor: crece con cada pedido encolado. reintentos.auditoria la vacía el auditor.",
+      "title": "Mensajes en las colas del bróker de la cadena",
+      "description": "La Dead-Letter-Queue no tiene consumidor: crece con cada pedido detenido. La cola de una etapa caída acumula su trabajo, que se retoma cuando la etapa vuelve.",
       "gridPos": {
         "x": 8,
         "y": 12,
@@ -787,7 +787,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max by (queue) (rabbitmq_queue_messages{queue=~\"reintentos.*\"})",
+          "expr": "max by (queue) (rabbitmq_queue_messages{queue=~\"dead-letter-queue|etapa.*\"})",
           "legendFormat": "{{queue}}",
           "range": true
         }
@@ -823,8 +823,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Encolados por segundo: Monitor y auditor",
-      "description": "Lo que el Monitor confirmó y lo que el auditor leyó de la copia. Deben coincidir.",
+      "title": "A la Dead-Letter-Queue por segundo: ventas y auditor",
+      "description": "Lo que ventas envió con confirmación del bróker y lo que el auditor leyó de la copia. Deben coincidir.",
       "gridPos": {
         "x": 16,
         "y": 12,
@@ -838,8 +838,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (etapa) (rate(monitor_pedidos_encolados_total[15s]))",
-          "legendFormat": "monitor · {{etapa}}",
+          "expr": "sum by (etapa) (rate(ventas_pedidos_encolados_total[15s]))",
+          "legendFormat": "ventas · {{etapa}}",
           "range": true
         },
         {

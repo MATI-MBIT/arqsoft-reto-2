@@ -71,5 +71,9 @@ CREATE TABLE registro.corrida (
     variables   jsonb       NOT NULL DEFAULT '{}',
     arranque    timestamptz NOT NULL,
     inicio      timestamptz,
-    fin         timestamptz
+    fin         timestamptz,
+    -- Falsa si la máquina se congeló durante la corrida (suspensión del equipo u
+    -- otra pausa): el orquestador la detecta por un hueco en la carga de fondo.
+    valida      boolean     NOT NULL DEFAULT true,
+    motivo      text
 );

@@ -3,3 +3,8 @@ spring:
     name: etapa-${ETAPA}
   config:
     import: classpath:comun.yml
+  rabbitmq:
+    listener:
+      simple:
+        # Un mensaje por hilo: el que queda sin confirmar es el que se está trabajando.
+        prefetch: 1

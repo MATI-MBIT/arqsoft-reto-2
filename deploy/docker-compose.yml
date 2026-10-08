@@ -1,7 +1,8 @@
 # Topología de los experimentos E01 y E02: un contenedor por micro, en una sola
 # máquina. Los puertos del host sirven para k6 y para mirar cada micro a mano.
 #
-#   sesiones :8081 · usuario-no-valido :8082 · receptor-sms :8083 · onboarding :8084
+#   sesiones :8081 · usuario-no-valido (Verificador) :8082 · receptor-sms :8083
+#   onboarding :8084 · notificador :8097
 #   ventas :8090 · etapas :8091-8093 · logistica :8094 · monitor :8095 · auditor :8096
 #   Grafana :3000 · Prometheus :9090 · RabbitMQ :15672 · PostgreSQL :5433
 name: reto2
@@ -84,6 +85,12 @@ services:
     <<: *receptor
     environment: { <<: *entorno, ROL: sms }
     ports: ["8083:8080"]
+
+  # El Notificador a seguridad: consume alerta.seguridad y entrega al receptor del SMS.
+  notificador:
+    <<: *receptor
+    environment: { <<: *entorno, ROL: notificador }
+    ports: ["8097:8080"]
 
   onboarding:
     <<: *micro

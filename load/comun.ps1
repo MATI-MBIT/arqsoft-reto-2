@@ -25,7 +25,7 @@ $env:PYTHONIOENCODING = 'utf-8'   # los scripts de Python imprimen ✓ y ✗
 
 $script:Raiz = Split-Path -Parent $PSScriptRoot
 $script:ComposeArchivo = Join-Path $script:Raiz 'deploy\docker-compose.yml'
-$script:Micros = @(8081, 8082, 8083, 8084, 8090, 8091, 8092, 8093, 8094, 8095, 8096)
+$script:Micros = @(8081, 8082, 8083, 8084, 8090, 8091, 8092, 8093, 8094, 8095, 8096, 8097)
 
 function Invoke-Compose {
     & docker compose -f $script:ComposeArchivo @args

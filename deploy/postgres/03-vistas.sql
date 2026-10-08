@@ -40,14 +40,18 @@ SELECT f.id AS falla_id, f.etapa, f.ts AS falla,
 FROM registro.evento f
 WHERE f.tipo = 'falla.inyectada' AND f.datos ->> 'tipo' = 'matar';
 
--- Los pedidos detenidos. D2: los que la etapa tenía en curso al morir y los que
--- ventas le envió hasta que volvió a recibir trabajo (D-4); t0 es el mayor entre la falla y
--- el envío (D-5). Se miran 30 s hacia atrás porque ninguna etapa dura más de
--- 25 s (S-11): un pedido confirmado antes y sin cierre de esa etapa estaba en
--- curso. La ventana no retrocede más allá del fin de la caída anterior de la
--- misma etapa: un pedido detenido allí nunca cierra la etapa, y sin ese límite
--- se contaría otra vez en la caída siguiente. D3: el pedido congelado, con t0
--- cuando entró a la etapa.
+-- Los pedidos detenidos. D2: los que ventas le envió a la etapa caída, desde
+-- 30 s antes de la falla (ninguna etapa dura más de 25 s, S-11) hasta que
+-- volvió a recibir trabajo (D-4); t0 es el mayor entre la falla y el envío
+-- (D-5). La ventana no retrocede más allá del fin de la caída anterior de la
+-- misma etapa, para no contar dos veces un pedido.
+--
+-- Detenido es el pedido cuya etapa no cerró dentro de los 30 s de ASR-3. El
+-- trabajo de una etapa caída espera en su cola del bróker y se retoma al
+-- reiniciarla, así que «nunca cerró» no sirve: casi todos cierran después. El
+-- que cerró antes de la falla, o en menos de 30 s, no estuvo detenido.
+--
+-- D3: el pedido congelado, con t0 cuando entró a la etapa.
 CREATE OR REPLACE VIEW registro.e02_detenidos AS
 SELECT 'D2'::text AS falla, c.falla_id, c.etapa, p.pedido_id, greatest(c.falla, p.ts) AS t0
 FROM registro.e02_caidas c
@@ -58,7 +62,8 @@ JOIN registro.evento p
                        WHERE a.etapa = c.etapa AND a.falla < c.falla))
  AND p.ts <  coalesce(c.fin, 'infinity')
 WHERE NOT EXISTS (SELECT 1 FROM registro.evento x
-                  WHERE x.tipo = 'etapa.completada' AND x.pedido_id = p.pedido_id AND x.etapa = c.etapa)
+                  WHERE x.tipo = 'etapa.completada' AND x.pedido_id = p.pedido_id AND x.etapa = c.etapa
+                    AND x.ts <= greatest(c.falla, p.ts) + interval '30 seconds')
 UNION ALL
 SELECT 'D3', f.id, f.etapa, f.pedido_id, f.ts
 FROM registro.evento f
@@ -88,8 +93,10 @@ SELECT d.id, d.ts, d.etapa,
 FROM registro.evento d
 WHERE d.tipo = 'etapa.declarada.detenida';
 
--- Mensajes de la cola que no corresponden a ningún pedido detenido: falsas
--- alarmas contadas por mensaje, o pedidos que llegaron a logística.
+-- Mensajes de la Dead-Letter-Queue que no corresponden a ningún pedido detenido:
+-- las falsas alarmas contadas por mensaje. llego_a_logistica dice si el pedido
+-- terminó la cadena; con el bróker, también la terminan los detenidos de verdad
+-- cuando la etapa vuelve, así que solo vale para los que no son detenidos.
 CREATE OR REPLACE VIEW registro.e02_mensajes_falsos AS
 SELECT m.ts, m.pedido_id, m.etapa,
        EXISTS (SELECT 1 FROM registro.evento l

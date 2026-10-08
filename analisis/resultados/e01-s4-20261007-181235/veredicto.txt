@@ -1,0 +1,44 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                          variables                                                          |            inicio             |              fin              |    duracion     | valida 
+------------------------+-------------+------+-----------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
+ e01-s4-20261007-181235 | E01         | S4   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "-", "caidas": 0, "caida_s": 45, "congelar": 0, "espera_ms": 500, "tasa_base": 2} | 2026-10-08 00:35:21.750684+00 | 2026-10-08 01:05:25.437831+00 | 00:30:03.687147 | t
+
+
+== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
+ valida | motivo | hueco_maximo_s 
+--------+--------+----------------
+ t      | —      |            8.4
+
+CREATE VIEW
+
+== Criterios de H1
+                                criterio                                | casos | cumplen | fallan | veredicto 
+------------------------------------------------------------------------+-------+---------+--------+-----------
+ S1 · 50 intrusos con aviso en ≤ 2 s y con vendedor, dispositivo y hora |     0 |       0 |      0 | NO APLICA
+ S2 · ≤ 1 aviso por cada 100 cambios legítimos                          |     0 |       0 |      0 | NO APLICA
+ S3 · 0 avisos en aperturas a menos de 1 s del registro                 |     0 |       0 |      0 | NO APLICA
+ Todas · 0 avisos por sesiones desde el dispositivo registrado          | 10811 |   10811 |      0 | PASA
+
+
+== Demora del aviso por fase (ms), solo sesiones de intruso
+ fase | intrusos | con_aviso | escapes | mediana | p95  | maximo 
+------+----------+-----------+---------+---------+------+--------
+ S4N1 |       10 |        10 |       0 |    15.6 | 28.4 |   30.9
+ S4N3 |       10 |        10 |       0 |    17.3 | 22.5 |   22.6
+ S4N5 |       10 |        10 |       0 |    16.5 | 33.9 |   37.9
+
+
+== S4 · aperturas por segundo logradas en cada nivel (número desconocido de H1)
+ fase | aperturas | por_segundo 
+------+-----------+-------------
+ S4N1 |      1213 |        2.02
+ S4N3 |      3618 |        6.02
+ S4N5 |      6010 |       10.02
+
+
+== Avisos fuera de lo esperado (escapes y falsas alarmas)
+ sesion_id | tipo | vendedor | dispositivo | abierta | demora_ms | completo 
+-----------+------+----------+-------------+---------+-----------+----------
+

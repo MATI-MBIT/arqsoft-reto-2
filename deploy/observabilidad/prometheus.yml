@@ -12,6 +12,7 @@ scrape_configs:
           - sesiones:8080
           - usuario-no-valido:8080
           - receptor-sms:8080
+          - notificador:8080
           - onboarding:8080
           - ventas:8080
           - etapa-facturacion:8080

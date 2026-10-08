@@ -38,14 +38,41 @@ if (-not $env:K6_PROMETHEUS_RW_PUSH_INTERVAL) { $env:K6_PROMETHEUS_RW_PUSH_INTER
 $PuertoCadena = 6566
 $PuertoFase = 6565
 
+# Una corrida suspendida queda contaminada: la máquina de Docker se congela, k6
+# deja de generar llegadas y los relojes saltan. Con batería no se arranca,
+# salvo FORZAR_BATERIA=1: un portátil con batería se suspende aunque se pida lo
+# contrario.
+try {
+    $bateria = Get-CimInstance -ClassName Win32_Battery -ErrorAction Stop | Select-Object -First 1
+    # BatteryStatus 1 = descargando: el equipo no está conectado a la corriente.
+    if ($bateria -and $bateria.BatteryStatus -eq 1 -and $env:FORZAR_BATERIA -ne '1') {
+        Write-Host 'El equipo está con batería y Windows puede suspenderlo a mitad de la corrida.'
+        Write-Host 'Conéctalo a la corriente, o corre con $env:FORZAR_BATERIA=1 bajo tu propio riesgo.'
+        exit 1
+    }
+} catch { }
 Start-SinSuspender
 
+# Hueco máximo admitido entre dos pedidos de la carga de fondo (1 por segundo).
+# En corridas sanas no pasa de 13 s; uno mayor que el plazo de ASR-3 (30 s) solo
+# sale si la máquina se congeló. En Windows se mira además el registro de
+# suspensiones. Una corrida contaminada no se retoma: se marca inválida y el
+# ciclo completo vuelve a empezar desde la primera corrida, hasta REINTENTOS
+# veces, para que todas las corridas de un ciclo corran seguidas.
+$HuecoMax = if ($env:HUECO_MAX_S) { [double]$env:HUECO_MAX_S } else { 30 }
+$Reintentos = if ($env:REINTENTOS) { [int]$env:REINTENTOS } else { 1 }
+
 function Invoke-Preparar([hashtable]$V) {
-    & docker start etapa-facturacion etapa-inventario etapa-despacho *> $null
-    foreach ($p in 8091, 8092, 8093) { if (-not (Wait-Salud $p)) { return $false } }
+    # Toda la topología arriba, no solo las etapas: si Docker se reinició (una
+    # actualización automática lo hizo a mitad de una corrida el 2026-10-07), la
+    # base y el bróker también cayeron.
+    Invoke-Compose up -d *> $null
+    foreach ($p in $Micros) { if (-not (Wait-Salud $p)) { return $false } }
     Invoke-Sql -c 'SELECT operacion.reiniciar()' | Out-Null
-    Invoke-Compose exec -T rabbitmq rabbitmqctl -q purge_queue reintentos *> $null
-    Invoke-Compose exec -T rabbitmq rabbitmqctl -q purge_queue reintentos.auditoria *> $null
+    # Las colas se vacían para que el trabajo pendiente de una corrida no llegue a la siguiente.
+    foreach ($cola in 'verificador.sesiones notificador.alertas etapa.facturacion etapa.inventario etapa.despacho ventas.completadas logistica.pedidos dead-letter-queue dead-letter-queue.auditoria'.Split(' ')) {
+        Invoke-Compose exec -T rabbitmq rabbitmqctl -q purge_queue $cola *> $null
+    }
     # El Monitor se recrea en cada corrida: arranca sin cuentas viejas y con el T y N de la fila.
     $env:SONDEO_T_MS = $V.SONDEO_T_MS
     $env:SONDEO_N = $V.SONDEO_N
@@ -116,7 +143,7 @@ function Invoke-Corrida($Fila) {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
     Write-Log "== $corrida · $($Fila.Experimento) $($Fila.Fase) · $($Fila.Pregunta)"
 
-    if (-not (Invoke-Preparar $V)) { Write-Log 'no se pudo preparar la topología'; return }
+    if (-not (Invoke-Preparar $V)) { Write-Log 'no se pudo preparar la topología'; return $true }
 
     # Las variables se arman con jsonb_build_object: sin comillas dobles, que 5.1
     # pierde al pasar el SQL a docker.
@@ -173,12 +200,44 @@ function Invoke-Corrida($Fila) {
         "tablero  http://localhost:3000/d/$($exp)?from=$desde&to=$hasta",
         "kiosco   http://localhost:3000/d/$($exp)?from=$desde&to=$hasta&kiosk")
 
+    # Validez: si la máquina se congeló, la carga de fondo deja un hueco.
+    $huecoTexto = ((Invoke-Sql -c ("SELECT coalesce(round(extract(epoch FROM max(hueco))::numeric, 1), 0) FROM " +
+        "(SELECT e.ts - lag(e.ts) OVER (ORDER BY e.ts) AS hueco FROM registro.evento e, registro.corrida c " +
+        "WHERE c.id = '$corrida' AND e.tipo = 'pedido.confirmado' AND e.ts BETWEEN c.arranque AND c.fin) x")) -join '').Trim()
+    # Sin respuesta de la base, la corrida no se puede validar: se da por contaminada.
+    $hueco = 0.0
+    if (-not [double]::TryParse($huecoTexto, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$hueco)) { $hueco = 9999 }
+    $suspensiones = 0
+    try {
+        $epoch = [long]((Invoke-Sql -c "SELECT extract(epoch FROM arranque)::bigint FROM registro.corrida WHERE id = '$corrida'") -join '')
+        $desde = [DateTimeOffset]::FromUnixTimeSeconds($epoch).LocalDateTime
+        # Evento 42 de Kernel-Power: el equipo entra en suspensión.
+        $suspensiones = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Kernel-Power'; Id = 42; StartTime = $desde } -ErrorAction Stop).Count
+    } catch { }
+    # La carga también tiene que ser la del diseño: si un k6 de la medición tuvo
+    # más de 1 % de solicitudes fallidas, la corrida no midió el Ambiente A.
+    $fallidas = 0.0
+    foreach ($k in (Join-Path $dir 'k6-cadena.txt'), (Join-Path $dir "k6-$($Fila.Fase).txt")) {
+        if (Test-Path $k) {
+            $m = Select-String -Path $k -Pattern 'http_req_failed\S*\s*([0-9.]+)%' -Encoding UTF8 | Select-Object -First 1
+            if ($m) { $fallidas = [math]::Max($fallidas, [double]$m.Matches[0].Groups[1].Value) }
+        }
+    }
+    if ($suspensiones -gt 0 -or $hueco -gt $HuecoMax -or $fallidas -gt 1) {
+        Invoke-Sql -c ("UPDATE registro.corrida SET valida = false, motivo = 'corrida inválida: hueco de $hueco s en la " +
+            "carga de fondo, $suspensiones suspensiones del equipo, $fallidas % de solicitudes de k6 fallidas' WHERE id = '$corrida'") | Out-Null
+        Rename-Item -Path $dir -NewName "$corrida-contaminada"
+        Write-Log "  CONTAMINADA: hueco de $hueco s (máximo $HuecoMax s), $suspensiones suspensiones, $fallidas % de solicitudes fallidas (máximo 1 %). Se descarta: analisis\resultados\$corrida-contaminada"
+        return $false
+    }
+
     $lineas = @(Select-String -Path $veredicto -Pattern '\| (PASA|FALLA|NO APLICA) *$' -Encoding UTF8 | ForEach-Object { $_.Line })
     foreach ($linea in $lineas) {
         Add-Utf8 $Resumen ("{0}`t{1}`t{2}`t{3}" -f $corrida, $Fila.Criterio, $Fila.Fase, $linea)
     }
     Write-Log "  veredicto en analisis\resultados\$corrida\veredicto.txt"
     $lineas | ForEach-Object { Write-Host "     $_" }
+    return $true
 }
 
 # Sin argumentos corre todo menos el humo.
@@ -187,16 +246,35 @@ function Test-Pertenece([string]$Grupo) {
     return ($Grupos -contains $Grupo)
 }
 
-Write-Log "resultados en analisis\resultados\ · resumen en analisis\resultados\resumen-$Stamp.tsv"
-$filas = Get-Content -Path $Plan -Encoding UTF8 | Where-Object { $_ -and -not $_.StartsWith('#') }
-foreach ($linea in $filas) {
-    $c = $linea.Split("`t")
-    if ($c.Count -lt 7) { continue }
-    $fila = [pscustomobject]@{
-        Grupo = $c[0]; Id = $c[1]; Experimento = $c[2]; Fase = $c[3]; Criterio = $c[4]; Vars = $c[5]; Pregunta = $c[6]
+# Un ciclo recorre el plan en orden. Si una corrida sale contaminada, devuelve
+# $false y el ciclo entero se repite con un sello nuevo.
+function Invoke-Ciclo {
+    Write-Log "resultados en analisis\resultados\ · resumen en analisis\resultados\resumen-$Stamp.tsv"
+    $filas = Get-Content -Path $Plan -Encoding UTF8 | Where-Object { $_ -and -not $_.StartsWith('#') }
+    foreach ($linea in $filas) {
+        $c = $linea.Split("`t")
+        if ($c.Count -lt 7) { continue }
+        $fila = [pscustomobject]@{
+            Grupo = $c[0]; Id = $c[1]; Experimento = $c[2]; Fase = $c[3]; Criterio = $c[4]; Vars = $c[5]; Pregunta = $c[6]
+        }
+        if (-not (Test-Pertenece $fila.Grupo)) { continue }
+        # La función devuelve todo lo que sale por su tubería: vale su último valor.
+        $resultado = @(Invoke-Corrida $fila)
+        if ($resultado.Count -gt 0 -and $resultado[-1] -eq $false) { return $false }
     }
-    if (-not (Test-Pertenece $fila.Grupo)) { continue }
-    Invoke-Corrida $fila
+    return $true
+}
+
+$base = $Stamp
+for ($intento = 0; $intento -le $Reintentos; $intento++) {
+    if ($intento -gt 0) {
+        $Stamp = "$base-r$intento"
+        $Resumen = Join-Path $Resultados "resumen-$Stamp.tsv"
+        Write-Log "== se reinicia el ciclo completo (reintento $intento de $Reintentos)"
+    }
+    $ok = @(Invoke-Ciclo)
+    if ($ok.Count -gt 0 -and $ok[-1] -eq $true) { break }
+    if ($intento -eq $Reintentos) { Write-Log "el ciclo sigue contaminado tras $Reintentos reintentos: no hay veredicto válido" }
 }
 
 Write-Log 'listo. Resumen:'

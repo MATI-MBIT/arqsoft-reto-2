@@ -149,7 +149,7 @@ WHERE tipo <> 'INTRUSO' AND aviso IS NOT NULL AND $__timeFilter(abierta)""",
     stat(t, "Demora p95 del aviso", """
 SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY demora_ms) FROM registro.e01_sesiones
 WHERE tipo = 'INTRUSO' AND $__timeFilter(abierta)""",
-         "Desde que el micro de sesiones registra la apertura hasta que el receptor del SMS recibe el aviso.",
+         "Desde que el Gestor de sesión registra la apertura hasta que el receptor del SMS recibe el aviso: pasa por el bróker dos veces.",
          pasos=((None, VERDE), (2000, ROJO)), unidad="ms")
     stat(t, "Demora máxima del aviso", """
 SELECT max(demora_ms) FROM registro.e01_sesiones WHERE tipo = 'INTRUSO' AND $__timeFilter(abierta)""",
@@ -171,18 +171,18 @@ FROM registro.e01_sesiones WHERE $__timeFilter(abierta) GROUP BY 1, 2 ORDER BY 1
     t.fila("Los micros · Prometheus")
     serie(t, "Aperturas, sospechas y avisos por segundo", [
         prom("sum(rate(sesiones_aperturas_total[15s]))", "aperturas"),
-        prom("sum(rate(sesiones_huella_no_coincide_total[15s]))", "huella no coincide", "B"),
+        prom("sum(rate(verificador_huella_no_coincide_total[15s]))", "huella no coincide (Verificador)", "B"),
         prom("sum(rate(receptor_avisos_recibidos_total[15s]))", "avisos recibidos", "C")],
-          "Lo que cuentan los micros. Sospechas y avisos deben ir juntos.", unidad="reqps", w=8)
+          "Lo que cuentan el Gestor de sesión, el Verificador de dispositivo y el receptor. Sospechas y avisos deben ir juntos.", unidad="reqps", w=8)
     serie(t, "Comparación de la huella: p95 y p99 (ms)", [
-        prom("histogram_quantile(0.95, sum by (le) (rate(sesiones_huella_comparacion_seconds_bucket[30s]))) * 1000", "p95"),
-        prom("histogram_quantile(0.99, sum by (le) (rate(sesiones_huella_comparacion_seconds_bucket[30s]))) * 1000", "p99", "B")],
-          "La lectura del dispositivo registrado en la base. Es la parte de H1 que depende de la carga.",
+        prom("histogram_quantile(0.95, sum by (le) (rate(verificador_huella_comparacion_seconds_bucket[30s]))) * 1000", "p95"),
+        prom("histogram_quantile(0.99, sum by (le) (rate(verificador_huella_comparacion_seconds_bucket[30s]))) * 1000", "p99", "B")],
+          "La lectura del dispositivo registrado en la base, en el Verificador de dispositivo.",
           unidad="ms", w=8)
-    serie(t, "Latencia HTTP p95 por micro (ms)", [prom(
-        'histogram_quantile(0.95, sum by (le, application) (rate(http_server_requests_seconds_bucket'
-        '{application=~"sesiones|usuario-no-valido|receptor-sms|onboarding"}[30s]))) * 1000', "{{application}}")],
-          "Cada salto del camino del aviso.", unidad="ms", w=8)
+    serie(t, "Mensajes esperando en las colas de E01", [
+        prom('max by (queue) (rabbitmq_queue_messages{queue=~"verificador.sesiones|notificador.alertas"})', "{{queue}}")],
+          "sesion.abierta esperando al Verificador y alerta.seguridad esperando al Notificador. Si crecen, el "
+          "aviso se atrasa en el bróker y no en la comparación.", w=8, minimo=0)
     serie(t, "k6: solicitudes por segundo, por tipo", [
         prom("sum by (tipo) (rate(k6_http_reqs_total[15s]))", "{{tipo}}")],
           "La carga que genera k6. Las consultas y los pedidos son el fondo del Ambiente A.", unidad="reqps")
@@ -206,8 +206,8 @@ WHERE aviso IS NOT NULL AND $__timeFilter(abierta) ORDER BY abierta DESC LIMIT 5
           "La ventana de medición de cada corrida empieza al terminar el calentamiento.", h=6)
 
     return t.json("e01", "E01 · Detección del dispositivo no registrado (H1, ASR-1)",
-                  "Si el micro de sesiones compara la huella del dispositivo al abrir la sesión, seguridad recibe "
-                  "el aviso en ≤ 2 s.",
+                  "Si el Verificador de dispositivo compara la huella apenas el Gestor de sesión publica la apertura, "
+                  "seguridad recibe el aviso en ≤ 2 s.",
                   [anotacion_pg("Corridas", ANOT_CORRIDA.format(exp="E01"), AZUL)])
 
 
@@ -219,11 +219,11 @@ SELECT count(*) FROM registro.evento WHERE tipo = 'falla.inyectada' AND $__timeF
          "Caídas de etapa (D2) y congelamientos (D3) que ejecutó el inyector.", pasos=((None, AZUL),), w=3)
     stat(t, "Pedidos detenidos", """
 SELECT count(*) FROM registro.e02_detenidos WHERE $__timeFilter(t0)""",
-         "D2: los que la etapa tenía en curso al caer y los que recibió caída. D3: el pedido congelado.",
+         "Pedidos cuya etapa no cerró en los 30 s de ASR-3. D2: los que la etapa tenía en curso o recibió caída. D3: el pedido congelado.",
          pasos=((None, AZUL),), w=3)
     stat(t, "En la cola ≤ 30 s", """
 SELECT count(*) FROM registro.e02_cruce WHERE demora_ms <= 30000 AND $__timeFilter(t0)""",
-         "Detenidos cuyo mensaje confirmó el bróker en ≤ 30 s desde la falla.", w=3)
+         "Detenidos cuyo mensaje confirmó el bróker en la Dead-Letter-Queue en ≤ 30 s desde la falla.", w=3)
     stat(t, "Escapes", """
 SELECT count(*) FROM registro.e02_cruce
 WHERE t0 < now() - interval '30 seconds' AND (encolado IS NULL OR demora_ms > 30000) AND $__timeFilter(t0)""",
@@ -239,13 +239,13 @@ SELECT count(*) FROM registro.e02_declaraciones WHERE NOT justificada AND $__tim
          pasos=((None, VERDE), (1, NARANJA), (2, ROJO)), w=3)
     stat(t, "Mensajes sin pedido detenido", """
 SELECT count(*) FROM registro.e02_mensajes_falsos WHERE $__timeFilter(ts)""",
-         "Mensajes encolados por pedidos que no estaban detenidos; casi siempre llegan después a logística.",
+         "Mensajes en la Dead-Letter-Queue por pedidos cuya etapa sí cerró en 30 s.",
          pasos=((None, VERDE), (1, NARANJA)), w=3)
     stat(t, "Demora p95 hasta la cola", """
 SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY demora_ms) FROM registro.e02_cruce
 WHERE encolado IS NOT NULL AND $__timeFilter(t0)""",
          "Desde la falla, o desde el envío si el pedido llegó con la etapa ya caída (D-5), hasta la confirmación "
-         "del bróker.", pasos=((None, VERDE), (30000, ROJO)), unidad="ms", w=3)
+         "del bróker en la Dead-Letter-Queue.", pasos=((None, VERDE), (30000, ROJO)), unidad="ms", w=3)
 
     t.fila("El Monitor de la cadena · Prometheus")
     t.panel("state-timeline", "Lo que declara el Monitor de cada etapa",
@@ -265,14 +265,14 @@ WHERE encolado IS NOT NULL AND $__timeFilter(t0)""",
         prom("max by (etapa) (ventas_pedidos_en_curso)", "{{etapa}}")],
           "Los pedidos que ventas envió a cada etapa y no han vuelto. En una caída crecen sin parar; en D3, el "
           "congelado queda para siempre.", w=8, minimo=0)
-    serie(t, "Mensajes en la cola de reintentos", [
-        prom('max by (queue) (rabbitmq_queue_messages{queue=~"reintentos.*"})', "{{queue}}")],
-          "reintentos no tiene consumidor: crece con cada pedido encolado. reintentos.auditoria la vacía el "
-          "auditor.", w=8, minimo=0)
-    serie(t, "Encolados por segundo: Monitor y auditor", [
-        prom("sum by (etapa) (rate(monitor_pedidos_encolados_total[15s]))", "monitor · {{etapa}}"),
+    serie(t, "Mensajes en las colas del bróker de la cadena", [
+        prom('max by (queue) (rabbitmq_queue_messages{queue=~"dead-letter-queue|etapa.*"})', "{{queue}}")],
+          "La Dead-Letter-Queue no tiene consumidor: crece con cada pedido detenido. La cola de una etapa caída "
+          "acumula su trabajo, que se retoma cuando la etapa vuelve.", w=8, minimo=0)
+    serie(t, "A la Dead-Letter-Queue por segundo: ventas y auditor", [
+        prom("sum by (etapa) (rate(ventas_pedidos_encolados_total[15s]))", "ventas · {{etapa}}"),
         prom("sum by (etapa) (rate(auditor_mensajes_total[15s]))", "auditor · {{etapa}}", "B")],
-          "Lo que el Monitor confirmó y lo que el auditor leyó de la copia. Deben coincidir.", unidad="reqps", w=8)
+          "Lo que ventas envió con confirmación del bróker y lo que el auditor leyó de la copia. Deben coincidir.", unidad="reqps", w=8)
 
     t.fila("Cada pedido detenido, cruzado con su mensaje")
     serie(t, "Demora hasta la cola de cada pedido detenido (ms)", [sql("""
@@ -331,9 +331,10 @@ SELECT ts AS time, etapa || ' responde de nuevo' AS text, 'reinicio' AS tags
 FROM registro.evento WHERE tipo = 'etapa.reiniciada' AND $__timeFilter(ts)""", VERDE),
         anotacion_pg("Corridas", ANOT_CORRIDA.format(exp="E02"), AZUL),
     ]
-    return t.json("e02", "E02 · Detección y encolado del pedido detenido (H2, ASR-3)",
-                  "Si el Monitor sondea cada etapa y encola los pedidos de la que no responde N sondeos seguidos, "
-                  "todo pedido detenido llega a la cola de reintentos en ≤ 30 s.", anot)
+    return t.json("e02", "E02 · Detección del pedido detenido y envío a la Dead-Letter-Queue (H2, ASR-3)",
+                  "Si el Monitor sondea cada etapa y avisa a ventas cuando una no responde N sondeos seguidos, y ventas "
+                  "envía sus pedidos pendientes a la Dead-Letter-Queue, todo pedido detenido llega a ella en ≤ 30 s.",
+                  anot)
 
 
 if __name__ == "__main__":
