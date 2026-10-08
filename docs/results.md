@@ -41,6 +41,15 @@ la salida que provocó. Prometheus y Grafana sirvieron para ver la corrida en
 vivo, pero ninguna cifra de este reporte sale de ellos, porque agregan los datos
 y pierden el identificador.
 
+**Figura 1. Dónde corrió cada pieza de las pruebas (DG-DEP-002).** k6 generó
+la carga desde el portátil, fuera de Docker. El inyector de fallas, los doce
+micros, RabbitMQ y PostgreSQL corrieron como contenedores de Docker Compose. El
+guion `load/experimento.sh` sacó el veredicto de la tabla `registro.evento` con
+una consulta SQL. Prometheus y Grafana no aparecen porque ninguna cifra sale de
+ellos.
+
+![DG-DEP-002 · Montaje de las pruebas: k6 y el guion en el portátil; inyector, micros, RabbitMQ y PostgreSQL en Docker Compose](modelos/png-v7/13-DG-DEP-002.png)
+
 Un guion, `load/experimento.sh`, lanzó las siete corridas una tras otra; se
 invoca con `make experimentos`. Cada corrida empezó con 5 minutos de
 calentamiento que no cuentan para ningún criterio. Entre una corrida y la
@@ -97,6 +106,14 @@ cual llegó el 95 % de los avisos.
 | S4 a 1× (2 aperturas/s) | 10 | 16 ms | 28 ms | 31 ms |
 | S4 a 3× (6 aperturas/s) | 10 | 17 ms | 23 ms | 23 ms |
 | S4 a 5× (10 aperturas/s) | 10 | 17 ms | 34 ms | 38 ms |
+
+**Figura 2. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
+reloj arranca en t0, cuando el micro de sesiones (Gestor de sesión en el
+diagrama) publica `sesion.abierta`, y se detiene en t1, cuando el aviso llega al
+receptor del SMS. Si la huella coincide con la registrada, el Verificador
+descarta el evento sin avisar: así se juzgan S2, S3 y las sesiones de fondo.
+
+![DG-SEQ-001 · E01: de la apertura de sesión al SMS de seguridad, con la rama de huella distinta y la de huella registrada](modelos/png-v7/14-DG-SEQ-001.png)
 
 **Tabla 3. Por dónde pasó el aviso en S1.** El aviso recorre cuatro tramos, dos
 de ellos por el bróker. Cada fila mide un tramo en las 50 sesiones de intruso.
@@ -217,6 +234,17 @@ en D2.** El límite es 30 s.
 
 ### Análisis de resultados
 
+**Figura 3. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
+y el Monitor la declara detenida al tercer sondeo sin respuesta. Desde ahí avisa
+en cada ciclo al Coordinador, que es el micro de ventas como en DG-CMP-005, y
+este publica cada pedido pendiente de esa etapa como `pedido.detenido`. El
+bróker lo deja en la Dead-Letter-Queue. El reloj arranca en la caída, o en el
+envío de ventas si el pedido llegó con la etapa ya caída, y se detiene en t1,
+la publicación confirmada. Al reiniciarse la etapa, el bróker le
+entrega el trabajo que esperaba en su cola.
+
+![DG-SEQ-002 · E02, D2: de la caída de la etapa a la Dead-Letter-Queue, con los sondeos cada T = 2 s y el aviso en cada ciclo](modelos/png-v7/15-DG-SEQ-002.png)
+
 **El sondeo detecta bien una etapa caída.** En cada una de las 30 caídas de
 D2, el Monitor declaró detenida la etapa con una mediana de 5,3 s y un máximo
 de 6,4 s. Es lo que predice el diseño: 3 sondeos sin respuesta, uno cada 2 s,
@@ -237,6 +265,13 @@ caen dentro de una caída real de su etapa. Pero quien consuma la
 Dead-Letter-Queue, lo que pide ASR-4, intentará reanudar pedidos que la etapa
 ya está procesando. La idempotencia por pedido y etapa de ADR-005 deja de ser
 opcional.
+
+**Figura 4. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
+etapa que retenga el próximo pedido sin completarlo. La etapa sigue respondiendo
+`200 OK` a cada sondeo, así que el Monitor no ve ningún sondeo sin respuesta, no
+avisa al Coordinador y el pedido nunca llega a la Dead-Letter-Queue.
+
+![DG-SEQ-003 · E02, D3: el pedido congelado en una etapa que responde todos los sondeos](modelos/png-v7/16-DG-SEQ-003.png)
 
 **D3 refuta H2: el Monitor no vio ninguno de los 30 pedidos congelados.** La
 etapa siguió viva y respondió todos los sondeos, así que el Monitor nunca la
