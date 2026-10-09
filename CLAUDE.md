@@ -129,8 +129,10 @@ Resultados (ciclo del 2026-10-07, 18:17–22:32, en `docs/results.md`), con el
 diseño de DG-CMP-004 y DG-CMP-005: H1 se sostiene en S1, S2 y S3 (50 de 50
 avisos, máximo 115 ms; 0 falsas alarmas en 17 893 sesiones) → aceptar ADR-007
 tal como está. H2 pasa D1 y D2 (655 de 655 detenidos en la Dead-Letter-Queue,
-máximo 6,4 s) y cae en D3 (0 de 30 congelados) → confirmar ADR-004. D4 no
-corrió. Con el bróker, 908 pedidos que se recuperaron solos también llegaron a
+máximo 6,4 s) y cae en D3 (0 de 30 congelados) → confirmar ADR-004. D4 corrió
+aparte la noche del 2026-10-08 (21:05–6:11, ciclo `20261008-210507`): las 12
+combinaciones de T y N sin una sola declaración falsa, así que el menor N es 1
+y su N × T, 1 s; vale para una máquina, no para red real. Con el bróker, 908 pedidos que se recuperaron solos también llegaron a
 la Dead-Letter-Queue: ASR-4 necesita la idempotencia de ADR-005. No se guarda el
 histórico de corridas: `analisis/resultados/` tiene solo el ciclo vigente.
 

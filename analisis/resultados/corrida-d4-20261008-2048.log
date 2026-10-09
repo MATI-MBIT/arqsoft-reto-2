@@ -1,0 +1,443 @@
+20:48:13 esperando corriente
+21:04:48 arranca make d4 con FORZAR_BATERIA=1
+./gradlew bootJar --console=plain -q
+docker compose -f deploy/docker-compose.yml build --quiet
+ Image reto2/receptor Building 
+ Image reto2/usuario-no-valido Building 
+ Image reto2/etapa Building 
+ Image reto2/ventas Building 
+ Image reto2/receptor Building 
+ Image reto2/sesiones Building 
+ Image reto2/monitor Building 
+ Image reto2/receptor Building 
+ Image reto2/onboarding Building 
+ Image reto2/etapa Building 
+ Image reto2/etapa Building 
+ Image reto2/receptor Building 
+ Image reto2/inyector Building 
+ Image reto2/onboarding Built 
+ Image reto2/etapa Built 
+ Image reto2/receptor Built 
+ Image reto2/ventas Built 
+ Image reto2/monitor Built 
+ Image reto2/receptor Built 
+ Image reto2/receptor Built 
+ Image reto2/sesiones Built 
+ Image reto2/etapa Built 
+ Image reto2/inyector Built 
+ Image reto2/usuario-no-valido Built 
+ Image reto2/receptor Built 
+ Image reto2/etapa Built 
+docker compose -f deploy/docker-compose.yml up -d
+ Container reto2-usuario-no-valido-1 Running 
+ Container reto2-postgres-1 Running 
+ Container reto2-onboarding-1 Running 
+ Container reto2-prometheus-1 Running 
+ Container reto2-rabbitmq-1 Running 
+ Container reto2-sesiones-1 Running 
+ Container reto2-ventas-1 Running 
+ Container inyector Running 
+ Container reto2-grafana-1 Running 
+ Container etapa-despacho Recreate 
+ Container etapa-facturacion Recreate 
+ Container etapa-inventario Recreate 
+ Container reto2-auditor-cola-1 Recreate 
+ Container reto2-logistica-1 Recreate 
+ Container reto2-monitor-1 Recreate 
+ Container reto2-notificador-1 Recreate 
+ Container reto2-receptor-sms-1 Recreate 
+ Container reto2-monitor-1 Recreated 
+ Container reto2-receptor-sms-1 Recreated 
+ Container reto2-auditor-cola-1 Recreated 
+ Container etapa-inventario Recreated 
+ Container etapa-facturacion Recreated 
+ Container reto2-logistica-1 Recreated 
+ Container etapa-despacho Recreated 
+ Container reto2-notificador-1 Recreated 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-rabbitmq-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-rabbitmq-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Waiting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-receptor-sms-1 Starting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-postgres-1 Healthy 
+ Container etapa-despacho Starting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-logistica-1 Starting 
+ Container reto2-rabbitmq-1 Healthy 
+ Container reto2-rabbitmq-1 Healthy 
+ Container reto2-postgres-1 Healthy 
+ Container etapa-inventario Starting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-notificador-1 Starting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-monitor-1 Starting 
+ Container reto2-postgres-1 Healthy 
+ Container etapa-facturacion Starting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-auditor-cola-1 Starting 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-postgres-1 Healthy 
+ Container reto2-receptor-sms-1 Started 
+ Container etapa-despacho Started 
+ Container reto2-logistica-1 Started 
+ Container etapa-inventario Started 
+ Container reto2-notificador-1 Started 
+ Container reto2-monitor-1 Started 
+ Container etapa-facturacion Started 
+ Container reto2-auditor-cola-1 Started 
+esperando a los micros.... listos
+Grafana precalentado
+Grafana http://localhost:3000 · Prometheus http://localhost:9090 · RabbitMQ http://localhost:15672 (reto2/reto2)
+./load/experimento.sh e02-d4
+[1m[21:05:07][0m resultados en analisis/resultados/ · resumen en analisis/resultados/resumen-20261008-210507.tsv
+[1m[21:05:07][0m == d4-t1-n1-20261008-210507 · E02 D4 · T=1 s, N=1: ¿falsas alarmas y demora de D2? (N×T=1 s)
+[1m[21:05:15][0m   calentamiento: 300 s
+[1m[21:10:15][0m   D1: 1200 s sin fallas
+[1m[21:30:15][0m   D2 1/15: se mata inventario por 45 s
+[1m[21:31:32][0m   D2 2/15: se mata inventario por 45 s
+[1m[21:32:49][0m   D2 3/15: se mata inventario por 45 s
+[1m[21:34:06][0m   D2 4/15: se mata inventario por 45 s
+[1m[21:35:23][0m   D2 5/15: se mata inventario por 45 s
+[1m[21:36:40][0m   D2 6/15: se mata facturacion por 45 s
+[1m[21:37:57][0m   D2 7/15: se mata facturacion por 45 s
+[1m[21:39:13][0m   D2 8/15: se mata facturacion por 45 s
+[1m[21:40:30][0m   D2 9/15: se mata facturacion por 45 s
+[1m[21:41:47][0m   D2 10/15: se mata facturacion por 45 s
+[1m[21:43:04][0m   D2 11/15: se mata despacho por 45 s
+[1m[21:44:21][0m   D2 12/15: se mata despacho por 45 s
+[1m[21:45:38][0m   D2 13/15: se mata despacho por 45 s
+[1m[21:46:55][0m   D2 14/15: se mata despacho por 45 s
+[1m[21:48:12][0m   D2 15/15: se mata despacho por 45 s
+[1m[21:49:29][0m   gracia: 60 s para las salidas tardías
+[1m[21:50:35][0m   veredicto en analisis/resultados/d4-t1-n1-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   318 |     318 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   318 |     318 |      0 | PASA
+[1m[21:50:35][0m == d4-t1-n2-20261008-210507 · E02 D4 · T=1 s, N=2: ¿falsas alarmas y demora de D2? (N×T=2 s)
+[1m[21:50:45][0m   calentamiento: 300 s
+[1m[21:55:45][0m   D1: 1200 s sin fallas
+[1m[22:15:45][0m   D2 1/15: se mata facturacion por 45 s
+[1m[22:17:02][0m   D2 2/15: se mata facturacion por 45 s
+[1m[22:18:19][0m   D2 3/15: se mata facturacion por 45 s
+[1m[22:19:36][0m   D2 4/15: se mata facturacion por 45 s
+[1m[22:20:53][0m   D2 5/15: se mata facturacion por 45 s
+[1m[22:22:10][0m   D2 6/15: se mata despacho por 45 s
+[1m[22:23:27][0m   D2 7/15: se mata despacho por 45 s
+[1m[22:24:43][0m   D2 8/15: se mata despacho por 45 s
+[1m[22:26:00][0m   D2 9/15: se mata despacho por 45 s
+[1m[22:27:17][0m   D2 10/15: se mata despacho por 45 s
+[1m[22:28:34][0m   D2 11/15: se mata inventario por 45 s
+[1m[22:29:51][0m   D2 12/15: se mata inventario por 45 s
+[1m[22:31:08][0m   D2 13/15: se mata inventario por 45 s
+[1m[22:32:25][0m   D2 14/15: se mata inventario por 45 s
+[1m[22:33:42][0m   D2 15/15: se mata inventario por 45 s
+[1m[22:34:59][0m   gracia: 60 s para las salidas tardías
+[1m[22:36:06][0m   veredicto en analisis/resultados/d4-t1-n2-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   309 |     309 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   309 |     309 |      0 | PASA
+[1m[22:36:06][0m == d4-t1-n3-20261008-210507 · E02 D4 · T=1 s, N=3: ¿falsas alarmas y demora de D2? (N×T=3 s)
+[1m[22:36:15][0m   calentamiento: 300 s
+[1m[22:41:15][0m   D1: 1200 s sin fallas
+[1m[23:01:15][0m   D2 1/15: se mata inventario por 45 s
+[1m[23:02:32][0m   D2 2/15: se mata inventario por 45 s
+[1m[23:03:49][0m   D2 3/15: se mata inventario por 45 s
+[1m[23:05:06][0m   D2 4/15: se mata inventario por 45 s
+[1m[23:06:23][0m   D2 5/15: se mata inventario por 45 s
+[1m[23:07:40][0m   D2 6/15: se mata despacho por 45 s
+[1m[23:08:57][0m   D2 7/15: se mata despacho por 45 s
+[1m[23:10:14][0m   D2 8/15: se mata despacho por 45 s
+[1m[23:11:31][0m   D2 9/15: se mata despacho por 45 s
+[1m[23:12:47][0m   D2 10/15: se mata despacho por 45 s
+[1m[23:14:04][0m   D2 11/15: se mata facturacion por 45 s
+[1m[23:15:21][0m   D2 12/15: se mata facturacion por 45 s
+[1m[23:16:38][0m   D2 13/15: se mata facturacion por 45 s
+[1m[23:17:55][0m   D2 14/15: se mata facturacion por 45 s
+[1m[23:19:12][0m   D2 15/15: se mata facturacion por 45 s
+[1m[23:20:29][0m   gracia: 60 s para las salidas tardías
+[1m[23:21:36][0m   veredicto en analisis/resultados/d4-t1-n3-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   329 |     329 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   329 |     329 |      0 | PASA
+[1m[23:21:36][0m == d4-t1-n5-20261008-210507 · E02 D4 · T=1 s, N=5: ¿falsas alarmas y demora de D2? (N×T=5 s)
+[1m[23:21:46][0m   calentamiento: 300 s
+[1m[23:26:46][0m   D1: 1200 s sin fallas
+[1m[23:46:46][0m   D2 1/15: se mata inventario por 45 s
+[1m[23:48:03][0m   D2 2/15: se mata inventario por 45 s
+[1m[23:49:20][0m   D2 3/15: se mata inventario por 45 s
+[1m[23:50:37][0m   D2 4/15: se mata inventario por 45 s
+[1m[23:51:54][0m   D2 5/15: se mata inventario por 45 s
+[1m[23:53:11][0m   D2 6/15: se mata facturacion por 45 s
+[1m[23:54:28][0m   D2 7/15: se mata facturacion por 45 s
+[1m[23:55:44][0m   D2 8/15: se mata facturacion por 45 s
+[1m[23:57:01][0m   D2 9/15: se mata facturacion por 45 s
+[1m[23:58:18][0m   D2 10/15: se mata facturacion por 45 s
+[1m[23:59:35][0m   D2 11/15: se mata despacho por 45 s
+[1m[00:00:52][0m   D2 12/15: se mata despacho por 45 s
+[1m[00:02:09][0m   D2 13/15: se mata despacho por 45 s
+[1m[00:03:26][0m   D2 14/15: se mata despacho por 45 s
+[1m[00:04:43][0m   D2 15/15: se mata despacho por 45 s
+[1m[00:06:00][0m   gracia: 60 s para las salidas tardías
+[1m[00:07:07][0m   veredicto en analisis/resultados/d4-t1-n5-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   334 |     334 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   334 |     334 |      0 | PASA
+[1m[00:07:07][0m == d4-t2-n1-20261008-210507 · E02 D4 · T=2 s, N=1: ¿falsas alarmas y demora de D2? (N×T=2 s)
+[1m[00:07:16][0m   calentamiento: 300 s
+[1m[00:12:16][0m   D1: 1200 s sin fallas
+[1m[00:32:17][0m   D2 1/15: se mata facturacion por 45 s
+[1m[00:33:33][0m   D2 2/15: se mata facturacion por 45 s
+[1m[00:34:50][0m   D2 3/15: se mata facturacion por 45 s
+[1m[00:36:07][0m   D2 4/15: se mata facturacion por 45 s
+[1m[00:37:24][0m   D2 5/15: se mata facturacion por 45 s
+[1m[00:38:41][0m   D2 6/15: se mata inventario por 45 s
+[1m[00:39:58][0m   D2 7/15: se mata inventario por 45 s
+[1m[00:41:15][0m   D2 8/15: se mata inventario por 45 s
+[1m[00:42:32][0m   D2 9/15: se mata inventario por 45 s
+[1m[00:43:49][0m   D2 10/15: se mata inventario por 45 s
+[1m[00:45:06][0m   D2 11/15: se mata despacho por 45 s
+[1m[00:46:23][0m   D2 12/15: se mata despacho por 45 s
+[1m[00:47:40][0m   D2 13/15: se mata despacho por 45 s
+[1m[00:48:56][0m   D2 14/15: se mata despacho por 45 s
+[1m[00:50:13][0m   D2 15/15: se mata despacho por 45 s
+[1m[00:51:30][0m   gracia: 60 s para las salidas tardías
+[1m[00:52:37][0m   veredicto en analisis/resultados/d4-t2-n1-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   309 |     309 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   309 |     309 |      0 | PASA
+[1m[00:52:38][0m == d4-t2-n2-20261008-210507 · E02 D4 · T=2 s, N=2: ¿falsas alarmas y demora de D2? (N×T=4 s)
+[1m[00:52:47][0m   calentamiento: 300 s
+[1m[00:57:47][0m   D1: 1200 s sin fallas
+[1m[01:17:47][0m   D2 1/15: se mata inventario por 45 s
+[1m[01:19:04][0m   D2 2/15: se mata inventario por 45 s
+[1m[01:20:21][0m   D2 3/15: se mata inventario por 45 s
+[1m[01:21:38][0m   D2 4/15: se mata inventario por 45 s
+[1m[01:22:55][0m   D2 5/15: se mata inventario por 45 s
+[1m[01:24:12][0m   D2 6/15: se mata despacho por 45 s
+[1m[01:25:29][0m   D2 7/15: se mata despacho por 45 s
+[1m[01:26:46][0m   D2 8/15: se mata despacho por 45 s
+[1m[01:28:03][0m   D2 9/15: se mata despacho por 45 s
+[1m[01:29:19][0m   D2 10/15: se mata despacho por 45 s
+[1m[01:30:36][0m   D2 11/15: se mata facturacion por 45 s
+[1m[01:31:53][0m   D2 12/15: se mata facturacion por 45 s
+[1m[01:33:10][0m   D2 13/15: se mata facturacion por 45 s
+[1m[01:34:27][0m   D2 14/15: se mata facturacion por 45 s
+[1m[01:35:44][0m   D2 15/15: se mata facturacion por 45 s
+[1m[01:37:01][0m   gracia: 60 s para las salidas tardías
+[1m[01:38:10][0m   veredicto en analisis/resultados/d4-t2-n2-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   301 |     301 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   301 |     301 |      0 | PASA
+[1m[01:38:10][0m == d4-t2-n3-20261008-210507 · E02 D4 · T=2 s, N=3: ¿falsas alarmas y demora de D2? (N×T=6 s)
+[1m[01:38:19][0m   calentamiento: 300 s
+[1m[01:43:20][0m   D1: 1200 s sin fallas
+[1m[02:03:20][0m   D2 1/15: se mata facturacion por 45 s
+[1m[02:04:37][0m   D2 2/15: se mata facturacion por 45 s
+[1m[02:05:53][0m   D2 3/15: se mata facturacion por 45 s
+[1m[02:07:10][0m   D2 4/15: se mata facturacion por 45 s
+[1m[02:08:27][0m   D2 5/15: se mata facturacion por 45 s
+[1m[02:09:44][0m   D2 6/15: se mata inventario por 45 s
+[1m[02:11:01][0m   D2 7/15: se mata inventario por 45 s
+[1m[02:12:18][0m   D2 8/15: se mata inventario por 45 s
+[1m[02:13:35][0m   D2 9/15: se mata inventario por 45 s
+[1m[02:14:52][0m   D2 10/15: se mata inventario por 45 s
+[1m[02:16:09][0m   D2 11/15: se mata despacho por 45 s
+[1m[02:17:26][0m   D2 12/15: se mata despacho por 45 s
+[1m[02:18:43][0m   D2 13/15: se mata despacho por 45 s
+[1m[02:19:59][0m   D2 14/15: se mata despacho por 45 s
+[1m[02:21:16][0m   D2 15/15: se mata despacho por 45 s
+[1m[02:22:33][0m   gracia: 60 s para las salidas tardías
+[1m[02:23:43][0m   veredicto en analisis/resultados/d4-t2-n3-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   337 |     337 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   337 |     337 |      0 | PASA
+[1m[02:23:43][0m == d4-t2-n5-20261008-210507 · E02 D4 · T=2 s, N=5: ¿falsas alarmas y demora de D2? (N×T=10 s)
+[1m[02:23:51][0m   calentamiento: 300 s
+[1m[02:28:51][0m   D1: 1200 s sin fallas
+[1m[02:48:51][0m   D2 1/15: se mata facturacion por 45 s
+[1m[02:50:08][0m   D2 2/15: se mata facturacion por 45 s
+[1m[02:51:25][0m   D2 3/15: se mata facturacion por 45 s
+[1m[02:52:42][0m   D2 4/15: se mata facturacion por 45 s
+[1m[02:53:59][0m   D2 5/15: se mata facturacion por 45 s
+[1m[02:55:16][0m   D2 6/15: se mata despacho por 45 s
+[1m[02:56:33][0m   D2 7/15: se mata despacho por 45 s
+[1m[02:57:50][0m   D2 8/15: se mata despacho por 45 s
+[1m[02:59:07][0m   D2 9/15: se mata despacho por 45 s
+[1m[03:00:23][0m   D2 10/15: se mata despacho por 45 s
+[1m[03:01:40][0m   D2 11/15: se mata inventario por 45 s
+[1m[03:02:57][0m   D2 12/15: se mata inventario por 45 s
+[1m[03:04:14][0m   D2 13/15: se mata inventario por 45 s
+[1m[03:05:31][0m   D2 14/15: se mata inventario por 45 s
+[1m[03:06:48][0m   D2 15/15: se mata inventario por 45 s
+[1m[03:08:05][0m   gracia: 60 s para las salidas tardías
+[1m[03:09:15][0m   veredicto en analisis/resultados/d4-t2-n5-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   313 |     313 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   313 |     313 |      0 | PASA
+[1m[03:09:15][0m == d4-t5-n1-20261008-210507 · E02 D4 · T=5 s, N=1: ¿falsas alarmas y demora de D2? (N×T=5 s)
+[1m[03:09:25][0m   calentamiento: 300 s
+[1m[03:14:25][0m   D1: 1200 s sin fallas
+[1m[03:34:25][0m   D2 1/15: se mata inventario por 45 s
+[1m[03:35:42][0m   D2 2/15: se mata inventario por 45 s
+[1m[03:36:59][0m   D2 3/15: se mata inventario por 45 s
+[1m[03:38:16][0m   D2 4/15: se mata inventario por 45 s
+[1m[03:39:33][0m   D2 5/15: se mata inventario por 45 s
+[1m[03:40:49][0m   D2 6/15: se mata despacho por 45 s
+[1m[03:42:06][0m   D2 7/15: se mata despacho por 45 s
+[1m[03:43:23][0m   D2 8/15: se mata despacho por 45 s
+[1m[03:44:40][0m   D2 9/15: se mata despacho por 45 s
+[1m[03:45:57][0m   D2 10/15: se mata despacho por 45 s
+[1m[03:47:14][0m   D2 11/15: se mata facturacion por 45 s
+[1m[03:48:31][0m   D2 12/15: se mata facturacion por 45 s
+[1m[03:49:48][0m   D2 13/15: se mata facturacion por 45 s
+[1m[03:51:05][0m   D2 14/15: se mata facturacion por 45 s
+[1m[03:52:22][0m   D2 15/15: se mata facturacion por 45 s
+[1m[03:53:39][0m   gracia: 60 s para las salidas tardías
+[1m[03:54:48][0m   veredicto en analisis/resultados/d4-t5-n1-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   350 |     350 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   350 |     350 |      0 | PASA
+[1m[03:54:48][0m == d4-t5-n2-20261008-210507 · E02 D4 · T=5 s, N=2: ¿falsas alarmas y demora de D2? (N×T=10 s)
+[1m[03:54:58][0m   calentamiento: 300 s
+[1m[03:59:58][0m   D1: 1200 s sin fallas
+[1m[04:19:58][0m   D2 1/15: se mata despacho por 45 s
+[1m[04:21:15][0m   D2 2/15: se mata despacho por 45 s
+[1m[04:22:32][0m   D2 3/15: se mata despacho por 45 s
+[1m[04:23:49][0m   D2 4/15: se mata despacho por 45 s
+[1m[04:25:06][0m   D2 5/15: se mata despacho por 45 s
+[1m[04:26:23][0m   D2 6/15: se mata inventario por 45 s
+[1m[04:27:40][0m   D2 7/15: se mata inventario por 45 s
+[1m[04:28:56][0m   D2 8/15: se mata inventario por 45 s
+[1m[04:30:13][0m   D2 9/15: se mata inventario por 45 s
+[1m[04:31:30][0m   D2 10/15: se mata inventario por 45 s
+[1m[04:32:47][0m   D2 11/15: se mata facturacion por 45 s
+[1m[04:34:04][0m   D2 12/15: se mata facturacion por 45 s
+[1m[04:35:21][0m   D2 13/15: se mata facturacion por 45 s
+[1m[04:36:38][0m   D2 14/15: se mata facturacion por 45 s
+[1m[04:37:55][0m   D2 15/15: se mata facturacion por 45 s
+[1m[04:39:12][0m   gracia: 60 s para las salidas tardías
+[1m[04:40:18][0m   veredicto en analisis/resultados/d4-t5-n2-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   291 |     291 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   291 |     291 |      0 | PASA
+[1m[04:40:18][0m == d4-t5-n3-20261008-210507 · E02 D4 · T=5 s, N=3: ¿falsas alarmas y demora de D2? (N×T=15 s)
+[1m[04:40:28][0m   calentamiento: 300 s
+[1m[04:45:28][0m   D1: 1200 s sin fallas
+[1m[05:05:28][0m   D2 1/15: se mata facturacion por 45 s
+[1m[05:06:45][0m   D2 2/15: se mata facturacion por 45 s
+[1m[05:08:02][0m   D2 3/15: se mata facturacion por 45 s
+[1m[05:09:19][0m   D2 4/15: se mata facturacion por 45 s
+[1m[05:10:36][0m   D2 5/15: se mata facturacion por 45 s
+[1m[05:11:53][0m   D2 6/15: se mata despacho por 45 s
+[1m[05:13:10][0m   D2 7/15: se mata despacho por 45 s
+[1m[05:14:27][0m   D2 8/15: se mata despacho por 45 s
+[1m[05:15:44][0m   D2 9/15: se mata despacho por 45 s
+[1m[05:17:01][0m   D2 10/15: se mata despacho por 45 s
+[1m[05:18:17][0m   D2 11/15: se mata inventario por 45 s
+[1m[05:19:34][0m   D2 12/15: se mata inventario por 45 s
+[1m[05:20:51][0m   D2 13/15: se mata inventario por 45 s
+[1m[05:22:08][0m   D2 14/15: se mata inventario por 45 s
+[1m[05:23:25][0m   D2 15/15: se mata inventario por 45 s
+[1m[05:24:42][0m   gracia: 60 s para las salidas tardías
+[1m[05:25:49][0m   veredicto en analisis/resultados/d4-t5-n3-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   349 |     349 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   349 |     349 |      0 | PASA
+[1m[05:25:49][0m == d4-t5-n5-20261008-210507 · E02 D4 · T=5 s, N=5: ¿falsas alarmas y demora de D2? (N×T=25 s)
+[1m[05:25:59][0m   calentamiento: 300 s
+[1m[05:30:59][0m   D1: 1200 s sin fallas
+[1m[05:50:59][0m   D2 1/15: se mata facturacion por 45 s
+[1m[05:52:16][0m   D2 2/15: se mata facturacion por 45 s
+[1m[05:53:33][0m   D2 3/15: se mata facturacion por 45 s
+[1m[05:54:49][0m   D2 4/15: se mata facturacion por 45 s
+[1m[05:56:06][0m   D2 5/15: se mata facturacion por 45 s
+[1m[05:57:23][0m   D2 6/15: se mata despacho por 45 s
+[1m[05:58:40][0m   D2 7/15: se mata despacho por 45 s
+[1m[05:59:57][0m   D2 8/15: se mata despacho por 45 s
+[1m[06:01:14][0m   D2 9/15: se mata despacho por 45 s
+[1m[06:02:31][0m   D2 10/15: se mata despacho por 45 s
+[1m[06:03:48][0m   D2 11/15: se mata inventario por 45 s
+[1m[06:05:05][0m   D2 12/15: se mata inventario por 45 s
+[1m[06:06:22][0m   D2 13/15: se mata inventario por 45 s
+[1m[06:07:39][0m   D2 14/15: se mata inventario por 45 s
+[1m[06:08:55][0m   D2 15/15: se mata inventario por 45 s
+[1m[06:10:12][0m   gracia: 60 s para las salidas tardías
+[1m[06:11:19][0m   veredicto en analisis/resultados/d4-t5-n5-20261008-210507/veredicto.txt
+      D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   334 |     334 |      0 | PASA
+      D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+      D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+      Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   334 |     334 |      0 | PASA
+[1m[06:11:19][0m listo. Resumen:
+d4-t1-n1-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   318 |     318 |      0 | PASA
+d4-t1-n1-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t1-n1-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t1-n1-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   318 |     318 |      0 | PASA
+d4-t1-n2-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   309 |     309 |      0 | PASA
+d4-t1-n2-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t1-n2-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t1-n2-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   309 |     309 |      0 | PASA
+d4-t1-n3-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   329 |     329 |      0 | PASA
+d4-t1-n3-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t1-n3-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t1-n3-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   329 |     329 |      0 | PASA
+d4-t1-n5-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   334 |     334 |      0 | PASA
+d4-t1-n5-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t1-n5-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t1-n5-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   334 |     334 |      0 | PASA
+d4-t2-n1-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   309 |     309 |      0 | PASA
+d4-t2-n1-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t2-n1-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t2-n1-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   309 |     309 |      0 | PASA
+d4-t2-n2-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   301 |     301 |      0 | PASA
+d4-t2-n2-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t2-n2-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t2-n2-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   301 |     301 |      0 | PASA
+d4-t2-n3-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   337 |     337 |      0 | PASA
+d4-t2-n3-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t2-n3-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t2-n3-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   337 |     337 |      0 | PASA
+d4-t2-n5-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   313 |     313 |      0 | PASA
+d4-t2-n5-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t2-n5-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t2-n5-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   313 |     313 |      0 | PASA
+d4-t5-n1-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   350 |     350 |      0 | PASA
+d4-t5-n1-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t5-n1-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t5-n1-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   350 |     350 |      0 | PASA
+d4-t5-n2-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   291 |     291 |      0 | PASA
+d4-t5-n2-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t5-n2-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t5-n2-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   291 |     291 |      0 | PASA
+d4-t5-n3-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   349 |     349 |      0 | PASA
+d4-t5-n3-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t5-n3-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t5-n3-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   349 |     349 |      0 | PASA
+d4-t5-n5-20261008-210507  observa  D4   D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                        |   334 |     334 |      0 | PASA
+d4-t5-n5-20261008-210507  observa  D4   D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s               |     0 |       0 |      0 | NO APLICA
+d4-t5-n5-20261008-210507  observa  D4   D1 · ≤ 1 falsa alarma por hora (episodios, D-6)                                      |    15 |      15 |      0 | PASA
+d4-t5-n5-20261008-210507  observa  D4   Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados) |   334 |     334 |      0 | PASA
+06:11:19 fin rc=0

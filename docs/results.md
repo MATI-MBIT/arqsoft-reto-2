@@ -8,7 +8,8 @@ helix_section: "Experiments → Results & analysis"
 
 Este reporte presenta lo que salió del ciclo de corridas del 7 de octubre de
 2026, entre las 18:17 y las 22:32, sobre el prototipo que siguen DG-CMP-004 y
-DG-CMP-005. El diseño de cada experimento, sus fases y su tabla de decisiones
+DG-CMP-005. La fase exploratoria D4 corrió aparte, la noche del 8 al 9 de
+octubre. El diseño de cada experimento, sus fases y su tabla de decisiones
 están en [Experimentos E01 y E02](experiments.md).
 
 **En resumen, H1 se sostiene y H2 cae.** El Verificador de dispositivo avisó a
@@ -19,7 +20,10 @@ desde el dispositivo registrado no dio ninguna falsa alarma.
 El Monitor de la cadena detectó en ≤ 6,4 s cada una de las 30 caídas de etapa.
 Ventas envió a tiempo a la Dead-Letter-Queue los 655 pedidos que quedaron
 detenidos. Pero el Monitor no vio ninguno de los 30 pedidos congelados dentro
-de una etapa que seguía viva.
+de una etapa que seguía viva. En D4 combinamos T, cada cuánto sondea el
+Monitor, con N, cuántos sondeos sin respuesta declaran detenida la etapa.
+Ninguna de las 12 combinaciones dio una falsa alarma, ni siquiera con N = 1,
+que declara la etapa al primer sondeo sin respuesta.
 
 | Experimento | Hipótesis | Escenario | Veredicto | Decisión |
 |---|---|---|---|---|
@@ -56,11 +60,15 @@ calentamiento que no cuentan para ningún criterio. Entre una corrida y la
 siguiente se reiniciaron la base y las colas del bróker, para que un pedido
 detenido en una no apareciera como pendiente en la otra.
 
-**Las siete corridas son válidas.** Al cerrar cada una, el guion comprobó tres
+**Las siete corridas son válidas, y también las doce de D4.** Al cerrar cada una, el guion comprobó tres
 cosas: que la carga de fondo no tuviera un hueco de más de 30 s, que el equipo
 no se hubiera suspendido y que k6 no pasara de 1 % de solicitudes fallidas. Si
 una corrida no cumple, el ciclo entero se descarta y vuelve a empezar. En este
-ciclo, el hueco más largo fue de 10,8 s y k6 no tuvo ninguna solicitud fallida.
+ciclo del 7 de octubre, el hueco más largo fue de 10,8 s y k6 no tuvo ninguna
+solicitud fallida.
+D4 se lanzó con `make d4` y corrió de 21:05 a 6:11. En sus doce corridas, el
+hueco más largo fue de 11,0 s, k6 tampoco tuvo fallos y el equipo no se
+suspendió.
 
 El enunciado no da algunas cifras que los experimentos necesitan. Las fijamos
 como supuestos, y cada una se cambia con una variable, sin tocar el código:
@@ -196,7 +204,8 @@ detecta un pedido detenido. Si lo detecta, ventas tiene que enviarlo a la
 Dead-Letter-Queue en ≤ 30 s. Probamos tres situaciones: una hora sin fallas,
 para contar falsas alarmas (D1); 30 caídas de una etapa entera (D2), y 30
 pedidos congelados dentro de una etapa que sigue viva (D3). La fase
-exploratoria D4 no corrió.
+exploratoria D4 repite D1 y D2 con 12 combinaciones de T y N, y sus resultados
+van en una sección propia, más abajo.
 
 **Tabla 4. Criterios de H2.** D2 aparece en tres filas: dos cuentan los pedidos
 detenidos de dos formas, explicadas debajo de la tabla, y la tercera cuenta los
@@ -291,17 +300,70 @@ validación de despacho, 10,0 s en facturación y 8,9 s en descargue de
 inventario. El más lento tardó 13,7 s. Estas duraciones salen del supuesto S-11, no de etapas reales, y así
 deben leerse.
 
+### D4: las doce combinaciones de T y N
+
+D4 busca el número que [experiments.md](experiments.md) dejó abierto: el menor
+N de sondeos sin respuesta que no dispara falsas alarmas, y su N × T. Cada
+combinación corrió 20 min sin fallas, como D1, y luego 15 caídas de 45 s, cinco
+por etapa, como D2.
+
+**Tabla 6. Resultado de cada combinación.** «Declarada tras» es el tiempo desde
+la caída hasta que el Monitor declaró detenida la etapa. Los detenidos y su
+demora se cuentan como en la Tabla 4.
+
+| T | N | N × T | Declarada tras (mediana / máximo) | Detenidos en la Dead-Letter-Queue en ≤ 30 s | Demora máxima | Declaraciones sin caída |
+|---|---|---|---|---|---|---|
+| 1 s | 1 | 1 s | 1,0 s / 1,5 s | 318 de 318 | 1,5 s | 0 |
+| 1 s | 2 | 2 s | 2,1 s / 2,5 s | 309 de 309 | 2,5 s | 0 |
+| 1 s | 3 | 3 s | 2,9 s / 3,5 s | 329 de 329 | 3,5 s | 0 |
+| 1 s | 5 | 5 s | 4,9 s / 5,4 s | 334 de 334 | 5,4 s | 0 |
+| 2 s | 1 | 2 s | 1,2 s / 2,4 s | 309 de 309 | 2,4 s | 0 |
+| 2 s | 2 | 4 s | 3,6 s / 4,3 s | 301 de 301 | 4,4 s | 0 |
+| 2 s | 3 | 6 s | 5,4 s / 6,4 s | 337 de 337 | 6,4 s | 0 |
+| 2 s | 5 | 10 s | 9,2 s / 10,3 s | 313 de 313 | 10,3 s | 0 |
+| 5 s | 1 | 5 s | 3,0 s / 5,1 s | 350 de 350 | 5,3 s | 0 |
+| 5 s | 2 | 10 s | 8,1 s / 10,1 s | 291 de 291 | 10,1 s | 0 |
+| 5 s | 3 | 15 s | 12,5 s / 14,7 s | 349 de 349 | 14,7 s | 0 |
+| 5 s | 5 | 25 s | 22,5 s / 24,6 s | 334 de 334 | 24,7 s | 0 |
+
+**El menor N sin falsas alarmas es 1, y su N × T es 1 s.** Ninguna de las 12
+combinaciones declaró detenida una etapa sin caída. Antes de la primera caída
+de cada corrida, ningún sondeo quedó sin respuesta: fueron 12 corridas de
+25 min sanos cada una, sumando el calentamiento. Con T = 1 s y N = 1, el
+Monitor declaró la caída en 1,5 s como máximo.
+
+**La detección sigue a N × T, y el pedido llega a la Dead-Letter-Queue justo
+después.** En
+cada combinación, la etapa quedó declarada entre (N − 1) × T y N × T después
+de la caída, más la espera de 500 ms del último sondeo. Dónde cae dentro de ese
+rango depende del momento del primer sondeo fallido. La demora hasta la
+Dead-Letter-Queue apenas supera ese tiempo. Las 12 combinaciones caben en los
+30 s de ASR-3; la más lenta, T = 5 s y N = 5, llegó a 24,7 s.
+
+**Ese N = 1 vale para esta máquina, no para producción.** En una sola máquina,
+las etapas sanas respondieron siempre el sondeo dentro de su espera de 500 ms.
+Con red real, una pausa de recolección de memoria o un paquete perdido harían
+fallar un sondeo suelto, y con N = 1 eso ya sería una falsa alarma. D4 no puede
+medir ese ruido, así que el N de producción se tiene que fijar con sondeos
+sobre la red real.
+
+**D4 no cambia la decisión.** El sondeo no detecta D3 con ningún T y N, porque
+la etapa congelada sigue respondiendo. D4 solo dice cuánto puede adelantar el
+sondeo de apoyo la señal de una etapa caída. Con T = 1 s y N de 1 a 3, la
+etapa queda declarada en 1,5 a 3,5 s como máximo.
+
 ### Evidencias
 
 Cada fase de E02 dejó las mismas dos piezas que E01: el `veredicto.txt`, de
 donde salen las cifras, y la captura del tablero de Grafana en la ventana de la
-corrida.
+corrida. D4 es la excepción: sus doce corridas no tienen captura.
 
 | Fase | Qué probó | Resultado | Veredicto | Tablero |
 |---|---|---|---|---|
 | D1 | 1 h de carga normal sin fallas inyectadas | 0 etapas declaradas detenidas; 0 falsas alarmas | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e02-d1-20261007-181235/veredicto.txt) | [captura](assets/resultados/e02-d1-tablero.png) |
 | D2 | 30 caídas de 45 s, 10 por etapa, con pedidos en curso | 64 de 64 pedidos en curso y 655 de 655 detenidos a tiempo | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e02-d2-20261007-181235/veredicto.txt) | [captura](assets/resultados/e02-d2-tablero.png) |
 | D3 | 30 pedidos congelados, 10 por etapa, dentro de una etapa que sigue viva | 0 de 30 llegaron a la Dead-Letter-Queue | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e02-d3-20261007-181235/veredicto.txt) | [captura](assets/resultados/e02-d3-tablero.png) |
+| D4 | 12 combinaciones de T y N, cada una con 20 min sin fallas y 15 caídas | 0 declaraciones sin caída; todos los detenidos a tiempo | Un `veredicto.txt` por combinación, en las carpetas [`d4-*-20261008-210507`](https://github.com/MATI-MBIT/arqsoft-reto-2/tree/main/analisis/resultados) | Sin captura |
 
 La captura de D2 se muestra abajo porque es la fase en que se ve la detección
 de las caídas. La fila superior da los conteos: 30 fallas inyectadas, 655
@@ -329,8 +391,9 @@ para adelantar la señal cuando cae una etapa entera.
 
 ## Dónde la medición se apartó de experiments.md
 
-Cinco reglas de medición de [experiments.md](experiments.md) no estaban
-escritas o no se podían aplicar al pie de la letra. Las resolvimos como dice el
+Seis reglas de medición de [experiments.md](experiments.md) no estaban
+escritas, no se podían aplicar al pie de la letra o se acortaron para que D4
+cupiera en una noche. Las resolvimos como dice el
 [plan de implementación](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/notas/plan-implementacion-experimentos.md),
 y ninguna cambia una decisión.
 
@@ -340,6 +403,7 @@ y ninguna cambia una decisión.
 | Pedidos de D2 | «Los 30 pedidos» de las 30 caídas | Los 64 en curso al caer la etapa, y aparte los 655 detenidos | Los dos conteos pasan |
 | Reloj de D2 | Arranca cuando el inyector detiene la etapa | Para el pedido que llega con la etapa ya caída, arranca cuando ventas se lo envía | Medido desde la caída, un pedido que llega tarde a una caída de 45 s contaría una espera que no fue suya |
 | Falsa alarma | Cada mensaje sobre un pedido que llegó a logística | El criterio de D1 cuenta las veces que el Monitor declara detenida una etapa sin caída inyectada | Con el bróker, los detenidos también llegan a logística cuando la etapa vuelve: la regla literal haría falsos casi todos los mensajes |
+| Duración de D4 | D1 y D2 completos en cada combinación: 1 h sin fallas y 30 caídas | 20 min sin fallas y 15 caídas, cinco por etapa | Las 12 combinaciones caben en una noche. Con menos minutos sin fallas, una falsa alarma rara se ve menos |
 | Tasa de aperturas de S4 | 1, 3 y 5 veces la del Ambiente A, que no la fija | S-10: 2 aperturas por segundo | El límite de H1 queda por encima de 10 aperturas por segundo |
 
 ---
@@ -352,9 +416,9 @@ y ninguna cambia una decisión.
 - **Duraciones supuestas.** Las etapas duran lo que fija S-11. Antes de aceptar
   ADR-004, su plazo se tiene que calibrar con etapas reales. [PREGUNTA] ¿Quién
   consigue esas duraciones y para cuándo?
-- **D4 no corrió.** Falta el número que E02 debía entregar: el menor N sin
-  falsas alarmas, y su N × T. No cambia la decisión, porque la falla de H2 no
-  depende de T ni de N. [PREGUNTA] ¿Se corre D4 y, si se corre, cuándo?
+- **El N de producción.** D4 dio N = 1 sin falsas alarmas en una sola
+  máquina, donde ningún sondeo sano se perdió. Con red real hace falta medir
+  cuántos sondeos sueltos fallan. [PREGUNTA] ¿Dónde y cuándo se mide ese ruido?
 - **El plazo por pedido no se probó.** E02 confirma que el sondeo solo no
   basta, pero no mide el mecanismo de ADR-004. [PREGUNTA] ¿Quién arma ese
   experimento y para qué fecha?
