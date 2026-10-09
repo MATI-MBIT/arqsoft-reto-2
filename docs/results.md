@@ -421,21 +421,19 @@ y ninguna cambia una decisión.
   máquina, donde ningún sondeo sano se perdió. S-13 propone un N con margen
   para la red real, y la forma de medir ese ruido.
 - **El plazo por pedido no se probó.** E02 confirma que el sondeo solo no
-  basta, pero no mide el mecanismo de ADR-004. S-14 propone el experimento que
-  lo mide sobre este mismo prototipo.
+  basta, pero no mide el mecanismo de ADR-004. Probarlo queda fuera del alcance
+  de E01 y E02.
 - **Nadie consume la Dead-Letter-Queue.** Reanudar el pedido o entregarlo a una
   persona es lo que pide ASR-4, y quien lo haga tendrá que tolerar los pedidos
   que se recuperan solos.
 
 ### Supuestos para lo que falta
 
-Estos tres supuestos responden lo que los resultados dejan abierto con lo que
-midieron D1, D2 y D4 y con lo que ya hace el prototipo. Son propuestas del
-grupo 1, que se encarga de las tres. Cada una dice de dónde sale, cuándo se
-resuelve y qué la cambiaría.
+Estos dos supuestos responden lo que los resultados dejan abierto con lo que
+midieron D1, D2 y D4. Son propuestas del grupo 1, que se encarga de las dos.
+Cada una dice de dónde sale, cuándo se resuelve y qué la cambiaría.
 
 | Supuesto | Valor propuesto | De dónde sale | Cuándo se resuelve | Qué lo cambia |
 |---|---|---|---|---|
 | S-12 · plazo por pedido y etapa de ADR-004 | 15 s por etapa | En D1, el pedido más lento cerró su etapa en 13,7 s, y el p99,9 no pasó de 10,0 s. Con 15 s, ventas tiene otros 15 s para enviar el pedido a la Dead-Letter-Queue, y D2 y D4 mostraron que eso toma menos de 1 s | Al recibir duraciones reales de las tres etapas, antes de aceptar ADR-004 | Las duraciones reales: el plazo pasa a ser la más lenta observada más 10 %, sin superar 25 s |
 | S-13 · T y N del sondeo de apoyo en producción | T = 1 s y N = 3 | Con N = 3, dos sondeos perdidos seguidos no declaran la caída. En D4, esa combinación declaró la etapa en 3,5 s como máximo | Antes de desplegar el Monitor sobre la red real | Contar los sondeos perdidos durante 24 h sobre la red real, con las etapas sanas. Si tres seguidos ocurren más de una vez por hora, se sube N mientras N × T quepa en 30 s |
-| S-14 · cómo se prueba el plazo por pedido | Un experimento E03 que repite D1 y D3 de E02 con el plazo de S-12 activo en ventas | El inyector ya congela pedidos (D3) y el veredicto ya cruza cada pedido con su mensaje. Solo falta el plazo en ventas | Como siguiente experimento del reto, antes de aceptar ADR-004 | Pasa si los 30 pedidos congelados llegan a la Dead-Letter-Queue en ≤ 30 s y D1 no da más de 1 falsa alarma por hora |
