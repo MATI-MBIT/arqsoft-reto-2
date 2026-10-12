@@ -168,6 +168,7 @@ class MonitorDeLaCadena {
         for (String pedido : pedidos) {
             if (vistos.add(pedido)) {
                 registro.pedido("pedido.atascado.detectado", pedido, etapa, Map.of("umbralMs", umbralMs));
+                log.warn("pedido {} atascado en {}, etapa viva: más de U={} ms sin terminar", pedido, etapa, umbralMs);
                 metricas.counter("monitor.pedidos.atascados", "etapa", etapa).increment();
             }
         }

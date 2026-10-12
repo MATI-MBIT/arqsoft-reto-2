@@ -8,6 +8,8 @@ import io.micrometer.core.instrument.Timer;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,6 +26,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 class VerificadorDeDispositivo {
+
+    private static final Logger log = LoggerFactory.getLogger(VerificadorDeDispositivo.class);
 
     private final JdbcTemplate jdbc;
     private final RabbitTemplate bus;
@@ -55,9 +59,13 @@ class VerificadorDeDispositivo {
         boolean ok = !registrado.isEmpty() && coincide(registrado.getFirst(), s.dispositivoId());
         muestra.stop(comparacion);
         registro.sesion("huella.comparada", s.sesionId(), Map.of("coincide", ok));
+        String esperado = registrado.isEmpty() ? "ninguno" : registrado.getFirst();
         if (ok) {
+            log.info("huella coincide · vendedor {} · dispositivo {} · sin aviso", s.vendedorId(), s.dispositivoId());
             return;
         }
+        log.warn("huella distinta · vendedor {} · registrado {} · presentado {} · aviso a seguridad",
+                s.vendedorId(), esperado, s.dispositivoId());
         noCoincide.increment();
         bus.convertAndSend(Bus.SEGURIDAD, Bus.ALERTA_SEGURIDAD,
                 new AlertaSeguridad(s.sesionId(), s.vendedorId(), s.dispositivoId(), s.abiertaEn()));

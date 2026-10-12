@@ -161,6 +161,18 @@ corre E02 en ~25 min y `make e02` el de decisión en ~1 h 30 (Nicolás pidió el
 2026-10-12 retroalimentación corta: nada de corridas de 9 h). En Windows,
 `make.bat` con los mismos objetivos.
 
+**Evidencias de un caso.** Nicolás pidió el 2026-10-12 evidencias
+intencionales en vez de tableros de Grafana: un caso por escenario, con el
+estímulo a la izquierda y la respuesta a la derecha. `load/evidencias.sh` las
+reproduce (`limpiar`, `intruso`, `cambio`, `congelado`, `caida`, `repetida` y
+`mirar <caso>`, que filtra los logs). Las capturas son de una demostración, no
+de las corridas de decisión, y viven en `docs/assets/resultados/evidencias/`.
+Para eso se agregó una línea de log por hecho en cinco micros, después de la
+corrida de E01; no cambia lo que mide H1. El mensaje de la Dead-Letter-Queue
+lleva `causa` (`ETAPA_CAIDA` o `PEDIDO_ATASCADO`), que es el «por qué» del
+estado exacto de ASR-4, y `analisis/e02.sql` tiene el criterio que lo verifica.
+`analisis/e02-senal.sql` mide de la señal a la cola contra los ≤ 5 s de ASR-4.
+
 El orquestador invalida una corrida si la carga de fondo tiene un hueco de más
 de 30 s, si el equipo se suspendió o si k6 pasa del 1 % de solicitudes
 fallidas, y entonces reinicia el ciclo completo: Nicolás pidió el 2026-10-07 no

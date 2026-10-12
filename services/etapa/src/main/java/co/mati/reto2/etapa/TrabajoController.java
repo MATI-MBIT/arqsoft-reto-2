@@ -86,6 +86,7 @@ class TrabajoController {
             // Ya terminó: no se repite el efecto. Se vuelve a avisar por si el
             // aviso anterior se perdió; ventas ignora el cierre repetido.
             registro.pedido("etapa.entrega.repetida", t.pedidoId(), etapa, Map.of());
+            log.info("entrega repetida · pedido {} · etapa {} · recibo terminado · el efecto no se repite", t.pedidoId(), etapa);
             bus.convertAndSend(Bus.CADENA, Bus.ETAPA_COMPLETADA, new Trabajo(t.pedidoId(), etapa));
             return;
         }

@@ -308,7 +308,7 @@ etapa los pedidos atascados por más de U s, y etapas idempotentes, **para** un
 pedido detenido en una etapa ([ASR-4](quality-attributes.md)), **dará como
 resultado** que el pedido llegue a la Dead-Letter-Queue sin efectos duplicados,
 **lo cual se validará cuando** los pedidos de D2 y D3 lleguen una sola vez a la
-cola en ≤ 30 s. Ese plazo de detección es el de [ASR-3](quality-attributes.md).
+cola en ≤ 30 s, cada uno con la etapa que falta y la causa. Ese plazo de detección es el de [ASR-3](quality-attributes.md).
 En D2 se caen etapas, y en D3 se congelan 15 pedidos dentro de una etapa que
 sigue viva. La media hora sin fallas de D1 no debe dar ninguna falsa
 alarma. Ninguna de las 60 entregas repetidas de D5 puede duplicar la factura, el
@@ -327,8 +327,9 @@ lo vuelve a poner a prueba.
   transacción que lo da por terminado.
 - **Variables dependientes:** la demora entre la falla y la confirmación del
   pedido en la cola; las falsas alarmas por hora, que ASR-3 limita a una; los
-  pedidos detenidos que no llegan a la cola o que llegan dos veces; y los
-  efectos que una etapa aplica dos veces al mismo pedido.
+  pedidos detenidos que no llegan a la cola o que llegan dos veces; los
+  mensajes que no dicen qué etapa falta y por qué; y los efectos que una etapa
+  aplica dos veces al mismo pedido.
 
 Fundamento: el Monitor detecta la etapa caída contando los sondeos sin
 respuesta, sin necesitar que la etapa le informe nada. Cuando la etapa sí
@@ -399,7 +400,9 @@ los deja en la Dead-Letter-Queue (T11): el nodo de contingencia del diagrama
 del equipo.
 
 Cada mensaje lleva como clave el pedido, la etapa y el intento, para que el
-mismo pedido no entre dos veces. La Dead-Letter-Queue separa la detección de
+mismo pedido no entre dos veces, y dice la causa: `ETAPA_CAIDA` si la etapa
+dejó de responder, o `PEDIDO_ATASCADO` si sigue viva y su punto de salud
+informó el pedido. La Dead-Letter-Queue separa la detección de
 quien atiende el pedido: reanudarlo o entregarlo a una persona es la parte de
 ASR-4 que este experimento no cubre, y en el panorama lo atiende CCP Support. En este prototipo nadie la consume.
 
@@ -462,7 +465,7 @@ Hay **falsa alarma** cuando el Monitor declara detenida una etapa que no cayó,
 o cuando el punto de salud informa como atascado un pedido que no estaba
 congelado ni detenido.
 
-**H2 se sostiene si se cumplen las cinco condiciones:**
+**H2 se sostiene si se cumplen las seis condiciones:**
 
 - En D2, los pedidos detenidos llegan a la cola en ≤ 30 s, cada uno con el
   pedido, la etapa y el tiempo transcurrido.
@@ -472,6 +475,9 @@ congelado ni detenido.
 - En D5, ninguna etapa aplica dos veces su efecto al mismo pedido.
 - En todas las fases, cada pedido detenido entra a la cola una sola vez: cero
   pedidos perdidos y cero duplicados.
+- En todas las fases, cada mensaje dice qué etapa falta y por qué: la causa es
+  `ETAPA_CAIDA` en D2 y `PEDIDO_ATASCADO` en D3. Es el estado exacto que ASR-4
+  pide entregar.
 
 **Limitaciones propias**, además de las comunes:
 

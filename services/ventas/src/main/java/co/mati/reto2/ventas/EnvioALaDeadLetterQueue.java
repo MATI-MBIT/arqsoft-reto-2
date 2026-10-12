@@ -32,6 +32,11 @@ import org.springframework.web.bind.annotation.RestController;
  * Monitor también le pasa los pedidos que una etapa viva informa como atascados
  * en su punto de salud, y el Coordinador envía solo esos.
  *
+ * <p>Cada mensaje dice qué etapa falta y por qué, que es el estado exacto que
+ * ASR-4 pide entregar: la causa es {@code ETAPA_CAIDA} si el Monitor dejó de
+ * recibir respuesta de la etapa, o {@code PEDIDO_ATASCADO} si la etapa sigue viva
+ * y su punto de salud informó el pedido.
+ *
  * <p>Cada pedido entra una sola vez: primero se inserta la señal con la clave
  * (pedido, etapa, intento); solo si entra se publica, y el pedido se da por
  * enviado cuando el bróker confirma (NR-004a de ADR-004). Si el bróker no
@@ -43,6 +48,8 @@ class EnvioALaDeadLetterQueue {
     private static final Logger log = LoggerFactory.getLogger(EnvioALaDeadLetterQueue.class);
     private static final int INTENTO = 1;   // nadie consume la cola: el reintento es de ASR-4
     private static final long ESPERA_CONFIRMACION_MS = 5_000;
+    static final String ETAPA_CAIDA = "ETAPA_CAIDA";
+    static final String PEDIDO_ATASCADO = "PEDIDO_ATASCADO";
 
     private final JdbcTemplate jdbc;
     private final RabbitTemplate bus;
@@ -62,8 +69,8 @@ class EnvioALaDeadLetterQueue {
 
     record PedidosAtascados(String etapa, List<String> pedidos) {}
 
-    record PedidoDetenido(String pedidoId, String etapa, int intento, String enviadoEn, String detectadoEn,
-                          long transcurridoMs) {}
+    record PedidoDetenido(String pedidoId, String etapa, String causa, int intento, String enviadoEn,
+                          String detectadoEn, long transcurridoMs) {}
 
     /**
      * El aviso del Monitor llega en cada ciclo mientras la etapa siga caída: así
@@ -100,7 +107,7 @@ class EnvioALaDeadLetterQueue {
                         WHERE pedido_id = ? AND etapa = ? AND estado = 'EN_CURSO'""",
                         Timestamp.class, pedidoId, a.etapa());
                 if (!enviado.isEmpty()) {
-                    enviar(pedidoId, enviado.get(0).toInstant(), a.etapa());
+                    enviar(pedidoId, enviado.get(0).toInstant(), a.etapa(), PEDIDO_ATASCADO);
                 }
             }
         });
@@ -112,11 +119,11 @@ class EnvioALaDeadLetterQueue {
                 SELECT pedido_id, enviado_en FROM operacion.pedido_etapa
                 WHERE etapa = ? AND estado = 'EN_CURSO' ORDER BY enviado_en""", etapa);
         for (Map<String, Object> p : pendientes) {
-            enviar((String) p.get("pedido_id"), ((Timestamp) p.get("enviado_en")).toInstant(), etapa);
+            enviar((String) p.get("pedido_id"), ((Timestamp) p.get("enviado_en")).toInstant(), etapa, ETAPA_CAIDA);
         }
     }
 
-    private void enviar(String pedidoId, Instant enviadoEn, String etapa) {
+    private void enviar(String pedidoId, Instant enviadoEn, String etapa, String causa) {
         Instant detectado = Instant.now();
         int nueva = jdbc.update("""
                 INSERT INTO operacion.senal (pedido_id, etapa, intento, detectada_en) VALUES (?, ?, ?, ?)
@@ -128,7 +135,7 @@ class EnvioALaDeadLetterQueue {
         try {
             CorrelationData correlacion = new CorrelationData(clave);
             bus.convertAndSend(Bus.CADENA, Bus.PEDIDO_DETENIDO,
-                    new PedidoDetenido(pedidoId, etapa, INTENTO, enviadoEn.toString(), detectado.toString(),
+                    new PedidoDetenido(pedidoId, etapa, causa, INTENTO, enviadoEn.toString(), detectado.toString(),
                             Duration.between(enviadoEn, detectado).toMillis()),
                     m -> {
                         m.getMessageProperties().setMessageId(clave);
@@ -152,7 +159,10 @@ class EnvioALaDeadLetterQueue {
                 Timestamp.from(confirmada), pedidoId, etapa, INTENTO);
         // t1 de E02: el bróker confirmó el pedido detenido en la Dead-Letter-Queue.
         registro.anotar(confirmada, "pedido.encolado", null, pedidoId, etapa, Map.of(
-                "intento", INTENTO, "transcurridoMs", Duration.between(enviadoEn, confirmada).toMillis()));
+                "intento", INTENTO, "causa", causa,
+                "transcurridoMs", Duration.between(enviadoEn, confirmada).toMillis()));
+        log.info("pedido {} → Dead-Letter-Queue · falta {} · causa {} · detenido {} ms",
+                pedidoId, etapa, causa, Duration.between(enviadoEn, confirmada).toMillis());
         metricas.counter("ventas.pedidos.encolados", "etapa", etapa).increment();
     }
 }

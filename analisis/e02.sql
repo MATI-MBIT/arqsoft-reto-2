@@ -85,7 +85,20 @@ criterios AS (
            CASE WHEN count(*) = 0 THEN 'NO APLICA'
                 WHEN count(*) FILTER (WHERE veces > 1) = 0 THEN 'PASA'
                 ELSE 'FALLA' END
-    FROM efectos)
+    FROM efectos
+    UNION ALL
+    SELECT 7, 'Todas · cada mensaje dice qué etapa falta y por qué (ETAPA_CAIDA en D2, PEDIDO_ATASCADO en D3)',
+           count(*) FILTER (WHERE encolado IS NOT NULL),
+           count(*) FILTER (WHERE encolado IS NOT NULL AND causa = CASE falla WHEN 'D2' THEN 'ETAPA_CAIDA'
+                                                                             WHEN 'D3' THEN 'PEDIDO_ATASCADO' END),
+           count(*) FILTER (WHERE encolado IS NOT NULL AND causa IS DISTINCT FROM
+                                  CASE falla WHEN 'D2' THEN 'ETAPA_CAIDA' WHEN 'D3' THEN 'PEDIDO_ATASCADO' END),
+           CASE WHEN count(*) FILTER (WHERE encolado IS NOT NULL) = 0 THEN 'NO APLICA'
+                WHEN count(*) FILTER (WHERE encolado IS NOT NULL AND causa IS DISTINCT FROM
+                                      CASE falla WHEN 'D2' THEN 'ETAPA_CAIDA' WHEN 'D3' THEN 'PEDIDO_ATASCADO' END) = 0
+                     THEN 'PASA'
+                ELSE 'FALLA' END
+    FROM x)
 SELECT criterio, casos, cumplen, fallan, veredicto FROM criterios ORDER BY orden;
 
 \echo

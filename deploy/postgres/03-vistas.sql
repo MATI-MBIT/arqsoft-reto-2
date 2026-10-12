@@ -76,10 +76,11 @@ SELECT d.*,
        e.ts                                              AS encolado,
        round(extract(epoch FROM e.ts - d.t0) * 1000, 1)  AS demora_ms,
        (SELECT count(*) FROM registro.evento m
-        WHERE m.tipo = 'mensaje.en.cola' AND m.pedido_id = d.pedido_id AND m.etapa = d.etapa) AS mensajes
+        WHERE m.tipo = 'mensaje.en.cola' AND m.pedido_id = d.pedido_id AND m.etapa = d.etapa) AS mensajes,
+       e.causa
 FROM registro.e02_detenidos d
 LEFT JOIN LATERAL (
-    SELECT ts FROM registro.evento e
+    SELECT ts, datos->>'causa' AS causa FROM registro.evento e
     WHERE e.tipo = 'pedido.encolado' AND e.pedido_id = d.pedido_id AND e.etapa = d.etapa
     ORDER BY ts LIMIT 1) e ON true;
 
