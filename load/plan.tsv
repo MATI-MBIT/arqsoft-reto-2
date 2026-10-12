@@ -29,7 +29,7 @@ humo	humo-e02	E02	HUMO	observa	WARMUP_S=20;D1_S=20;REPS=3;CAIDA_S=40;PAUSA_S=15;
 e01	e01-s1	E01	S1	decide	-	¿Avisa en ≤ 2 s por cada sesión desde un dispositivo no registrado?
 e01	e01-s2	E01	S2	decide	-	¿Hay ≤ 1 aviso por cada 100 cambios legítimos?
 e01	e01-s3	E01	S3	decide	-	¿Ve el registro hecho menos de 1 s antes de abrir la sesión?
-e01	e01-s4	E01	S4	observa	-	¿A qué tasa de aperturas empieza a atrasarse el aviso?
+e01-s4	e01-s4	E01	S4	observa	-	¿A qué tasa de aperturas empieza a atrasarse el aviso?
 e02-rapido	e02-rapido	E02	RAPIDO	observa	WARMUP_S=60;D1_S=600;REPS=9;CAIDA_S=40;PAUSA_S=20;CONGELAR=9;ESPACIO_S=20;REPETIR=9	Todas las fases con 3 casos por etapa (~25 min)
 e02	e02-d1	E02	D1	decide	WARMUP_S=120;D1_S=1800	¿Hay ≤ 1 falsa alarma por hora sin fallas, contando pedidos sanos informados como atascados?
 e02	e02-d2	E02	D2	decide	WARMUP_S=120;REPS=15	¿Llega a la cola en ≤ 30 s todo pedido de una etapa caída?

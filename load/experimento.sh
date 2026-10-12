@@ -68,18 +68,27 @@ esperar_salud() { # puerto
 
 MICROS="8081 8082 8083 8084 8090 8091 8092 8093 8094 8095 8096 8097"
 
-preparar() {
+preparar() { # experimento
   # Toda la topología arriba, no solo las etapas: si Docker se reinició (una
   # actualización automática lo hizo a mitad de una corrida el 2026-10-07), la
   # base y el bróker también cayeron.
   "${COMPOSE[@]}" up -d >/dev/null 2>&1
   for p in $MICROS; do esperar_salud "$p" || return 1; done
-  sql -c "SELECT operacion.reiniciar()" >/dev/null
-  # Las colas se vacían para que el trabajo pendiente de una corrida no llegue a la siguiente.
-  for cola in verificador.sesiones notificador.alertas etapa.facturacion etapa.inventario etapa.despacho ventas.completadas logistica.pedidos dead-letter-queue dead-letter-queue.auditoria; do
+  # Cada experimento reinicia solo sus tablas y vacía solo sus colas: así E01 y
+  # E02 pueden correr a la vez sin borrarse el estado.
+  local colas
+  if [ "$1" = E01 ]; then
+    sql -c "SELECT operacion.reiniciar_e01()" >/dev/null
+    colas="verificador.sesiones notificador.alertas"
+  else
+    sql -c "SELECT operacion.reiniciar_e02()" >/dev/null
+    colas="etapa.facturacion etapa.inventario etapa.despacho ventas.completadas logistica.pedidos dead-letter-queue dead-letter-queue.auditoria"
+  fi
+  for cola in $colas; do
     "${COMPOSE[@]}" exec -T rabbitmq rabbitmqctl -q purge_queue "$cola" >/dev/null 2>&1 || true
   done
-  # El Monitor se recrea en cada corrida: arranca sin cuentas viejas y con el T y N de la fila.
+  [ "$1" = E01 ] && return 0
+  # El Monitor se recrea en cada corrida de E02: arranca sin cuentas viejas y con el T y N de la fila.
   SONDEO_T_MS="$SONDEO_T_MS" SONDEO_N="$SONDEO_N" SONDEO_ESPERA_MS="$SONDEO_ESPERA_MS" \
   UMBRAL_ATASCO_MS="$UMBRAL_ATASCO_MS" \
     "${COMPOSE[@]}" up -d --force-recreate --no-deps monitor >/dev/null 2>&1
@@ -146,16 +155,23 @@ correr() { # grupo id experimento fase criterio vars pregunta
   variables=$(printf '{"T_ms":%s,"N":%s,"espera_ms":%s,"umbral_ms":%s,"tasa_base":%s,"d1_s":%s,"caidas":%s,"caida_s":%s,"congelar":%s,"repetir":%s,"vars":"%s"}' \
     "$SONDEO_T_MS" "$SONDEO_N" "$SONDEO_ESPERA_MS" "$UMBRAL_ATASCO_MS" "$TASA_BASE" "$D1_S" "$REPS" "$CAIDA_S" "$CONGELAR" "$REPETIR" "$vars")
 
-  preparar || { log "no se pudo preparar la topología"; return 1; }
+  preparar "$experimento" || { log "no se pudo preparar la topología"; return 1; }
   sql -c "INSERT INTO registro.corrida (id, experimento, fase, variables, arranque)
           VALUES ('$corrida', '$experimento', '$fase', '$variables'::jsonb, clock_timestamp())"
 
   # La carga de fondo del Ambiente A corre durante toda la corrida.
   # La etiqueta guion separa las series de los dos k6 de la corrida: con la misma
   # etiqueta, Prometheus rechaza el lote entero por muestras duplicadas.
-  (cd "$ROOT/load/k6" && exec k6 run -q "${K6_OUT[@]}" --tag corrida="$corrida" --tag guion=cadena \
-      -e CORRIDA="$corrida" cadena.js >"$dir/k6-cadena.txt" 2>&1) &
-  local cadena=$!
+  # Con CADENA_COMPARTIDA=1, E01 no lanza la suya y usa la de un E02 que corre a la
+  # vez: dos cargas de pedidos serían el doble del Ambiente A.
+  local cadena=""
+  if [ "${CADENA_COMPARTIDA:-0}" = 1 ] && [ "$experimento" = E01 ]; then
+    log "  carga de pedidos: la del E02 que corre en paralelo"
+  else
+    (cd "$ROOT/load/k6" && exec k6 run -q "${K6_OUT[@]}" --tag corrida="$corrida" --tag guion=cadena \
+        -e CORRIDA="$corrida" cadena.js >"$dir/k6-cadena.txt" 2>&1) &
+    cadena=$!
+  fi
 
   log "  calentamiento: ${WARMUP_S} s"
   if [ "$experimento" = E01 ]; then
@@ -178,7 +194,7 @@ correr() { # grupo id experimento fase criterio vars pregunta
 
   log "  gracia: ${GRACIA_S} s para las salidas tardías"
   sleep "$GRACIA_S"
-  kill -INT "$cadena" 2>/dev/null; wait "$cadena" 2>/dev/null
+  if [ -n "$cadena" ]; then kill -INT "$cadena" 2>/dev/null; wait "$cadena" 2>/dev/null; fi
   sleep 1   # el registro de cada micro se vacía cada 200 ms
 
   local script; script=$(echo "$experimento" | tr 'A-Z' 'a-z')

@@ -41,6 +41,10 @@ e01: up ## E01 completo (~2 h): S1, S2, S3 y S4
 e02: up ## E02 con criterio (~1 h 30): D1, D2, D3 y D5, con T=2 s, N=3 y U=15 s
 	./load/experimento.sh e02
 
+.PHONY: paralelo
+paralelo: up ## E01 y E02 a la vez (~1 h 30): cada uno reinicia solo lo suyo y comparten la carga de pedidos
+	./load/experimento.sh e02 & sleep 2; CADENA_COMPARTIDA=1 ./load/experimento.sh e01; wait
+
 .PHONY: e02-rapido
 e02-rapido: up ## E02 rápido (~25 min): todas las fases en una corrida, 3 casos por etapa
 	./load/experimento.sh e02-rapido

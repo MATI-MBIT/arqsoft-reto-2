@@ -145,7 +145,7 @@ print("HTTP %s · etapa viva · en curso %d · atascados: %s" % (codigo, s["enCu
                      coalesce(' · ' || nullif(datos::text, '{}'), '')" ;;
       *) echo "uso: $0 vivo e01|e02" >&2; exit 2 ;;
     esac
-    corrida=$(ls -t analisis/resultados | grep -E '^e0[12]-' | head -1)
+    corrida=$(ls -t analisis/resultados | grep -E "^$2-" | head -1)
     titulo "Estímulo · corrida de decisión en curso" "Corrida $corrida. Lo que el orquestador le hace al sistema, leído del registro de eventos."
     desde=$(psql_q "SELECT now() - interval '${3:-0} seconds'")
     while true; do
