@@ -7,16 +7,16 @@ helix_section: "Experiments → Results & analysis"
 # Resultados de los experimentos E01 y E02
 
 E01 y E02 corrieron en paralelo el 12 de octubre de 2026, entre las 16:08 y
-las 17:28, sobre el prototipo. El prototipo sigue los diagramas de componentes
-de E01 (DG-CMP-004) y de E02 (DG-CMP-005). Dos fases exploratorias vienen de
+las 17:28, sobre un prototipo que sigue los diagramas de componentes de E01
+(DG-CMP-004) y de E02 (DG-CMP-005). Dos fases exploratorias vienen de
 corridas anteriores y siguen valiendo: S4 de E01, del 7 de octubre, y D4 de E02,
 de la noche del 8 al 9 de octubre. El diseño de cada experimento, sus fases y
 su tabla de decisiones están en [Experimentos E01 y E02](experiments.md).
 
 **En resumen, las dos hipótesis se sostienen.** H1 dice que el Verificador de
 dispositivo detecta a tiempo la sesión abierta desde un dispositivo no
-registrado. Avisó a seguridad en las 50 aperturas de ese tipo, y el aviso más
-lento tardó 52 ms, frente a un límite de 2 s. En 7 081 sesiones legítimas,
+registrado. El Verificador avisó a seguridad en las 50 aperturas de ese tipo, y
+el aviso más lento tardó 52 ms, frente a un límite de 2 s. En 7 081 sesiones legítimas,
 desde el dispositivo que el vendedor ya tenía registrado, no dio ninguna falsa
 alarma.
 
@@ -82,9 +82,9 @@ en D4, y k6 no tuvo ninguna solicitud fallida.
 
 E02 detiene su carga de pedidos unos segundos entre una fase y la siguiente.
 Para que ese corte no dejara un hueco en la carga de fondo de E01, un relleno
-creó un pedido cada vez que pasaban 10 s sin uno. Actuó 6 veces: 5 entre
-fases de E02 o después de que E02 terminó, y 1 dentro de D1, cuando la carga
-de E02 pasó 10 s sin un pedido.
+creó un pedido cada vez que pasaban 10 s sin uno. Actuó 18 veces: 1 dentro
+de D1, cuando la carga de E02 pasó 10 s sin un pedido; 4 entre fases de E02, y
+13 después de que E02 terminó, mientras E01 cerraba S3 y su minuto de gracia.
 
 El enunciado no da algunas cifras que los experimentos necesitan. Las fijamos
 como supuestos, y cada una se cambia con una variable, sin tocar el código:
@@ -130,7 +130,8 @@ busca a qué tasa empieza a atrasarse el aviso.
 **Figura 2. Un intruso en S1.** El orquestador abre la sesión del vendedor
 V1722 desde `D-ATACANTE-647209` a las 21:42:31.893 UTC. El Verificador ve la
 huella distinta 1 ms después. El SMS llega a seguridad con el vendedor, el
-dispositivo y la hora de apertura, y la tabla de eventos le mide 52 ms. Abajo, el tablero lleva 8
+dispositivo y la hora de apertura; según la tabla de eventos, la demora fue de
+52 ms. Abajo, el tablero lleva 8
 intrusos en los últimos 5 minutos, todos con aviso a tiempo, sin escapes ni
 falsas alarmas.
 
@@ -286,8 +287,9 @@ detección.
 Estos resultados son de la versión refinada de H2. Tiene dos cambios: el punto
 de salud de cada etapa informa los pedidos que la etapa lleva más del umbral
 U = 15 s sin terminar (S-12), y cada etapa es idempotente. A esos pedidos los
-llamamos atascados. Las dos cosas salen del recibo que la etapa guarda por cada
-pedido antes de confirmar el mensaje al bróker. La primera versión, con un sondeo que solo comprobaba si la
+llamamos atascados. El punto de salud y la idempotencia salen del mismo dato: el
+recibo que la etapa guarda por cada pedido antes de confirmar el mensaje al
+bróker. La primera versión, con un sondeo que solo comprobaba si la
 etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
 ### La evidencia en vivo
@@ -296,7 +298,7 @@ etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 22:06:55.646 UTC, el orquestador hace que validación de despacho acepte su
 próximo pedido y lo olvide: el pedido P7-7 entra y se queda quieto. A la
 derecha, 16,9 s después el Monitor lo detecta como atascado con la etapa viva.
-46 ms más tarde, ventas lo confirma en la Dead-Letter-Queue con la etapa que
+Ventas lo confirma 46 ms más tarde en la Dead-Letter-Queue con la etapa que
 falta y la causa `PEDIDO_ATASCADO`. Abajo, el Monitor no declara detenida
 ninguna etapa: el pedido se detecta aunque la etapa sigue respondiendo. En el video se ve llegar el
 mensaje a la consola de RabbitMQ.
@@ -318,8 +320,8 @@ aparecen son los últimos de D3, todavía dentro de la ventana de 5 minutos.
 
 **Figura 11. Una etapa caída en D2.** A la izquierda, el orquestador mata
 validación de despacho a las 22:01:01.210 UTC. A la derecha, el Monitor la
-declara detenida 5,8 s después, al tercer sondeo sin respuesta. 12 ms más
-tarde, ventas empieza a confirmar en la Dead-Letter-Queue los pedidos que
+declara detenida 5,8 s después, al tercer sondeo sin respuesta. Ventas empieza
+12 ms más tarde a confirmar en la Dead-Letter-Queue los pedidos que
 estaban en la etapa. Cada mensaje lleva la etapa que falta y la causa
 `ETAPA_CAIDA`. Abajo, el tablero marca en rojo cada caída de despacho y
 cuenta 82 pedidos en la cola en ≤ 30 s en los últimos 5 minutos. La consola de
@@ -387,16 +389,17 @@ la cola, no la reanudación ni la entrega a una persona; la consulta está en
 
 **Figura 12. D1 sobre toda su ventana.** Arriba, el veredicto: ninguna etapa
 declarada detenida y ningún pedido sano informado como atascado en 30 minutos.
-Los 5 408 pares de pedido y etapa con un solo efecto incluyen los pedidos que
-cierran durante el minuto de gracia que sigue a la ventana. Abajo, el tablero de E02
+Los 5 408 pares de pedido y etapa con un solo efecto son los de los 1 739
+pedidos de la ventana, más los de 62 pedidos que entraron en el minuto de gracia
+y 4 del calentamiento que cerraron dentro de la ventana. Abajo, el tablero de E02
 sobre la misma media hora, con todos los contadores de fallas en cero.
 
 ![E02 de lote, D1: arriba, el veredicto sin falsas alarmas; abajo, el tablero de E02 sobre la ventana de D1](assets/resultados/evidencias/lote-e02-d1.png)
 
 <video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e02-d1.png" src="assets/resultados/evidencias/lote-e02-d1.mp4"></video>
 
-**Figura 13. D2 sobre toda su ventana.** Arriba, los cinco criterios que aplican
-a D2 y la demora hasta la cola por etapa. Abajo, el tablero cuenta 15 fallas,
+**Figura 13. D2 sobre toda su ventana.** Los cinco criterios que aplican a D2
+pasan, y la demora hasta la cola no pasa de 6,2 s en ninguna etapa. Abajo, el tablero cuenta 15 fallas,
 329 pedidos detenidos, 329 en la cola a tiempo, 0 escapes, 0 duplicados y 38
 entregas retomadas tras las caídas. Los 447 «mensajes sin pedido detenido» son
 los pedidos que se recuperaron solos, que el análisis explica abajo.
@@ -413,8 +416,9 @@ tablero, el Monitor no declara detenida ninguna etapa durante toda la fase.
 
 <video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e02-d3.png" src="assets/resultados/evidencias/lote-e02-d3.mp4"></video>
 
-**Figura 15. D5 sobre toda su ventana.** Las 60 entregas repetidas, 20 por
-etapa, se detectan todas y cada una deja un solo efecto.
+**Figura 15. D5 sobre toda su ventana.** El orquestador repitió 60 entregas,
+20 por etapa. Las tres etapas detectaron todas, y ningún pedido quedó con un
+efecto doble.
 
 ![E02 de lote, D5: arriba, el veredicto con 60 de 60 entregas repetidas sin efecto doble; abajo, el tablero de E02 sobre la ventana de D5](assets/resultados/evidencias/lote-e02-d5.png)
 
@@ -491,7 +495,7 @@ trabajo que esperaba en su cola.
 **El sondeo sigue detectando bien la etapa caída.** En cada una de las 15
 caídas de D2, el Monitor declaró detenida la etapa con una mediana de 5,2 s y
 un máximo de 6,2 s. Es lo que predice el diseño: 3 sondeos sin respuesta, uno
-cada 2 s, más la espera de 500 ms del último, suman a lo sumo 6,5 s. Ventas
+cada 2 s, más la espera de 500 ms del último, dan como máximo 6,5 s. Ventas
 envió los 329 pedidos detenidos a la Dead-Letter-Queue en los avisos del
 Monitor, cada uno una sola vez.
 
@@ -588,8 +592,8 @@ o como se explica aquí, y ninguna cambia una decisión.
 | Duración de D4 | D1 y D2 completos en cada combinación: 1 h sin fallas y 30 caídas | 20 min sin fallas y 15 caídas, cinco por etapa | Las 12 combinaciones caben en una noche. Con menos minutos sin fallas, una falsa alarma rara se ve menos |
 | Tasa de aperturas de S4 | 1, 3 y 5 veces la del Ambiente A, que no la fija | S-10: 2 aperturas por segundo | El límite de H1 queda por encima de 10 aperturas por segundo |
 | S4 en el ciclo del 12 de octubre | Parte de E01 | No se repitió; se cita la corrida del 7 de octubre | Es exploratoria y la decisión no depende de ella. Entre las dos corridas solo cambió una línea de log en el Verificador y en el receptor del SMS |
-| Carga de pedidos de E01 | La lanza cada corrida de E01 | La de E02, que corría en paralelo, y un relleno de 6 pedidos cuando pasaban 10 s sin uno | No duplica el Ambiente A. En los últimos minutos de S3, ya sin E02, la carga de pedidos bajó a uno cada 10 s; las sesiones de E01 siguieron a su tasa |
-| Calentamiento de E02 | 5 min por corrida | 2 min | El Monitor y las etapas ya estaban calientes de la fase anterior; los 2 min no entran a ningún criterio |
+| Carga de pedidos de E01 | La lanza cada corrida de E01 | La de E02, que corría en paralelo, y un relleno de 18 pedidos cuando pasaban 10 s sin uno | No duplica el Ambiente A. En los últimos 79 s de S3, ya sin E02, la carga de pedidos bajó a uno cada 10 s. Las sesiones de E01 siguieron a su tasa |
+| Calentamiento de E02 | 5 min por corrida | 2 min | Las etapas y el Monitor ya llevaban 5 min sirviendo la carga de E01 cuando arrancó D1, y en D2 a D5 venían de la fase anterior. Los 2 min no entran a ningún criterio |
 
 ---
 
