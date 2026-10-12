@@ -146,13 +146,14 @@ ADR-004. E02 primera versión (2026-10-07) cayó en D3; D4 (2026-10-08) sigue
 valiendo: menor N = 1, solo para una máquina. `analisis/resultados/` guarda
 solo lo que `results.md` cita.
 
-**Evidencia.** Nicolás pidió el 2026-10-12 evidencia intencional, en vivo y de
-lote, con foto y video. En vivo: una pantalla por caso durante la ejecución de
-decisión (estímulo leído del registro de eventos, respuesta en los logs,
-tablero `ev-e01`/`ev-e02` y RabbitMQ). De lote: el veredicto de cada fase sobre
-el tablero completo de su ventana. Todo en `docs/assets/resultados/evidencias/`,
-grabado con `load/evidencias-captura.sh` (solo macOS) y `load/evidencias.sh`.
-No abrir Grafana durante D1, que mide las falsas alarmas.
+**Evidencia.** Nicolás pidió el 2026-10-12 evidencia intencional y una página
+clara, en tres capas: (1) la tabla de veredicto con el margen frente a cada
+umbral; (2) por escenario, una gráfica de margen (`analisis/graficas.py`, desde
+la tabla de eventos) y un caso testigo anotado (`analisis/anotar.swift`, números
+en círculo sobre la toma en vivo) con un clip plegado de 15 s; (3) el respaldo
+por fase, plegado en el anexo. Los videos largos se quitaron: casi no cambiaban
+frente a la foto. Las tomas se graban con `load/evidencias-captura.sh` (solo
+macOS) durante las ejecuciones de decisión; no abrir Grafana durante D1.
 
 ### El prototipo
 

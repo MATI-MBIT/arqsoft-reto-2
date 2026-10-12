@@ -95,6 +95,22 @@ preparar() { # experimento
   esperar_salud 8095
 }
 
+# Relleno de la carga de pedidos para un E01 en paralelo: un pedido cada vez que
+# pasan 10 s sin uno. Los pedidos llevan el prefijo RELLENO y la ejecución.
+rellenar() { # corrida
+  local n=0 vacio
+  while true; do
+    vacio=$(sql -c "SELECT coalesce(extract(epoch FROM clock_timestamp() - max(ts)) > 10, true)
+                    FROM registro.evento WHERE tipo = 'pedido.confirmado' AND ts > now() - interval '5 minutes'" 2>/dev/null)
+    if [ "$vacio" = t ]; then
+      n=$((n + 1))
+      curl -s -o /dev/null -m 2 -X POST "http://localhost:8090/pedidos" -H 'Content-Type: application/json' \
+        -d "{\"pedidoId\":\"RELLENO-$1-$n\"}" || true
+    fi
+    sleep 1
+  done
+}
+
 # Las caídas de D2 se reparten por igual entre las tres etapas, en orden aleatorio.
 orden_de_etapas() { # cuantas
   local etapas=(facturacion inventario despacho)
@@ -164,9 +180,14 @@ correr() { # grupo id experimento fase criterio vars pregunta
   # etiqueta, Prometheus rechaza el lote entero por muestras duplicadas.
   # Con CADENA_COMPARTIDA=1, E01 no lanza la suya y usa la de un E02 que corre a la
   # vez: dos cargas de pedidos serían el doble del Ambiente A.
-  local cadena=""
+  local cadena="" relleno=""
   if [ "${CADENA_COMPARTIDA:-0}" = 1 ] && [ "$experimento" = E01 ]; then
-    log "  carga de pedidos: la del E02 que corre en paralelo"
+    log "  carga de pedidos: la del E02 que corre en paralelo, con relleno"
+    # E02 corta su carga unos segundos entre fases, y ya no la hay cuando E02
+    # termina. El relleno crea un pedido si pasan 10 s sin uno, para que ese
+    # corte no deje un hueco que invalide la ejecución de E01.
+    rellenar "$corrida" &
+    relleno=$!
   else
     (cd "$ROOT/load/k6" && exec k6 run -q "${K6_OUT[@]}" --tag corrida="$corrida" --tag guion=cadena \
         -e CORRIDA="$corrida" cadena.js >"$dir/k6-cadena.txt" 2>&1) &
@@ -195,6 +216,7 @@ correr() { # grupo id experimento fase criterio vars pregunta
   log "  gracia: ${GRACIA_S} s para las salidas tardías"
   sleep "$GRACIA_S"
   if [ -n "$cadena" ]; then kill -INT "$cadena" 2>/dev/null; wait "$cadena" 2>/dev/null; fi
+  if [ -n "$relleno" ]; then kill "$relleno" 2>/dev/null; wait "$relleno" 2>/dev/null; fi
   sleep 1   # el registro de cada micro se vacía cada 200 ms
 
   local script; script=$(echo "$experimento" | tr 'A-Z' 'a-z')

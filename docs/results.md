@@ -39,6 +39,20 @@ falsas alarmas.
 | E01 — Seguridad | H1: el Verificador de dispositivo compara la huella apenas el micro de sesiones publica la apertura | ASR-1 | Se sostiene en S1, S2 y S3 | Aceptar ADR-007 tal como está |
 | E02 — Disponibilidad | H2: el Monitor lee del punto de salud los pedidos atascados, el micro de ventas los envía a la Dead-Letter-Queue con su causa, y cada etapa es idempotente | ASR-4, con ASR-3 como paso previo | Se sostiene en D1, D2, D3 y D5 | Aceptar ADR-005 con un ajuste y actualizar ADR-004 |
 
+**El veredicto, escenario por escenario.** Cada fila compara lo medido con el
+umbral del escenario. El margen es la distancia entre el caso más lento y el
+umbral.
+
+| Escenario | Criterio | Umbral | Medido | Margen | Veredicto |
+|---|---|---|---|---|---|
+| ASR-1 · seguridad | Aviso a seguridad por la sesión desde un dispositivo no registrado | ≤ 2 s | 50 de 50, máximo 52 ms | 38 veces por debajo | **Pasa** |
+| ASR-1 · seguridad | Avisos por cambios legítimos de dispositivo | ≤ 1 por cada 100 | 0 en 100 (S2) y 0 en 20 (S3) | — | **Pasa** |
+| ASR-3 · disponibilidad | Pedido detenido, detectado y en la Dead-Letter-Queue | ≤ 30 s | 344 de 344, máximo 17,0 s | 13,0 s de holgura | **Pasa** |
+| ASR-3 · disponibilidad | Falsas alarmas | ≤ 1 por hora | 0 en los 30 min de D1 | — | **Pasa** |
+| ASR-4 · disponibilidad | De la señal de detención a la Dead-Letter-Queue | ≤ 5 s | 139 de 139, máximo 111 ms | 45 veces por debajo | **Pasa**, en la entrega a la cola; la reanudación no se midió |
+| ASR-4 · disponibilidad | Estado exacto: qué etapa falta y por qué | En cada mensaje | 344 de 344 con su causa | — | **Pasa** |
+| ASR-4 · disponibilidad | Facturas, descargues u órdenes de despacho duplicados | 0 | 0 en 11 641 pares de pedido y etapa | — | **Pasa** |
+
 ## Cómo se midió
 
 Corrimos los experimentos sobre el prototipo de este repositorio: doce micros
@@ -99,17 +113,18 @@ como supuestos, y cada una se cambia con una variable, sin tocar el código:
 | S-12 · umbral U | Pedido atascado tras 15 s sin terminar en una etapa viva | En D1 de las dos versiones, el pedido más lento en su etapa tardó a lo sumo 13,7 s. U, más un sondeo de 2 s y su espera de 500 ms, da 17,5 s, dentro de los 30 s de ASR-3 |
 | Caída de una etapa (D2) | El proceso muere con SIGKILL durante 45 s y luego se reinicia | El trabajo que la etapa tenía sin terminar vuelve a su cola del bróker y se retoma al reiniciar |
 
-**Evidencia en vivo y evidencia de lote, las dos de las ejecuciones de
-decisión.** Las cifras salen de la tabla de eventos; las imágenes y los videos
-muestran esas mismas ejecuciones, y se graban con `load/evidencias-captura.sh`:
+**La evidencia, en tres capas, sale de las ejecuciones de decisión.** Las
+cifras salen de la tabla de eventos. Cada escenario se muestra así:
 
-- **En vivo**, mientras la fase mide. Arriba van el estímulo que el
-  orquestador le aplica al sistema, leído de la tabla de eventos, y la
-  respuesta en los logs de los micros. Abajo van el tablero de evidencias de
-  Grafana y, cuando hace falta, la consola de RabbitMQ.
-- **De lote**, cuando la fase ya cerró. Arriba va su veredicto, con los
-  criterios y el detalle por caso; abajo, el tablero completo sobre toda la
-  ventana de medición. El video recorre el tablero de arriba abajo.
+- **Una gráfica de margen.** Cada caso es un punto y el umbral del escenario,
+  una línea. La genera `analisis/graficas.py` desde la tabla de eventos.
+- **Un caso testigo anotado.** Es una toma en vivo de la ejecución, con las
+  piezas del caso numeradas: el estímulo que el orquestador le aplica al
+  sistema, la respuesta en los logs y el tablero de Grafana o la consola de
+  RabbitMQ. Debajo va un clip plegado de 15 s con el momento del hecho.
+- **El respaldo por fase, en el anexo.** Son las tomas en vivo sin anotar y las
+  tomas de lote: el veredicto de cada fase sobre el tablero completo de su
+  ventana.
 
 Las horas de los logs están en UTC y las del tablero, en la hora de Bogotá.
 Para la evidencia en vivo se agregó a cinco micros una línea de log por hecho,
@@ -146,39 +161,22 @@ escapes y 0 falsas alarmas.
 
 ![E01 en vivo, S1, anotada: 1 el estímulo, 2 la huella distinta, 3 el SMS a seguridad, 4 el tablero](assets/resultados/testigos/asr1-intruso.png)
 
-### La evidencia en vivo
+<details><summary>▶ Ver el momento (15 s)</summary>
+<video controls preload="none" width="100%" src="assets/resultados/clips/asr1-intruso.mp4"></video>
+</details>
 
-**Figura 4. Un intruso en S1.** El orquestador abre la sesión del vendedor
-V1722 desde `D-ATACANTE-647209` a las 21:42:31.893 UTC. El Verificador ve la
-huella distinta 1 ms después. El SMS llega a seguridad con el vendedor, el
-dispositivo y la hora de apertura; según la tabla de eventos, la demora fue de
-52 ms. Abajo, el tablero lleva 8
-intrusos en los últimos 5 minutos, todos con aviso a tiempo, sin escapes ni
-falsas alarmas.
+**Figura 4. El contraste: aperturas pegadas al registro, sin aviso.** La toma
+en vivo de S3, el caso más estrecho para el Verificador. ① Cada vendedor abre
+sesión desde un dispositivo que registró menos de 1 s antes. ② El Verificador
+lee el registro recién hecho, la huella coincide y no sale ningún SMS. ③ El
+tablero no cuenta ninguna falsa alarma.
 
-![E01 en vivo, S1: arriba, el intruso V1722 y su SMS a seguridad 52 ms después; abajo, el tablero con 8 intrusos, 8 avisos a tiempo, 0 escapes y 0 falsas alarmas](assets/resultados/evidencias/asr1-intruso-vivo.png)
+![E01 en vivo, S3, anotada: 1 las aperturas pegadas al registro, 2 las huellas que coinciden sin aviso, 3 cero falsas alarmas](assets/resultados/testigos/asr1-pegado.png)
 
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-intruso-vivo.png" src="assets/resultados/evidencias/asr1-intruso-vivo.mp4"></video>
+<details><summary>▶ Ver el momento (15 s)</summary>
+<video controls preload="none" width="100%" src="assets/resultados/clips/asr1-pegado.mp4"></video>
+</details>
 
-**Figura 5. Tres cambios legítimos de dispositivo en S2.** Los vendedores
-V1001, V1004 y V1002 registran un dispositivo nuevo y abren sesión desde él.
-A la derecha, el Verificador compara cada huella, ve que coincide con la
-recién registrada y no avisa: no aparece ningún SMS. Abajo, el tablero no
-cuenta intrusos ni falsas alarmas.
-
-![E01 en vivo, S2: arriba, tres cambios legítimos de dispositivo y tres huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas](assets/resultados/evidencias/asr1-cambio-vivo.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-cambio-vivo.png" src="assets/resultados/evidencias/asr1-cambio-vivo.mp4"></video>
-
-**Figura 6. Aperturas pegadas al registro en S3.** Cada vendedor registra un
-dispositivo nuevo y abre sesión desde él menos de 1 s después. Es el caso más
-estrecho: el Verificador tiene que leer un registro que acaba de hacerse. Lo
-lee, la huella coincide y seguridad no recibe ningún SMS, y el tablero sigue
-sin falsas alarmas.
-
-![E01 en vivo, S3: arriba, aperturas a menos de 1 s del registro y huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas](assets/resultados/evidencias/asr1-pegado-vivo.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-pegado-vivo.png" src="assets/resultados/evidencias/asr1-pegado-vivo.mp4"></video>
 
 ### Lo que midieron las ejecuciones
 
@@ -206,7 +204,7 @@ cual llegó el 95 % de los avisos.
 | S4 a 3× (6 aperturas/s), 7 de octubre | 10 | 17 ms | 23 ms | 23 ms |
 | S4 a 5× (10 aperturas/s), 7 de octubre | 10 | 17 ms | 34 ms | 38 ms |
 
-**Figura 7. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
+**Figura 5. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
 reloj arranca en t0, cuando el micro de sesiones (Gestor de sesión en el
 diagrama) publica `sesion.abierta`, y se detiene en t1, cuando el aviso llega al
 receptor del SMS. Si la huella coincide con la registrada, el Verificador
@@ -223,33 +221,6 @@ de ellos por el bróker. Cada fila mide un tramo en las 50 sesiones de intruso.
 | Comparación → publicación de `alerta.seguridad` | 3,3 ms | 10,6 ms |
 | Publicación → Notificador a seguridad, por el bróker | 4,4 ms | 10,7 ms |
 | Notificador → receptor del SMS | 9,7 ms | 29,4 ms |
-
-### La evidencia de lote
-
-**Figura 8. S1 sobre toda su ventana.** Arriba, el veredicto de la ejecución: 50
-de 50 intrusos con aviso a tiempo, y 0 avisos en 3 720 sesiones legítimas desde el
-dispositivo registrado. Abajo, el tablero de E01 sobre los 31 minutos de S1
-cuenta lo mismo, y en «Demora de cada aviso» cada punto es un intruso, todos
-en ≤ 52 ms.
-
-![E01 de lote, S1: arriba, el veredicto con 50 de 50 intrusos con aviso a tiempo; abajo, el tablero de E01 sobre la ventana de S1](assets/resultados/evidencias/lote-e01-s1.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e01-s1.png" src="assets/resultados/evidencias/lote-e01-s1.mp4"></video>
-
-**Figura 9. S2 sobre toda su ventana.** Ni los 100 cambios legítimos ni las
-2 640 sesiones legítimas de fondo producen un aviso, y la lista de avisos
-fuera de lo esperado queda vacía.
-
-![E01 de lote, S2: arriba, el veredicto con 0 avisos en 100 cambios legítimos; abajo, el tablero de E01 sobre la ventana de S2](assets/resultados/evidencias/lote-e01-s2.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e01-s2.png" src="assets/resultados/evidencias/lote-e01-s2.mp4"></video>
-
-**Figura 10. S3 sobre toda su ventana.** Las 20 aperturas pegadas al registro
-y las 721 sesiones legítimas de fondo pasan sin un solo aviso.
-
-![E01 de lote, S3: arriba, el veredicto con 0 avisos en 20 aperturas pegadas al registro; abajo, el tablero de E01 sobre la ventana de S3](assets/resultados/evidencias/lote-e01-s3.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e01-s3.png" src="assets/resultados/evidencias/lote-e01-s3.mp4"></video>
 
 ### Análisis de resultados
 
@@ -313,45 +284,61 @@ recibo que la etapa guarda por cada pedido antes de confirmar el mensaje al
 bróker. La primera versión, con un sondeo que solo comprobaba si la
 etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
-### La evidencia en vivo
+### El resultado de un vistazo
 
-**Figura 11. Un pedido congelado en una etapa viva, en D3.** A las
+**Figura 6. ASR-3 se cumple con 13,0 s de holgura.** Cada punto es un pedido
+detenido: los 329 de las caídas de D2 y los 15 congelados de D3. El tiempo va
+desde que el pedido quedó detenido hasta que el bróker lo confirmó en la
+Dead-Letter-Queue, así que incluye la detección y el envío.
+
+![ASR-3: 329 pedidos de D2 entre 0 y 6,2 s y 15 de D3 entre 15,3 y 17,0 s, frente al umbral de 30 s](assets/resultados/graficas/asr3-margen.svg)
+
+**Figura 7. ASR-4: de la señal a la cola, 45 veces por debajo del umbral.**
+Cada punto es un pedido, desde la señal de detención hasta su confirmación en
+la Dead-Letter-Queue. Mide la entrega a la cola, que es la parte de ASR-4 que
+este prototipo cubre; la reanudación y la entrega a una persona no se midieron.
+
+![ASR-4: 139 pedidos entre 3 y 111 ms desde la señal hasta la cola, frente al umbral de 5 s](assets/resultados/graficas/asr4-margen.svg)
+
+**Figura 8. Un pedido congelado en una etapa viva, en D3.** ① A las
 22:06:55.646 UTC, el orquestador hace que validación de despacho acepte su
-próximo pedido y lo olvide: el pedido P7-7 entra y se queda quieto. A la
-derecha, 16,9 s después el Monitor lo detecta como atascado con la etapa viva.
-Ventas lo confirma 46 ms más tarde en la Dead-Letter-Queue con la etapa que
-falta y la causa `PEDIDO_ATASCADO`. Abajo, el Monitor no declara detenida
-ninguna etapa: el pedido se detecta aunque la etapa sigue respondiendo. En el video se ve llegar el
-mensaje a la consola de RabbitMQ.
+próximo pedido y lo olvide: el pedido P7-7 entra y se queda quieto. ② 16,9 s
+después, el Monitor lo detecta como atascado con la etapa viva. ③ Ventas lo
+confirma en la Dead-Letter-Queue 46 ms más tarde, con la etapa que falta y la
+causa `PEDIDO_ATASCADO`. ④ El Monitor no declara detenida ninguna etapa
+mientras tanto.
 
-![E02 en vivo, D3: arriba, el congelamiento del pedido P7-7, su detección como atascado a los 16,9 s y su envío a la Dead-Letter-Queue con causa PEDIDO_ATASCADO; abajo, el Monitor con las etapas vivas y la cola en RabbitMQ](assets/resultados/evidencias/asr4-congelado-vivo.png)
+![E02 en vivo, D3, anotada: 1 el congelamiento, 2 la detección como atascado, 3 la llegada a la cola con su causa, 4 el Monitor sin caídas](assets/resultados/testigos/asr4-congelado.png)
 
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-congelado-vivo.png" src="assets/resultados/evidencias/asr4-congelado-vivo.mp4"></video>
+<details><summary>▶ Ver el momento (15 s)</summary>
+<video controls preload="none" width="100%" src="assets/resultados/clips/asr4-congelado.mp4"></video>
+</details>
 
-**Figura 12. Entregas repetidas en D5.** Cada 5 s, el orquestador le vuelve a
-entregar a facturación un pedido que la etapa ya facturó. A la derecha, unos
-10 ms después de cada entrega, facturación encuentra el recibo del pedido
-terminado y no repite el efecto. Abajo, el tablero cuenta las entregas
-repetidas descartadas y 0 efectos dobles. Los pedidos atascados que aún
-aparecen son los últimos de D3, todavía dentro de la ventana de 5 minutos.
+**Figura 9. Una etapa caída en D2.** ① A las 22:01:01.210 UTC, el orquestador
+mata validación de despacho. ② El Monitor la declara detenida 5,8 s después,
+al tercer sondeo sin respuesta. ③ Ventas empieza 12 ms más tarde a confirmar
+en la Dead-Letter-Queue los pedidos que estaban en la etapa, cada uno con la
+causa `ETAPA_CAIDA`. ④ El tablero marca en rojo cada caída de despacho. ⑤ La
+consola de RabbitMQ muestra los 670 mensajes que la Dead-Letter-Queue acumuló
+en D2, que nadie consume.
 
-![E02 en vivo, D5: arriba, cinco entregas repetidas a facturación y la etapa que no repite el efecto; abajo, el tablero con las entregas descartadas y 0 efectos dobles](assets/resultados/evidencias/asr4-repetida-vivo.png)
+![E02 en vivo, D2, anotada: 1 la caída, 2 la declaración, 3 los pedidos a la cola con su causa, 4 el Monitor en rojo, 5 la cola en RabbitMQ](assets/resultados/testigos/asr4-caida.png)
 
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-repetida-vivo.png" src="assets/resultados/evidencias/asr4-repetida-vivo.mp4"></video>
+<details><summary>▶ Ver el momento (15 s)</summary>
+<video controls preload="none" width="100%" src="assets/resultados/clips/asr4-caida.mp4"></video>
+</details>
 
-**Figura 13. Una etapa caída en D2.** A la izquierda, el orquestador mata
-validación de despacho a las 22:01:01.210 UTC. A la derecha, el Monitor la
-declara detenida 5,8 s después, al tercer sondeo sin respuesta. Ventas empieza
-12 ms más tarde a confirmar en la Dead-Letter-Queue los pedidos que
-estaban en la etapa. Cada mensaje lleva la etapa que falta y la causa
-`ETAPA_CAIDA`. Abajo, el tablero marca en rojo cada caída de despacho y
-cuenta 82 pedidos en la cola en ≤ 30 s en los últimos 5 minutos. La consola de
-RabbitMQ muestra los mensajes acumulados en la Dead-Letter-Queue, que nadie
-consume.
+**Figura 10. Una entrega repetida en D5, sin efecto doble.** ① Cada 5 s, el
+orquestador le vuelve a entregar a facturación un pedido que la etapa ya
+facturó; aquí, P19-4. ② Facturación encuentra el recibo del pedido terminado
+y no repite el efecto. ③ El tablero cuenta las entregas repetidas descartadas
+y 0 efectos dobles.
 
-![E02 en vivo, D2: arriba, la caída de despacho, su declaración a los 5,8 s y los pedidos a la Dead-Letter-Queue con causa ETAPA_CAIDA; abajo, el tablero con las caídas en rojo y la cola en RabbitMQ](assets/resultados/evidencias/asr4-caida-vivo.png)
+![E02 en vivo, D5, anotada: 1 la entrega repetida, 2 la etapa que no repite el efecto, 3 los contadores con 0 efectos dobles](assets/resultados/testigos/asr4-repetida.png)
 
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-caida-vivo.png" src="assets/resultados/evidencias/asr4-caida-vivo.mp4"></video>
+<details><summary>▶ Ver el momento (15 s)</summary>
+<video controls preload="none" width="100%" src="assets/resultados/clips/asr4-repetida.mp4"></video>
+</details>
 
 ### Lo que midieron las ejecuciones
 
@@ -406,50 +393,11 @@ la cola, no la reanudación ni la entrega a una persona; la consulta está en
 | D2 · etapa caída | 124 | 21 ms | 111 ms |
 | D3 · pedido congelado en una etapa viva | 15 | 5 ms | 46 ms |
 
-### La evidencia de lote
-
-**Figura 14. D1 sobre toda su ventana.** Arriba, el veredicto: ninguna etapa
-declarada detenida y ningún pedido sano informado como atascado en 30 minutos.
-De los 5 408 pares de pedido y etapa con un solo efecto, 5 217 son de los
-1 739 pedidos de la ventana. Los otros 191 son de 62 pedidos que entraron en el
-minuto de gracia y de 4 del calentamiento que cerraron dentro de la ventana. Abajo, el tablero de E02
-sobre la misma media hora, con todos los contadores de fallas en cero.
-
-![E02 de lote, D1: arriba, el veredicto sin falsas alarmas; abajo, el tablero de E02 sobre la ventana de D1](assets/resultados/evidencias/lote-e02-d1.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e02-d1.png" src="assets/resultados/evidencias/lote-e02-d1.mp4"></video>
-
-**Figura 15. D2 sobre toda su ventana.** Se cumplen los cinco criterios que
-aplican a D2, y la demora hasta la cola no supera 6,2 s en ninguna etapa. Abajo, el tablero cuenta 15 fallas,
-329 pedidos detenidos, 329 en la cola a tiempo, 0 escapes, 0 duplicados y 38
-entregas retomadas tras las caídas. Los 447 «mensajes sin pedido detenido» son
-los pedidos que se recuperaron solos, que el análisis explica abajo.
-
-![E02 de lote, D2: arriba, el veredicto con 329 de 329 pedidos en la cola y todos con su causa; abajo, el tablero de E02 sobre la ventana de D2](assets/resultados/evidencias/lote-e02-d2.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e02-d2.png" src="assets/resultados/evidencias/lote-e02-d2.mp4"></video>
-
-**Figura 16. D3 sobre toda su ventana.** Los 15 pedidos congelados llegan a
-la cola en ≤ 30 s, una sola vez y con la causa `PEDIDO_ATASCADO`. En el
-tablero, el Monitor no declara detenida ninguna etapa durante toda la fase.
-
-![E02 de lote, D3: arriba, el veredicto con 15 de 15 pedidos congelados en la cola; abajo, el tablero de E02 sobre la ventana de D3](assets/resultados/evidencias/lote-e02-d3.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e02-d3.png" src="assets/resultados/evidencias/lote-e02-d3.mp4"></video>
-
-**Figura 17. D5 sobre toda su ventana.** El orquestador repitió 60 entregas,
-20 por etapa. Las tres etapas detectaron todas, y ningún pedido quedó con un
-efecto doble.
-
-![E02 de lote, D5: arriba, el veredicto con 60 de 60 entregas repetidas sin efecto doble; abajo, el tablero de E02 sobre la ventana de D5](assets/resultados/evidencias/lote-e02-d5.png)
-
-<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/lote-e02-d5.png" src="assets/resultados/evidencias/lote-e02-d5.mp4"></video>
-
 ### Análisis de resultados
 
 #### La idempotencia: ningún efecto duplicado
 
-**Figura 18. Una entrega repetida en D5 (DG-SEQ-004).** El inyector toma un
+**Figura 11. Una entrega repetida en D5 (DG-SEQ-004).** El inyector toma un
 pedido que la etapa ya terminó y se lo vuelve a entregar por el bróker. La
 etapa busca el recibo, lo encuentra terminado y descarta la entrega sin repetir
 el efecto. Vuelve a publicar `etapa.completada`, por si el aviso anterior se
@@ -480,7 +428,7 @@ repetida no repite el efecto.
 
 #### La detección que lo precede (ASR-3)
 
-**Figura 19. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
+**Figura 12. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
 etapa que acepte el próximo pedido y lo olvide sin terminarlo. La etapa guarda
 el recibo antes de confirmar el mensaje al bróker, así que el pedido queda en
 curso en su tabla. En cada sondeo, el punto de salud lee esa tabla y responde
@@ -503,7 +451,7 @@ lleva demasiado tiempo sin terminar, y lo lee del recibo que la etapa guardó
 antes de confirmar el mensaje. Por eso ve también el pedido que la etapa aceptó
 y olvidó.
 
-**Figura 20. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
+**Figura 13. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
 y el Monitor la declara detenida al tercer sondeo sin respuesta. Desde ahí avisa
 en cada ciclo al Coordinador, que es el micro de ventas como en DG-CMP-005, y
 este publica cada pedido pendiente de esa etapa como `pedido.detenido`. El
@@ -652,13 +600,56 @@ Cada uno dice de dónde sale, cuándo se resuelve y qué lo cambiaría.
 
 ---
 
-## Anexo: el veredicto de cada ejecución
+## Anexo A: el respaldo de cada fase
+
+Las tomas sin anotar, en vivo y de lote, quedan aquí para quien quiera revisar
+cada fase. Se abren con un clic y se amplían con el visor.
+
+<details><summary>E01 · las tomas en vivo de S1, S2 y S3</summary>
+<p><strong>Un intruso en S1.</strong> El orquestador abre la sesión del vendedor V1722 desde `D-ATACANTE-647209` a las 21:42:31.893 UTC. El Verificador ve la huella distinta 1 ms después. El SMS llega a seguridad con el vendedor, el dispositivo y la hora de apertura; según la tabla de eventos, la demora fue de 52 ms. Abajo, el tablero lleva 8 intrusos en los últimos 5 minutos, todos con aviso a tiempo, sin escapes ni falsas alarmas.</p>
+<p><img src="assets/resultados/evidencias/asr1-intruso-vivo.png" alt="E01 en vivo, S1: arriba, el intruso V1722 y su SMS a seguridad 52 ms después; abajo, el tablero con 8 intrusos, 8 avisos a tiempo, 0 escapes y 0 falsas alarmas"></p>
+<p><strong>Tres cambios legítimos de dispositivo en S2.</strong> Los vendedores V1001, V1004 y V1002 registran un dispositivo nuevo y abren sesión desde él. A la derecha, el Verificador compara cada huella, ve que coincide con la recién registrada y no avisa: no aparece ningún SMS. Abajo, el tablero no cuenta intrusos ni falsas alarmas.</p>
+<p><img src="assets/resultados/evidencias/asr1-cambio-vivo.png" alt="E01 en vivo, S2: arriba, tres cambios legítimos de dispositivo y tres huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas"></p>
+<p><strong>Aperturas pegadas al registro en S3.</strong> Cada vendedor registra un dispositivo nuevo y abre sesión desde él menos de 1 s después. Es el caso más estrecho: el Verificador tiene que leer un registro que acaba de hacerse. Lo lee, la huella coincide y seguridad no recibe ningún SMS, y el tablero sigue sin falsas alarmas.</p>
+<p><img src="assets/resultados/evidencias/asr1-pegado-vivo.png" alt="E01 en vivo, S3: arriba, aperturas a menos de 1 s del registro y huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas"></p>
+</details>
+
+<details><summary>E01 · las tomas de lote de S1, S2 y S3</summary>
+<p><strong>S1 sobre toda su ventana.</strong> Arriba, el veredicto de la ejecución: 50 de 50 intrusos con aviso a tiempo, y 0 avisos en 3 720 sesiones legítimas desde el dispositivo registrado. Abajo, el tablero de E01 sobre los 31 minutos de S1 cuenta lo mismo, y en «Demora de cada aviso» cada punto es un intruso, todos en ≤ 52 ms.</p>
+<p><img src="assets/resultados/evidencias/lote-e01-s1.png" alt="E01 de lote, S1: arriba, el veredicto con 50 de 50 intrusos con aviso a tiempo; abajo, el tablero de E01 sobre la ventana de S1"></p>
+<p><strong>S2 sobre toda su ventana.</strong> Ni los 100 cambios legítimos ni las 2 640 sesiones legítimas de fondo producen un aviso, y la lista de avisos fuera de lo esperado queda vacía.</p>
+<p><img src="assets/resultados/evidencias/lote-e01-s2.png" alt="E01 de lote, S2: arriba, el veredicto con 0 avisos en 100 cambios legítimos; abajo, el tablero de E01 sobre la ventana de S2"></p>
+<p><strong>S3 sobre toda su ventana.</strong> Las 20 aperturas pegadas al registro y las 721 sesiones legítimas de fondo pasan sin un solo aviso.</p>
+<p><img src="assets/resultados/evidencias/lote-e01-s3.png" alt="E01 de lote, S3: arriba, el veredicto con 0 avisos en 20 aperturas pegadas al registro; abajo, el tablero de E01 sobre la ventana de S3"></p>
+</details>
+
+<details><summary>E02 · las tomas en vivo de D2, D3 y D5</summary>
+<p><strong>Un pedido congelado en una etapa viva, en D3.</strong> A las 22:06:55.646 UTC, el orquestador hace que validación de despacho acepte su próximo pedido y lo olvide: el pedido P7-7 entra y se queda quieto. A la derecha, 16,9 s después el Monitor lo detecta como atascado con la etapa viva. Ventas lo confirma 46 ms más tarde en la Dead-Letter-Queue con la etapa que falta y la causa `PEDIDO_ATASCADO`. Abajo, el Monitor no declara detenida ninguna etapa: el pedido se detecta aunque la etapa sigue respondiendo. En el video se ve llegar el mensaje a la consola de RabbitMQ.</p>
+<p><img src="assets/resultados/evidencias/asr4-congelado-vivo.png" alt="E02 en vivo, D3: arriba, el congelamiento del pedido P7-7, su detección como atascado a los 16,9 s y su envío a la Dead-Letter-Queue con causa PEDIDO_ATASCADO; abajo, el Monitor con las etapas vivas y la cola en RabbitMQ"></p>
+<p><strong>Entregas repetidas en D5.</strong> Cada 5 s, el orquestador le vuelve a entregar a facturación un pedido que la etapa ya facturó. A la derecha, unos 10 ms después de cada entrega, facturación encuentra el recibo del pedido terminado y no repite el efecto. Abajo, el tablero cuenta las entregas repetidas descartadas y 0 efectos dobles. Los pedidos atascados que aún aparecen son los últimos de D3, todavía dentro de la ventana de 5 minutos.</p>
+<p><img src="assets/resultados/evidencias/asr4-repetida-vivo.png" alt="E02 en vivo, D5: arriba, cinco entregas repetidas a facturación y la etapa que no repite el efecto; abajo, el tablero con las entregas descartadas y 0 efectos dobles"></p>
+<p><strong>Una etapa caída en D2.</strong> A la izquierda, el orquestador mata validación de despacho a las 22:01:01.210 UTC. A la derecha, el Monitor la declara detenida 5,8 s después, al tercer sondeo sin respuesta. Ventas empieza 12 ms más tarde a confirmar en la Dead-Letter-Queue los pedidos que estaban en la etapa. Cada mensaje lleva la etapa que falta y la causa `ETAPA_CAIDA`. Abajo, el tablero marca en rojo cada caída de despacho y cuenta 82 pedidos en la cola en ≤ 30 s en los últimos 5 minutos. La consola de RabbitMQ muestra los mensajes acumulados en la Dead-Letter-Queue, que nadie consume.</p>
+<p><img src="assets/resultados/evidencias/asr4-caida-vivo.png" alt="E02 en vivo, D2: arriba, la caída de despacho, su declaración a los 5,8 s y los pedidos a la Dead-Letter-Queue con causa ETAPA_CAIDA; abajo, el tablero con las caídas en rojo y la cola en RabbitMQ"></p>
+</details>
+
+<details><summary>E02 · las tomas de lote de D1, D2, D3 y D5</summary>
+<p><strong>D1 sobre toda su ventana.</strong> Arriba, el veredicto: ninguna etapa declarada detenida y ningún pedido sano informado como atascado en 30 minutos. De los 5 408 pares de pedido y etapa con un solo efecto, 5 217 son de los 1 739 pedidos de la ventana. Los otros 191 son de 62 pedidos que entraron en el minuto de gracia y de 4 del calentamiento que cerraron dentro de la ventana. Abajo, el tablero de E02 sobre la misma media hora, con todos los contadores de fallas en cero.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d1.png" alt="E02 de lote, D1: arriba, el veredicto sin falsas alarmas; abajo, el tablero de E02 sobre la ventana de D1"></p>
+<p><strong>D2 sobre toda su ventana.</strong> Se cumplen los cinco criterios que aplican a D2, y la demora hasta la cola no supera 6,2 s en ninguna etapa. Abajo, el tablero cuenta 15 fallas, 329 pedidos detenidos, 329 en la cola a tiempo, 0 escapes, 0 duplicados y 38 entregas retomadas tras las caídas. Los 447 «mensajes sin pedido detenido» son los pedidos que se recuperaron solos, que el análisis explica abajo.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d2.png" alt="E02 de lote, D2: arriba, el veredicto con 329 de 329 pedidos en la cola y todos con su causa; abajo, el tablero de E02 sobre la ventana de D2"></p>
+<p><strong>D3 sobre toda su ventana.</strong> Los 15 pedidos congelados llegan a la cola en ≤ 30 s, una sola vez y con la causa `PEDIDO_ATASCADO`. En el tablero, el Monitor no declara detenida ninguna etapa durante toda la fase.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d3.png" alt="E02 de lote, D3: arriba, el veredicto con 15 de 15 pedidos congelados en la cola; abajo, el tablero de E02 sobre la ventana de D3"></p>
+<p><strong>D5 sobre toda su ventana.</strong> El orquestador repitió 60 entregas, 20 por etapa. Las tres etapas detectaron todas, y ningún pedido quedó con un efecto doble.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d5.png" alt="E02 de lote, D5: arriba, el veredicto con 60 de 60 entregas repetidas sin efecto doble; abajo, el tablero de E02 sobre la ventana de D5"></p>
+</details>
+
+## Anexo B: el veredicto de cada ejecución
 
 Cada ejecución dejó un `veredicto.txt`, la salida de la consulta SQL que cruza la
 tabla de eventos caso por caso. Trae la validez de la ejecución, los criterios con
 sus casos y su veredicto, y el detalle de cada caso. Cada archivo cubre solo su
 fase, así que los criterios de las otras fases aparecen como «NO APLICA». Las
-tomas de lote de arriba muestran cada uno junto a su tablero.
+tomas de lote del anexo A muestran cada uno junto a su tablero.
 
 | Fase | Qué probó | Resultado | Veredicto |
 |---|---|---|---|
