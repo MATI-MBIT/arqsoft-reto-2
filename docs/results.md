@@ -119,22 +119,25 @@ los micros. Abajo, el tablero de evidencias de Grafana con la ventana de los
 últimos 5 minutos. Cada figura trae su video.
 
 **Figura 2. Un intruso en S1.** El orquestador abre la sesión del vendedor
-V1885 desde `D-ATACANTE-883743` a las 20:54:38.860 UTC. El Verificador ve la
-huella distinta 2 ms después, y el SMS llega a seguridad a los 38 ms con el
+V1722 desde `D-ATACANTE-647209` a las 21:42:31.893 UTC. El Verificador ve la
+huella distinta 1 ms después, y el SMS llega a seguridad a los 54 ms con el
 vendedor, el dispositivo y la hora de apertura. Abajo, el tablero lleva 8
 intrusos en los últimos 5 minutos, todos con aviso a tiempo, sin escapes ni
-falsas alarmas; en el video se ve llegar el noveno.
+falsas alarmas.
 
-![E01 en vivo, S1: arriba, el intruso V1885 y su SMS a seguridad 38 ms después; abajo, el tablero con 8 intrusos, 8 avisos a tiempo, 0 escapes y 0 falsas alarmas](assets/resultados/evidencias/asr1-intruso-vivo.png)
+![E01 en vivo, S1: arriba, el intruso V1722 y su SMS a seguridad 54 ms después; abajo, el tablero con 8 intrusos, 8 avisos a tiempo, 0 escapes y 0 falsas alarmas](assets/resultados/evidencias/asr1-intruso-vivo.png)
 
 <video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-intruso-vivo.png" src="assets/resultados/evidencias/asr1-intruso-vivo.mp4"></video>
 
-**Figura 3. El contraste: un cambio legítimo de dispositivo (demostración).** El vendedor
-V0777 registra un dispositivo nuevo y abre sesión desde él un instante
-después. El Verificador compara la huella, ve que coincide con la que se acaba
-de registrar y no avisa.
+**Figura 3. Tres cambios legítimos de dispositivo en S2.** Los vendedores
+V1001, V1004 y V1002 registran un dispositivo nuevo y abren sesión desde él.
+A la derecha, el Verificador compara cada huella, ve que coincide con la
+recién registrada y no avisa: no aparece ningún SMS. Abajo, el tablero no
+cuenta intrusos ni falsas alarmas.
 
-![Captura de E01: V0777 registra un dispositivo nuevo y abre sesión desde él; el Verificador ve que la huella coincide y no envía aviso](assets/resultados/evidencias/asr1-cambio-legitimo.png)
+![E01 en vivo, S2: arriba, tres cambios legítimos de dispositivo y tres huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas](assets/resultados/evidencias/asr1-cambio-vivo.png)
+
+<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-cambio-vivo.png" src="assets/resultados/evidencias/asr1-cambio-vivo.mp4"></video>
 
 ### Lo que midieron las corridas
 
