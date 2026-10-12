@@ -1,0 +1,66 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                                                       variables                                                                                       |            inicio             |             fin             |    duracion     | valida 
+------------------------+-------------+------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-----------------------------+-----------------+--------
+ e02-d1-20261012-131837 | E02         | D1   | {"N": 3, "T_ms": 2000, "d1_s": 1800, "vars": "WARMUP_S=120;D1_S=1800", "caidas": 0, "caida_s": 45, "repetir": 0, "congelar": 0, "espera_ms": 500, "tasa_base": 2, "umbral_ms": 15000} | 2026-10-12 18:20:45.549515+00 | 2026-10-12 18:50:45.7338+00 | 00:30:00.184285 | t
+
+
+== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
+ valida | motivo | hueco_maximo_s 
+--------+--------+----------------
+ t      | —      |            8.8
+
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+
+== Criterios de H2
+                                        criterio                                        | casos | cumplen | fallan | veredicto 
+----------------------------------------------------------------------------------------+-------+---------+--------+-----------
+ D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                          |     0 |       0 |      0 | NO APLICA
+ D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s                 |     0 |       0 |      0 | NO APLICA
+ D1 · ≤ 1 falsa alarma por hora (etapas declaradas y pedidos informados como atascados) |     0 |       0 |      0 | PASA
+ Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados)   |     0 |       0 |      0 | NO APLICA
+ D5 · la entrega repetida no repite el efecto de la etapa                               |     0 |       0 |      0 | NO APLICA
+ Todas · cada etapa aplica su efecto una sola vez por pedido                            |  5611 |    5611 |      0 | PASA
+
+
+== Demora hasta la cola (ms), por tipo de falla y etapa
+ falla | etapa | detenidos | encolados | escapes | duplicados | mediana | p95 | maximo 
+-------+-------+-----------+-----------+---------+------------+---------+-----+--------
+
+
+== D2 · cada caída con sus pedidos detenidos
+ falla_id | etapa | falla | caida | detenidos | encolados | demora_max_ms | declarada_tras 
+----------+-------+-------+-------+-----------+-----------+---------------+----------------
+
+
+== D3 · cada pedido congelado: cuándo lo informó el punto de salud y cuándo llegó a la cola
+ etapa | pedido_id | t0 | informado_tras | demora_ms 
+-------+-----------+----+----------------+-----------
+
+
+== D5 · entregas repetidas: detectadas y efectos por pedido
+ etapa | repeticiones | detectadas | un_efecto | efecto_doble | sin_efecto 
+-------+--------------+------------+-----------+--------------+------------
+
+
+== Entregas que el bróker devolvió y la etapa retomó (tras una caída)
+ etapa | retomadas 
+-------+-----------
+
+
+== Falsas alarmas: declaraciones sin caída, pedidos sanos informados como atascados y mensajes sin pedido detenido
+ que | ts | etapa | pedido_id | llego_a_logistica 
+-----+----+-------+-----------+-------------------
+
+
+== Escapes: pedidos detenidos que no llegaron a la cola o llegaron tarde
+ falla | etapa | pedido_id | t0 | encolado | demora_ms 
+-------+-------+-----------+----+----------+-----------
+

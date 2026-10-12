@@ -105,3 +105,27 @@ FROM registro.evento m
 WHERE m.tipo = 'pedido.encolado'
   AND NOT EXISTS (SELECT 1 FROM registro.e02_detenidos d
                   WHERE d.pedido_id = m.pedido_id AND d.etapa = m.etapa);
+
+-- Cada pedido que el punto de salud informó como atascado (H2 refinada). Está
+-- justificado si era un pedido congelado (D3) o un detenido de una caída (D2)
+-- en esa misma etapa; si no, es una falsa alarma: un pedido sano pero lento que
+-- el umbral U confundió con uno atascado.
+CREATE OR REPLACE VIEW registro.e02_atascos AS
+SELECT a.id, a.ts, a.etapa, a.pedido_id,
+       EXISTS (SELECT 1 FROM registro.e02_detenidos d
+               WHERE d.pedido_id = a.pedido_id AND d.etapa = a.etapa) AS justificado
+FROM registro.evento a
+WHERE a.tipo = 'pedido.atascado.detectado';
+
+-- D5: cada entrega repetida que inyectó el inyector, con lo que hizo la etapa.
+-- detectada: la etapa vio el recibo y descartó la entrega. efectos: cuántas
+-- veces aplicó la etapa su efecto a ese pedido; tiene que ser exactamente uno.
+CREATE OR REPLACE VIEW registro.e02_repeticiones AS
+SELECT f.id AS falla_id, f.ts, f.etapa, f.pedido_id,
+       EXISTS (SELECT 1 FROM registro.evento r
+               WHERE r.tipo = 'etapa.entrega.repetida' AND r.pedido_id = f.pedido_id
+                 AND r.etapa = f.etapa AND r.ts >= f.ts) AS detectada,
+       (SELECT count(*) FROM registro.evento e
+        WHERE e.tipo = 'etapa.efecto.aplicado' AND e.pedido_id = f.pedido_id AND e.etapa = f.etapa) AS efectos
+FROM registro.evento f
+WHERE f.tipo = 'falla.inyectada' AND f.datos ->> 'tipo' = 'repetir';

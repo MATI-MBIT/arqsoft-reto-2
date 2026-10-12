@@ -68,22 +68,26 @@ detiene hasta que se reanuda.
 
 ## Lo que dijeron los experimentos
 
-Las corridas del 4 de octubre de 2026 probaron dos hipótesis por separado, para
-que una pudiera caer sin arrastrar a la otra. E01 prueba la decisión que el
+Las corridas de octubre de 2026 probaron dos hipótesis por separado, para que
+una pudiera caer sin arrastrar a la otra. E01 prueba la decisión que el
 equipo propuso para ASR-1. E02 prueba una alternativa más simple a la decisión
 propuesta para ASR-3.
 
 **E01, seguridad (ASR-1).** La hipótesis H1 dice que basta con comparar la
 huella del dispositivo apenas se abre la sesión, que es lo que propone ADR-007.
-El micro de sesiones avisó al área de seguridad en las 50 aperturas desde un
-dispositivo distinto del suministrado, con 120 ms en el peor caso, y no dio
-falsas alarmas. H1 se sostiene: ADR-007 queda para aceptar.
+El Verificador de dispositivo avisó al área de seguridad en las 50 aperturas
+desde un dispositivo distinto del suministrado, con 115 ms en el peor caso, y
+no dio falsas alarmas. H1 se sostiene: ADR-007 queda para aceptar.
 
 **E02, disponibilidad (ASR-3).** La hipótesis H2 dice que basta con un Monitor
-que consulta de forma periódica la salud de cada etapa. Ese sondeo detectó las
-etapas caídas en unos 6 s, pero no vio ninguno de los 30 pedidos congelados
-dentro de una etapa viva. Como H2 cae, se confirma ADR-004, que busca los plazos
-vencidos por pedido y deja el sondeo solo como apoyo.
+que consulta de forma periódica la salud de cada etapa. En su primera versión,
+el sondeo solo comprobaba que la etapa estuviera viva: detectó las etapas
+caídas en unos 6 s, pero no vio ninguno de los 30 pedidos congelados dentro de
+una etapa viva. El equipo la refinó: el punto de salud ahora informa los
+pedidos que la etapa lleva más de 15 s sin terminar, y cada etapa es
+idempotente. Así, el punto de salud informó los 15 pedidos congelados, que
+llegaron a la Dead-Letter-Queue en ≤ 17,6 s, y ninguna entrega repetida repitió
+su efecto. H2 se sostiene, y ADR-004 y ADR-005 se actualizan.
 
 El detalle de cada criterio está en [Resultados de E01 y E02](results.md).
 
@@ -91,9 +95,10 @@ El detalle de cada criterio está en [Resultados de E01 y E02](results.md).
 
 Fuera de este wiki, en el
 [repositorio](https://github.com/MATI-MBIT/arqsoft-reto-2), vive el prototipo de
-los experimentos: once micros en Java 21 y Spring Boot 3, con PostgreSQL y RabbitMQ en Docker
-Compose. `make help` lista los comandos; `make e2e` verifica el montaje y
-`make experimentos` corre E01 y E02, unas 4 h 20 min.
+los experimentos: doce micros en Java 21 y Spring Boot 3, con PostgreSQL y
+RabbitMQ en Docker Compose. `make help` lista los comandos; `make e2e` verifica
+el montaje, `make e02-rapido` corre E02 en unos 25 min y `make experimentos`
+corre E01 y E02 de decisión, unas 3 h 30 min.
 
 ## Cómo agregar o cambiar una página
 

@@ -8,8 +8,11 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,15 +29,22 @@ import org.springframework.web.client.RestClient;
  * Monitor de la cadena (EL-17), en la forma que pone a prueba H2: el sondeo de
  * salud de las etapas es el único mecanismo de detección.
  *
- * <p>Cada T sondea las tres etapas en paralelo («ping/echo»), con un tiempo de
- * espera menor que T, para que una etapa que no contesta no atrase el sondeo de
- * las otras. Cuando una etapa suma N sondeos sin respuesta la declara detenida y,
- * en ese ciclo y en cada uno mientras siga detenida, le notifica la falla al
- * Coordinador de la cadena (el micro de ventas), que envía sus pedidos
- * pendientes a la Dead-Letter-Queue (DG-CMP-005).
+ * <p>Cada T sondea las tres etapas en paralelo («ping/echo» con datos), con un
+ * tiempo de espera menor que T, para que una etapa que no contesta no atrase el
+ * sondeo de las otras. Detecta dos cosas:
+ * <ul>
+ *   <li>La etapa caída: cuando suma N sondeos sin respuesta la declara detenida
+ *       y, en ese ciclo y en cada uno mientras siga detenida, le notifica la
+ *       falla al Coordinador de la cadena (el micro de ventas), que envía todos
+ *       sus pedidos pendientes a la Dead-Letter-Queue (DG-CMP-005).</li>
+ *   <li>El pedido atascado en una etapa viva: el punto de salud informa los
+ *       pedidos que la etapa lleva más de U sin terminar, y el Monitor se los
+ *       pasa al Coordinador, que envía esos pedidos a la Dead-Letter-Queue.</li>
+ * </ul>
  *
- * <p>T, N y el tiempo de espera vienen de variables de entorno para variarlos en
- * D4 sin tocar código: SONDEO_T_MS, SONDEO_N y SONDEO_ESPERA_MS.
+ * <p>T, N, el tiempo de espera y U vienen de variables de entorno para variarlos
+ * sin tocar código: SONDEO_T_MS, SONDEO_N, SONDEO_ESPERA_MS y UMBRAL_ATASCO_MS
+ * (U, supuesto S-12; 0 lo apaga y deja solo el sondeo de vida).
  */
 @Component
 class MonitorDeLaCadena {
@@ -43,8 +53,10 @@ class MonitorDeLaCadena {
 
     private final long tMs;
     private final int n;
+    private final long umbralMs;
     private final Map<String, RestClient> etapas = new LinkedHashMap<>();
     private final Map<String, CuentaDeSondeos> cuentas = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> atascadosVistos = new ConcurrentHashMap<>();
     private final RestClient ventas;
     private final Registro registro;
     private final MeterRegistry metricas;
@@ -56,6 +68,7 @@ class MonitorDeLaCadena {
                       @Value("${SONDEO_T_MS:2000}") long tMs,
                       @Value("${SONDEO_N:3}") int n,
                       @Value("${SONDEO_ESPERA_MS:500}") long esperaMs,
+                      @Value("${UMBRAL_ATASCO_MS:15000}") long umbralMs,
                       @Value("${FACTURACION_URL:http://localhost:8091}") String facturacion,
                       @Value("${INVENTARIO_URL:http://localhost:8092}") String inventario,
                       @Value("${DESPACHO_URL:http://localhost:8093}") String despacho) {
@@ -64,6 +77,7 @@ class MonitorDeLaCadena {
         }
         this.tMs = tMs;
         this.n = n;
+        this.umbralMs = umbralMs;
         this.ventas = Http.cliente(ventas, Duration.ofSeconds(2));
         this.registro = registro;
         this.metricas = metricas;
@@ -74,19 +88,22 @@ class MonitorDeLaCadena {
         etapas.keySet().forEach(e -> {
             CuentaDeSondeos cuenta = new CuentaDeSondeos(n);
             cuentas.put(e, cuenta);
+            atascadosVistos.put(e, ConcurrentHashMap.newKeySet());
             Gauge.builder("monitor.etapa.detenida", cuenta, c -> c.detenida() ? 1 : 0).tag("etapa", e).register(metricas);
             Gauge.builder("monitor.sondeos.fallidos_seguidos", cuenta, CuentaDeSondeos::fallidosSeguidos)
                     .tag("etapa", e).register(metricas);
         });
         Gauge.builder("monitor.config.t_ms", () -> tMs).register(metricas);
         Gauge.builder("monitor.config.n", () -> n).register(metricas);
-        log.info("monitor: sondeo cada T={} ms, detenida tras N={} sondeos sin respuesta, espera={} ms (N×T={} ms)",
-                tMs, n, esperaMs, n * tMs);
+        Gauge.builder("monitor.config.umbral_ms", () -> umbralMs).register(metricas);
+        log.info("monitor: sondeo cada T={} ms, detenida tras N={} sondeos sin respuesta, espera={} ms (N×T={} ms), "
+                + "atascado tras U={} ms", tMs, n, esperaMs, n * tMs, umbralMs);
     }
 
     @PostConstruct
     void arrancar() {
-        registro.anotar(Instant.now(), "monitor.arranque", null, null, null, Map.of("tMs", tMs, "n", n));
+        registro.anotar(Instant.now(), "monitor.arranque", null, null, null,
+                Map.of("tMs", tMs, "n", n, "umbralMs", umbralMs));
         ciclo.scheduleAtFixedRate(this::sondear, tMs, tMs, TimeUnit.MILLISECONDS);
     }
 
@@ -95,31 +112,77 @@ class MonitorDeLaCadena {
         ciclo.shutdownNow();
     }
 
+    /** Lo que dejó un sondeo: la causa si no hubo respuesta, o los pedidos atascados que informó la etapa. */
+    record Sondeo(String causa, List<String> atascados) {
+        static Sondeo sinRespuesta(String causa) {
+            return new Sondeo(causa, List.of());
+        }
+    }
+
     private void sondear() {
-        Map<String, Future<String>> respuestas = new LinkedHashMap<>();
+        Map<String, Future<Sondeo>> respuestas = new LinkedHashMap<>();
         etapas.forEach((etapa, cliente) -> respuestas.put(etapa, trabajo.submit(() -> sondeo(cliente))));
         respuestas.forEach((etapa, futuro) -> {
-            String causa;
+            Sondeo sondeo;
             try {
-                causa = futuro.get();
+                sondeo = futuro.get();
             } catch (Exception ex) {
-                causa = ex.getClass().getSimpleName();
+                sondeo = Sondeo.sinRespuesta(ex.getClass().getSimpleName());
             }
-            aplicar(etapa, causa);
+            aplicar(etapa, sondeo.causa());
+            if (sondeo.causa() == null) {
+                atascados(etapa, sondeo.atascados());
+            }
         });
     }
 
-    /** null si la etapa respondió; si no, la causa, que queda en el registro. */
-    private static String sondeo(RestClient cliente) {
+    private Sondeo sondeo(RestClient cliente) {
         try {
-            cliente.get().uri("/salud").retrieve().toBodilessEntity();
-            return null;
+            Map<?, ?> salud = cliente.get().uri("/salud?mayorQueMs={u}", umbralMs).retrieve().body(Map.class);
+            List<String> atascados = new ArrayList<>();
+            if (salud != null && salud.get("atascados") instanceof List<?> lista) {
+                for (Object p : lista) {
+                    if (p instanceof Map<?, ?> pedido && pedido.get("pedidoId") != null) {
+                        atascados.add(pedido.get("pedidoId").toString());
+                    }
+                }
+            }
+            return new Sondeo(null, atascados);
         } catch (RuntimeException ex) {
             Throwable raiz = ex;
             while (raiz.getCause() != null) {
                 raiz = raiz.getCause();
             }
-            return raiz.getClass().getSimpleName() + ": " + raiz.getMessage();
+            return Sondeo.sinRespuesta(raiz.getClass().getSimpleName() + ": " + raiz.getMessage());
+        }
+    }
+
+    /**
+     * Los pedidos atascados de una etapa viva: cada uno se anota la primera vez
+     * que aparece, y mientras siga atascado se le pasa al Coordinador en cada
+     * ciclo. El Coordinador lo envía una sola vez (la señal es idempotente).
+     */
+    private void atascados(String etapa, List<String> pedidos) {
+        Set<String> vistos = atascadosVistos.get(etapa);
+        vistos.retainAll(pedidos);
+        for (String pedido : pedidos) {
+            if (vistos.add(pedido)) {
+                registro.pedido("pedido.atascado.detectado", pedido, etapa, Map.of("umbralMs", umbralMs));
+                metricas.counter("monitor.pedidos.atascados", "etapa", etapa).increment();
+            }
+        }
+        if (!pedidos.isEmpty()) {
+            List<String> copia = List.copyOf(pedidos);
+            trabajo.submit(() -> notificarAtascados(etapa, copia));
+        }
+    }
+
+    private void notificarAtascados(String etapa, List<String> pedidos) {
+        try {
+            ventas.post().uri("/fallas/pedidos").body(Map.of("etapa", etapa, "pedidos", pedidos))
+                    .retrieve().toBodilessEntity();
+        } catch (RuntimeException ex) {
+            log.warn("ventas no recibió los pedidos atascados de {}: {}", etapa, ex.getMessage());
         }
     }
 

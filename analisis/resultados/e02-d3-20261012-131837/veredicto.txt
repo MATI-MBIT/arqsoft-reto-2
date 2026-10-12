@@ -1,0 +1,84 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                                                             variables                                                                                              |            inicio             |              fin              |    duracion     | valida 
+------------------------+-------------+------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
+ e02-d3-20261012-131837 | E02         | D3   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "WARMUP_S=120;CONGELAR=15;ESPACIO_S=30", "caidas": 0, "caida_s": 45, "repetir": 0, "congelar": 15, "espera_ms": 500, "tasa_base": 2, "umbral_ms": 15000} | 2026-10-12 19:16:38.220031+00 | 2026-10-12 19:24:09.873425+00 | 00:07:31.653394 | t
+
+
+== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
+ valida | motivo | hueco_maximo_s 
+--------+--------+----------------
+ t      | —      |            5.5
+
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+
+== Criterios de H2
+                                        criterio                                        | casos | cumplen | fallan | veredicto 
+----------------------------------------------------------------------------------------+-------+---------+--------+-----------
+ D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                          |     0 |       0 |      0 | NO APLICA
+ D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s                 |    15 |      15 |      0 | PASA
+ D1 · ≤ 1 falsa alarma por hora (etapas declaradas y pedidos informados como atascados) |    15 |      15 |      0 | PASA
+ Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados)   |    15 |      15 |      0 | PASA
+ D5 · la entrega repetida no repite el efecto de la etapa                               |     0 |       0 |      0 | NO APLICA
+ Todas · cada etapa aplica su efecto una sola vez por pedido                            |  1612 |    1612 |      0 | PASA
+
+
+== Demora hasta la cola (ms), por tipo de falla y etapa
+ falla |    etapa    | detenidos | encolados | escapes | duplicados | mediana |   p95   | maximo  
+-------+-------------+-----------+-----------+---------+------------+---------+---------+---------
+ D3    | despacho    |         5 |         5 |       0 |          0 | 16075.8 | 16803.0 | 16966.6
+ D3    | facturacion |         5 |         5 |       0 |          0 | 15873.2 | 16852.4 | 16871.7
+ D3    | inventario  |         5 |         5 |       0 |          0 | 16320.2 | 17417.8 | 17550.2
+
+
+== D2 · cada caída con sus pedidos detenidos
+ falla_id | etapa | falla | caida | detenidos | encolados | demora_max_ms | declarada_tras 
+----------+-------+-------+-------+-----------+-----------+---------------+----------------
+
+
+== D3 · cada pedido congelado: cuándo lo informó el punto de salud y cuándo llegó a la cola
+    etapa    |           pedido_id           |              t0               | informado_tras  | demora_ms 
+-------------+-------------------------------+-------------------------------+-----------------+-----------
+ despacho    | e02-d3-20261012-131837-P14-9  | 2026-10-12 19:16:38.853808+00 | 00:00:16.0543   |   16075.8
+ despacho    | e02-d3-20261012-131837-P15-9  | 2026-10-12 19:17:09.585332+00 | 00:00:15.321584 |   15326.9
+ despacho    | e02-d3-20261012-131837-P1-12  | 2026-10-12 19:17:39.953725+00 | 00:00:16.957454 |   16966.6
+ despacho    | e02-d3-20261012-131837-P2-9   | 2026-10-12 19:18:10.766301+00 | 00:00:16.142732 |   16148.8
+ despacho    | e02-d3-20261012-131837-P9-12  | 2026-10-12 19:18:41.404882+00 | 00:00:15.500312 |   15504.3
+ facturacion | e02-d3-20261012-131837-P15-15 | 2026-10-12 19:19:09.581358+00 | 00:00:15.32562  |   15329.8
+ facturacion | e02-d3-20261012-131837-P11-18 | 2026-10-12 19:19:40.034917+00 | 00:00:16.868556 |   16871.7
+ facturacion | e02-d3-20261012-131837-P19-20 | 2026-10-12 19:20:10.126014+00 | 00:00:16.771917 |   16775.1
+ facturacion | e02-d3-20261012-131837-P10-21 | 2026-10-12 19:20:39.03351+00  | 00:00:15.867117 |   15873.2
+ facturacion | e02-d3-20261012-131837-P12-13 | 2026-10-12 19:21:09.490884+00 | 00:00:15.411184 |   15416.4
+ inventario  | e02-d3-20261012-131837-P11-24 | 2026-10-12 19:21:40.035689+00 | 00:00:16.882861 |   16888.1
+ inventario  | e02-d3-20261012-131837-P14-33 | 2026-10-12 19:22:09.76457+00  | 00:00:15.135814 |   15140.7
+ inventario  | e02-d3-20261012-131837-P10-29 | 2026-10-12 19:22:40.855349+00 | 00:00:16.05456  |   16058.8
+ inventario  | e02-d3-20261012-131837-P18-21 | 2026-10-12 19:23:10.038539+00 | 00:00:17.43642  |   17550.2
+ inventario  | e02-d3-20261012-131837-P13-27 | 2026-10-12 19:23:40.585597+00 | 00:00:16.31693  |   16320.2
+
+
+== D5 · entregas repetidas: detectadas y efectos por pedido
+ etapa | repeticiones | detectadas | un_efecto | efecto_doble | sin_efecto 
+-------+--------------+------------+-----------+--------------+------------
+
+
+== Entregas que el bróker devolvió y la etapa retomó (tras una caída)
+ etapa | retomadas 
+-------+-----------
+
+
+== Falsas alarmas: declaraciones sin caída, pedidos sanos informados como atascados y mensajes sin pedido detenido
+ que | ts | etapa | pedido_id | llego_a_logistica 
+-----+----+-------+-----------+-------------------
+
+
+== Escapes: pedidos detenidos que no llegaron a la cola o llegaron tarde
+ falla | etapa | pedido_id | t0 | encolado | demora_ms 
+-------+-------+-----------+----+----------+-----------
+

@@ -9,7 +9,7 @@
 #                 recreado con el T y el N de la fila
 #   2. calentar   la carga de fondo corre WARMUP_S; nada de esto entra al veredicto
 #   3. medir      E01: la fase de k6 · E02: D1_S sin fallas, REPS caídas, CONGELAR
-#                 congelamientos, en ese orden
+#                 congelamientos y REPETIR entregas repetidas (D5), en ese orden
 #   4. cerrar     GRACIA_S más con carga, para que lleguen las salidas tardías
 #   5. veredicto  analisis/e01.sql o e02.sql sobre el registro de eventos
 #
@@ -81,6 +81,7 @@ preparar() {
   done
   # El Monitor se recrea en cada corrida: arranca sin cuentas viejas y con el T y N de la fila.
   SONDEO_T_MS="$SONDEO_T_MS" SONDEO_N="$SONDEO_N" SONDEO_ESPERA_MS="$SONDEO_ESPERA_MS" \
+  UMBRAL_ATASCO_MS="$UMBRAL_ATASCO_MS" \
     "${COMPOSE[@]}" up -d --force-recreate --no-deps monitor >/dev/null 2>&1
   esperar_salud 8095
 }
@@ -115,14 +116,24 @@ medir_e02() { # dir
       sleep "$ESPACIO_S"
     done
   fi
+  if [ "$REPETIR" -gt 0 ]; then
+    local i=0
+    for etapa in $(orden_de_etapas "$REPETIR"); do
+      i=$((i + 1))
+      log "  D5 $i/$REPETIR: se le vuelve a entregar a $etapa un pedido que ya terminó"
+      docker exec inyector inyectar repetir "$etapa" >>"$1/inyector.log" 2>&1 \
+        || log "  no se pudo repetir la entrega en $etapa: ver $1/inyector.log"
+      sleep "$ESPACIO_REPETIR_S"
+    done
+  fi
 }
 
 correr() { # grupo id experimento fase criterio vars pregunta
   local grupo="$1" id="$2" experimento="$3" fase="$4" criterio="$5" vars="$6" pregunta="$7"
 
   # Valores por omisión; la fila los sobrescribe.
-  WARMUP_S=300 TASA_BASE=2 SONDEO_T_MS=2000 SONDEO_N=3 SONDEO_ESPERA_MS=500
-  D1_S=0 REPS=0 CAIDA_S=45 PAUSA_S=30 CONGELAR=0 ESPACIO_S=60 GRACIA_S=60
+  WARMUP_S=300 TASA_BASE=2 SONDEO_T_MS=2000 SONDEO_N=3 SONDEO_ESPERA_MS=500 UMBRAL_ATASCO_MS=15000
+  D1_S=0 REPS=0 CAIDA_S=45 PAUSA_S=30 CONGELAR=0 ESPACIO_S=60 REPETIR=0 ESPACIO_REPETIR_S=5 GRACIA_S=60
   if [ "$vars" != "-" ]; then
     IFS=';' read -ra pares <<<"$vars"
     for kv in "${pares[@]}"; do printf -v "${kv%%=*}" '%s' "${kv#*=}"; done
@@ -132,8 +143,8 @@ correr() { # grupo id experimento fase criterio vars pregunta
   mkdir -p "$dir"
   log "== $corrida · $experimento $fase · $pregunta"
   local variables
-  variables=$(printf '{"T_ms":%s,"N":%s,"espera_ms":%s,"tasa_base":%s,"d1_s":%s,"caidas":%s,"caida_s":%s,"congelar":%s,"vars":"%s"}' \
-    "$SONDEO_T_MS" "$SONDEO_N" "$SONDEO_ESPERA_MS" "$TASA_BASE" "$D1_S" "$REPS" "$CAIDA_S" "$CONGELAR" "$vars")
+  variables=$(printf '{"T_ms":%s,"N":%s,"espera_ms":%s,"umbral_ms":%s,"tasa_base":%s,"d1_s":%s,"caidas":%s,"caida_s":%s,"congelar":%s,"repetir":%s,"vars":"%s"}' \
+    "$SONDEO_T_MS" "$SONDEO_N" "$SONDEO_ESPERA_MS" "$UMBRAL_ATASCO_MS" "$TASA_BASE" "$D1_S" "$REPS" "$CAIDA_S" "$CONGELAR" "$REPETIR" "$vars")
 
   preparar || { log "no se pudo preparar la topología"; return 1; }
   sql -c "INSERT INTO registro.corrida (id, experimento, fase, variables, arranque)

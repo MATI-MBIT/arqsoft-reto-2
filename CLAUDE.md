@@ -125,16 +125,21 @@ al experimento. Stack fijado: local, Java
 Prometheus y Grafana para ver la corrida, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
-Resultados (ciclo del 2026-10-07, 18:17–22:32, en `docs/results.md`), con el
-diseño de DG-CMP-004 y DG-CMP-005: H1 se sostiene en S1, S2 y S3 (50 de 50
-avisos, máximo 115 ms; 0 falsas alarmas en 17 893 sesiones) → aceptar ADR-007
-tal como está. H2 pasa D1 y D2 (655 de 655 detenidos en la Dead-Letter-Queue,
-máximo 6,4 s) y cae en D3 (0 de 30 congelados) → confirmar ADR-004. D4 corrió
-aparte la noche del 2026-10-08 (21:05–6:11, ciclo `20261008-210507`): las 12
-combinaciones de T y N sin una sola declaración falsa, así que el menor N es 1
-y su N × T, 1 s; vale para una máquina, no para red real. Con el bróker, 908 pedidos que se recuperaron solos también llegaron a
-la Dead-Letter-Queue: ASR-4 necesita la idempotencia de ADR-005. No se guarda el
-histórico de corridas: `analisis/resultados/` tiene solo el ciclo vigente.
+Resultados (en `docs/results.md`), con el diseño de DG-CMP-004 y DG-CMP-005.
+E01 (ciclo del 2026-10-07, 18:17–22:32): H1 se sostiene en S1, S2 y S3 (50 de
+50 avisos, máximo 115 ms; 0 falsas alarmas en 17 893 sesiones) → aceptar
+ADR-007 tal como está. E02, primera versión (sondeo de solo vida, 2026-10-07):
+cayó en D3, 0 de 30 congelados. El 2026-10-12 Nicolás pidió refinar H2 en vez
+de cerrar la decisión: **punto de salud enriquecido** (la etapa informa los
+pedidos con más de U = 15 s sin terminar, S-12, leídos de su recibo) y **etapa
+idempotente** (recibo antes de confirmar al bróker; efecto en la misma
+transacción que lo cierra; fase nueva D5 de entregas repetidas). E02 refinado
+(2026-10-12, 13:18–14:33, ciclo `20261012-131837`): pasa D1, D2 (362 de 362,
+≤ 6,4 s), D3 (15 de 15, ≤ 17,6 s) y D5 (60 de 60 sin efecto doble) → adoptar
+el Monitor con punto de salud enriquecido y actualizar ADR-004 (el plazo lo
+mide la etapa y lo lee el Monitor) y ADR-005. D4 corrió con la primera versión
+la noche del 2026-10-08 y sigue valiendo: menor N = 1, N × T = 1 s, solo para
+una máquina. `analisis/resultados/` guarda solo lo que `results.md` cita.
 
 ### El prototipo
 
@@ -142,8 +147,10 @@ Vive en este repositorio: `services/` (12 micros; los eventos van por RabbitMQ
 como en DG-CMP-004 y DG-CMP-005), `deploy/` (Compose, Grafana, Prometheus,
 inyector), `load/` (k6, `plan.tsv`, `experimento.sh` y sus versiones `.ps1`
 para Windows) y `analisis/` (veredicto en SQL y resultados del ciclo vigente).
-`make help` lista todo; `make e2e` verifica el montaje; `make experimentos`
-corre E01 y E02 (~4 h 20 min). En Windows, `make.bat` con los mismos objetivos.
+`make help` lista todo; `make e2e` verifica el montaje; `make e02-rapido`
+corre E02 en ~25 min y `make e02` el de decisión en ~1 h 30 (Nicolás pidió el
+2026-10-12 retroalimentación corta: nada de corridas de 9 h). En Windows,
+`make.bat` con los mismos objetivos.
 
 El orquestador invalida una corrida si la carga de fondo tiene un hueco de más
 de 30 s, si el equipo se suspendió o si k6 pasa del 1 % de solicitudes

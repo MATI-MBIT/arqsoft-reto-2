@@ -8,7 +8,7 @@
 # cada tipo de evento llega al registro y cada criterio tiene casos.
 #
 # Que H1 o H2 pasen o fallen es el resultado del experimento, y se informa
-# aparte sin hacer fallar el e2e: D3 falla por diseño si el sondeo no ve el
+# aparte sin hacer fallar el e2e: D3 falla si el punto de salud no informa el
 # pedido congelado. Lo que sí lo hace fallar es un criterio sin casos (NO
 # APLICA), un tipo de evento ausente, un duplicado o un panel roto.
 #
@@ -91,7 +91,8 @@ foreach ($corrida in "humo-e01-$Stamp", "humo-e02-$Stamp") {
 $esperados = @('sesion.abierta', 'huella.comparada', 'aviso.emitido', 'aviso.recibido', 'dispositivo.registrado',
     'pedido.confirmado', 'etapa.completada', 'pedido.listo', 'pedido.en.logistica', 'alerta.notificada',
     'falla.inyectada', 'sondeo.fallido', 'etapa.declarada.detenida', 'pedido.encolado', 'mensaje.en.cola',
-    'etapa.reiniciada', 'etapa.recuperada', 'falla.congelada')
+    'etapa.reiniciada', 'etapa.recuperada', 'falla.congelada',
+    'pedido.atascado.detectado', 'etapa.efecto.aplicado', 'etapa.entrega.repetida')
 $presentes = @(Invoke-Sql -c ("SELECT DISTINCT e.tipo FROM registro.evento e, registro.corrida c " +
     "WHERE c.id LIKE 'humo-%-$Stamp' AND e.ts BETWEEN c.arranque AND c.fin + interval '60 seconds'") | ForEach-Object { "$_".Trim() })
 $faltan = @($esperados | Where-Object { $presentes -notcontains $_ })

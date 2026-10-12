@@ -9,7 +9,7 @@
 #                 recreado con el T y el N de la fila
 #   2. calentar   la carga de fondo corre WARMUP_S; nada de esto entra al veredicto
 #   3. medir      E01: la fase de k6 · E02: D1_S sin fallas, REPS caídas, CONGELAR
-#                 congelamientos, en ese orden
+#                 congelamientos y REPETIR entregas repetidas (D5), en ese orden
 #   4. cerrar     GRACIA_S más con carga, para que lleguen las salidas tardías
 #   5. veredicto  analisis/e01.sql o e02.sql sobre el registro de eventos
 #
@@ -77,6 +77,7 @@ function Invoke-Preparar([hashtable]$V) {
     $env:SONDEO_T_MS = $V.SONDEO_T_MS
     $env:SONDEO_N = $V.SONDEO_N
     $env:SONDEO_ESPERA_MS = $V.SONDEO_ESPERA_MS
+    $env:UMBRAL_ATASCO_MS = $V.UMBRAL_ATASCO_MS
     Invoke-Compose up -d --force-recreate --no-deps monitor *> $null
     return (Wait-Salud 8095)
 }
@@ -115,6 +116,17 @@ function Invoke-MedirE02([hashtable]$V, [string]$Dir) {
             Start-Sleep -Seconds ([int]$V.ESPACIO_S)
         }
     }
+    if ([int]$V.REPETIR -gt 0) {
+        $i = 0
+        foreach ($etapa in (Get-OrdenDeEtapas ([int]$V.REPETIR))) {
+            $i++
+            Write-Log "  D5 $i/$($V.REPETIR): se le vuelve a entregar a $etapa un pedido que ya terminó"
+            $salida = & docker exec inyector inyectar repetir $etapa 2>&1
+            Add-Utf8 $log $salida
+            if ($LASTEXITCODE -ne 0) { Write-Log "  no se pudo repetir la entrega en ${etapa}: ver $log" }
+            Start-Sleep -Seconds ([int]$V.ESPACIO_REPETIR_S)
+        }
+    }
 }
 
 function Start-K6([string]$Guion, [int]$Puerto, [string]$Salida, [string[]]$Extra, [switch]$Esperar) {
@@ -128,8 +140,9 @@ function Start-K6([string]$Guion, [int]$Puerto, [string]$Salida, [string[]]$Extr
 function Invoke-Corrida($Fila) {
     # Valores por omisión; la fila los sobrescribe.
     $V = @{
-        WARMUP_S = '300'; TASA_BASE = '2'; SONDEO_T_MS = '2000'; SONDEO_N = '3'; SONDEO_ESPERA_MS = '500'
-        D1_S = '0'; REPS = '0'; CAIDA_S = '45'; PAUSA_S = '30'; CONGELAR = '0'; ESPACIO_S = '60'; GRACIA_S = '60'
+        WARMUP_S = '300'; TASA_BASE = '2'; SONDEO_T_MS = '2000'; SONDEO_N = '3'; SONDEO_ESPERA_MS = '500'; UMBRAL_ATASCO_MS = '15000'
+        D1_S = '0'; REPS = '0'; CAIDA_S = '45'; PAUSA_S = '30'; CONGELAR = '0'; ESPACIO_S = '60'
+        REPETIR = '0'; ESPACIO_REPETIR_S = '5'; GRACIA_S = '60'
     }
     if ($Fila.Vars -ne '-') {
         foreach ($kv in $Fila.Vars.Split(';')) {
@@ -147,9 +160,9 @@ function Invoke-Corrida($Fila) {
 
     # Las variables se arman con jsonb_build_object: sin comillas dobles, que 5.1
     # pierde al pasar el SQL a docker.
-    $variables = "jsonb_build_object('T_ms', $($V.SONDEO_T_MS), 'N', $($V.SONDEO_N), 'espera_ms', $($V.SONDEO_ESPERA_MS), " +
+    $variables = "jsonb_build_object('T_ms', $($V.SONDEO_T_MS), 'N', $($V.SONDEO_N), 'espera_ms', $($V.SONDEO_ESPERA_MS), 'umbral_ms', $($V.UMBRAL_ATASCO_MS), " +
         "'tasa_base', $($V.TASA_BASE), 'd1_s', $($V.D1_S), 'caidas', $($V.REPS), 'caida_s', $($V.CAIDA_S), " +
-        "'congelar', $($V.CONGELAR), 'vars', '$($Fila.Vars)')"
+        "'congelar', $($V.CONGELAR), 'repetir', $($V.REPETIR), 'vars', '$($Fila.Vars)')"
     Invoke-Sql -c ("INSERT INTO registro.corrida (id, experimento, fase, variables, arranque) " +
         "VALUES ('$corrida', '$($Fila.Experimento)', '$($Fila.Fase)', $variables, clock_timestamp())") | Out-Null
 

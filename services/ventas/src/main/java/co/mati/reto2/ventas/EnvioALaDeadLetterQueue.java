@@ -28,7 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
  * La reacción de H2 (DG-CMP-005): el Monitor le notifica al Coordinador que una
  * etapa cayó, y el Coordinador publica en el bróker (T8) cada pedido que tiene
  * pendiente en ella, con la clave pedido.detenido. El bróker lo deja en la
- * Dead-Letter-Queue (T11), que en este prototipo nadie consume (ASR-4).
+ * Dead-Letter-Queue (T11), que en este prototipo nadie consume (ASR-4). El
+ * Monitor también le pasa los pedidos que una etapa viva informa como atascados
+ * en su punto de salud, y el Coordinador envía solo esos.
  *
  * <p>Cada pedido entra una sola vez: primero se inserta la señal con la clave
  * (pedido, etapa, intento); solo si entra se publica, y el pedido se da por
@@ -58,6 +60,8 @@ class EnvioALaDeadLetterQueue {
 
     record FallaDeEtapa(String etapa) {}
 
+    record PedidosAtascados(String etapa, List<String> pedidos) {}
+
     record PedidoDetenido(String pedidoId, String etapa, int intento, String enviadoEn, String detectadoEn,
                           long transcurridoMs) {}
 
@@ -78,6 +82,28 @@ class EnvioALaDeadLetterQueue {
                 }
             });
         }
+        return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * El aviso del Monitor por pedidos atascados en una etapa viva: el punto de
+     * salud de la etapa los informó. Se envían solo esos pedidos, y solo si
+     * siguen sin cerrar en ventas. La señal (pedido, etapa, intento) evita que un
+     * aviso repetido los envíe dos veces.
+     */
+    @PostMapping("/fallas/pedidos")
+    ResponseEntity<Void> pedidosAtascados(@RequestBody PedidosAtascados a) {
+        trabajo.submit(() -> {
+            for (String pedidoId : a.pedidos()) {
+                List<Timestamp> enviado = jdbc.queryForList("""
+                        SELECT enviado_en FROM operacion.pedido_etapa
+                        WHERE pedido_id = ? AND etapa = ? AND estado = 'EN_CURSO'""",
+                        Timestamp.class, pedidoId, a.etapa());
+                if (!enviado.isEmpty()) {
+                    enviar(pedidoId, enviado.get(0).toInstant(), a.etapa());
+                }
+            }
+        });
         return ResponseEntity.accepted().build();
     }
 

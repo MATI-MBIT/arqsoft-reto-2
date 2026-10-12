@@ -14,7 +14,7 @@ la primera sección.
 | Experimento | Hipótesis | Escenario | Decisión que valida | Alcance |
 |---|---|---|---|---|
 | E01 — Seguridad | H1: el Verificador de dispositivo compara la huella apenas el micro de sesiones abre la sesión | ASR-1 | ADR-007 | La detección y el aviso a seguridad, que son toda la respuesta del escenario |
-| E02 — Disponibilidad | H2: el Monitor de la cadena sondea las etapas y avisa al micro de ventas, que envía el pedido detenido a la Dead-Letter-Queue | ASR-3 | ADR-004 | La detección y la reacción, que consiste solo en enviar el pedido a la Dead-Letter-Queue |
+| E02 — Disponibilidad | H2: el Monitor de la cadena detecta el pedido detenido, el micro de ventas lo envía a la Dead-Letter-Queue y cada etapa idempotente aplica su efecto una sola vez | ASR-4, con ASR-3 como paso previo | ADR-005, con ADR-004 para la detección | Que el pedido detenido llegue a la Dead-Letter-Queue y que ninguna etapa duplique su efecto. La reanudación y la entrega a una persona quedan fuera |
 
 Los escenarios están en [ASRs de disponibilidad y seguridad](quality-attributes.md),
 y las decisiones, en el [registro de ADR](modelos/adrs-ccp-reto2.md). Cada
@@ -104,10 +104,18 @@ de dispositivo.**
 
 #### H1 — El Verificador de dispositivo detecta la huella de un dispositivo no registrado
 
-**Si el Verificador de dispositivo compara la huella del dispositivo —el ID que
-la base guarda para cada vendedor— apenas el micro de sesiones publica la
-apertura de la sesión, entonces seguridad recibirá el aviso en ≤ 2 s, porque la
-comparación es una sola lectura en la base y no bloquea el inicio de sesión.**
+- **Creemos que** comparar la huella del dispositivo —el ID que la base guarda
+  para cada vendedor— en el Verificador de dispositivo, apenas el micro de
+  sesiones publica la apertura de la sesión,
+- **para** una sesión abierta con las credenciales correctas de un vendedor
+  desde un dispositivo que no es el suministrado ([ASR-1](quality-attributes.md)),
+- **dará como resultado** un aviso a seguridad con el vendedor, el dispositivo
+  y la hora, sin frenar el inicio de sesión del vendedor legítimo,
+- **lo cual se validará cuando** las 50 aperturas desde un dispositivo no
+  registrado de la fase S1 produzcan su aviso en ≤ 2 s, los 100 cambios
+  legítimos de S2 disparen ≤ 1 aviso, y ni las 20 aperturas de S3, hechas
+  menos de 1 s después de registrar el dispositivo, ni las sesiones desde el
+  dispositivo registrado disparen ninguno.
 
 - **Variable independiente:** dónde y cuándo se compara la huella. Se compara
   en el Verificador de dispositivo, al recibir el evento `sesion.abierta` del
@@ -119,8 +127,8 @@ comparación es una sola lectura en la base y no bloquea el inicio de sesión.**
 
 Fundamento: CCP le entrega el dispositivo a cada vendedor, de modo que el
 sistema tiene contra qué comparar aunque las credenciales sean correctas. La
-comparación corre después de abrir la sesión, así que no frena al vendedor
-legítimo.
+comparación es una sola lectura en la base y corre después de abrir la sesión,
+así que cabe en los 2 s y no frena al vendedor legítimo.
 
 El cambio legítimo de dispositivo no dispara el aviso porque se registra antes
 del primer uso: en el prototipo, el micro Onboarding registra el dispositivo
@@ -283,65 +291,114 @@ resultado no se acomoda después a la decisión.
 
 ### El título del experimento
 
-**E02 — Validar la detección del pedido detenido con el Monitor de la cadena y
-su envío a la Dead-Letter-Queue.**
+**E02 — Validar que el pedido detenido llegue a la Dead-Letter-Queue sin
+efectos duplicados, con el Monitor de la cadena y etapas idempotentes.**
 
 ### La hipótesis de diseño
 
-#### H2 — El Monitor de la cadena detecta el pedido detenido y el micro de ventas lo envía a la Dead-Letter-Queue
+**H2 tiene dos versiones.** La primera probó un sondeo que solo comprueba si
+la etapa está viva. Corrió el 7 de octubre de 2026 y cayó en D3: la etapa
+respondía al sondeo con un pedido congelado dentro, y el Monitor no lo vio. El
+12 de octubre el equipo la refinó con dos cambios: el punto de salud de cada
+etapa informa qué pedidos lleva demasiado tiempo sin terminar, y cada etapa es
+idempotente. Lo que sigue es la versión vigente; la primera queda al final de
+esta sección.
 
-**Si el Monitor de la cadena sondea cada etapa y avisa al micro de ventas
-cuando una no responde N sondeos seguidos, y el micro de ventas envía sus
-pedidos pendientes a la Dead-Letter-Queue, entonces todo pedido detenido llegará
-a ella en ≤ 30 s, porque N sondeos fallidos caben en ese plazo.**
+#### H2 — El Monitor de la cadena detecta el pedido detenido, el micro de ventas lo envía a la Dead-Letter-Queue y ninguna etapa duplica su efecto
+
+- **Creemos que** un Monitor de la cadena que le pide al punto de salud de
+  cada etapa los pedidos con más de U segundos sin terminar, y que da por caída
+  la etapa que no responde N sondeos seguidos, con un micro de ventas que envía
+  a la Dead-Letter-Queue esos pedidos y los pendientes en la etapa caída, y con
+  etapas idempotentes,
+- **para** un pedido detenido con una o dos etapas ya completadas y una
+  pendiente ([ASR-4](quality-attributes.md)), que primero hay que detectar
+  ([ASR-3](quality-attributes.md)),
+- **dará como resultado** que todo pedido detenido llegue una sola vez a la
+  Dead-Letter-Queue, con la etapa y el tiempo transcurrido, y que ninguna etapa
+  duplique la factura, el descargue ni la orden de despacho,
+- **lo cual se validará cuando** los pedidos de las etapas caídas en D2 y los
+  15 congelados dentro de una etapa viva en D3 lleguen a la cola en ≤ 30 s y
+  sin duplicados, la media hora sin fallas de D1 deje ≤ 1 falsa alarma por
+  hora y ninguna de las 60 entregas repetidas de D5 aplique dos veces su
+  efecto.
 
 «Pedido detenido» incluye el que se congela dentro de una etapa que sigue
-respondiendo al sondeo. Es el caso que el sondeo quizá no vea, y la fase D3 lo
-pone a prueba.
+respondiendo al sondeo. Es el caso que tumbó la primera versión, y la fase D3
+lo vuelve a poner a prueba.
 
-- **Variable independiente:** el sondeo del Monitor y el envío a la cola. El
-  Monitor sondea cada T segundos y avisa al micro de ventas cuando una etapa no
-  responde N sondeos seguidos; el micro de ventas envía a la Dead-Letter-Queue
-  cada pedido pendiente en ella.
+- **Variables independientes:** el sondeo enriquecido y la idempotencia por
+  etapa. El Monitor sondea cada T segundos y le pide a cada etapa los pedidos
+  con más de U segundos sin terminar. Avisa al micro de ventas cuando una etapa
+  no responde N sondeos seguidos o cuando informa pedidos atascados, y el micro
+  de ventas los envía a la Dead-Letter-Queue. Cada etapa guarda el recibo del
+  pedido antes de confirmarlo al bróker, y aplica su efecto en la misma
+  transacción que lo da por terminado.
 - **Variables dependientes:** la demora entre la falla y la confirmación del
-  pedido en la cola; las falsas alarmas por hora, que ASR-3 limita a una; y los
-  pedidos detenidos que no llegan a la cola o que llegan dos veces.
+  pedido en la cola; las falsas alarmas por hora, que ASR-3 limita a una; los
+  pedidos detenidos que no llegan a la cola o que llegan dos veces; y los
+  efectos que una etapa aplica dos veces al mismo pedido.
 
-Fundamento: el Monitor nota que una etapa no responde sin depender de ella. El
-micro de ventas sabe qué pedidos le entregó a esa etapa y cuáles no han vuelto.
-Con el aviso del Monitor arma, por cada pedido, un mensaje con el pedido, la
-etapa y el tiempo transcurrido.
+Fundamento: el Monitor detecta la etapa caída contando los sondeos sin
+respuesta, sin necesitar que la etapa le informe nada. Cuando la etapa sí
+responde, el recibo que guarda para ser idempotente dice qué pedidos aceptó y no
+ha terminado, aunque el hilo que los trabajaba ya no exista. El Monitor fija U
+en la consulta, y el punto de salud le devuelve los pedidos que lo pasan. El
+plazo alcanza porque N × T, para la etapa caída, y U + T, para el pedido
+congelado, caben en los 30 s.
 
-Publicar en una cola durable cuesta milisegundos: la reacción no se come el
-plazo de la detección, y el mensaje sobrevive aunque nadie lo atienda todavía.
+El micro de ventas arma, por cada pedido, un mensaje con el pedido, la etapa y
+el tiempo transcurrido. Publicarlo en una cola durable cuesta milisegundos: la
+reacción no se come el plazo de la detección, y el mensaje sobrevive aunque
+nadie lo atienda todavía.
 
-Lo que la refutaría, cualquiera de dos casos:
+La idempotencia cubre la otra mitad de la hipótesis. Al llegar un pedido, la
+etapa revisa su recibo, y aplica el efecto solo si el pedido sigue en curso, en
+la misma transacción que lo da por terminado. Así, la etapa que recibe dos veces
+el mismo pedido aplica el efecto una sola vez. Las facturas, los descargues y
+las órdenes de despacho duplicados se quedan en cero.
 
-- Una etapa que sigue viva y responde al sondeo mientras un pedido se queda
-  congelado dentro de ella. ASR-3 describe justo esa falla, sin señal de error.
-  En [ADR-004](modelos/adrs-ccp-reto2.md) el equipo predijo que el sondeo no
-  la ve, y por eso eligió un plazo por pedido y etapa. El experimento contrasta
-  esa predicción con datos.
-- Un pedido detectado que no llega a la cola, o que llega dos veces. Un
-  duplicado haría que la reanudación de ASR-4 repita una etapa.
+Lo que la refutaría, cualquiera de tres casos:
 
-El número que no conocemos: el menor N de sondeos sin respuesta que no dispara
-falsas alarmas con la variación normal de las etapas. Con un sondeo cada T
-segundos, el pedido llega a la cola cerca de N × T segundos después de la
-falla. Ese producto tiene que caber en los 30 s que da ASR-3.
+- Un pedido congelado dentro de una etapa viva que no llega a la cola en
+  ≤ 30 s. ASR-3 describe justo esa falla, sin señal de error.
+- Más de una falsa alarma por hora: pedidos sanos pero lentos que el punto de
+  salud informa como atascados porque U quedó corto.
+- Un pedido detectado que no llega a la cola o llega dos veces, o una etapa que
+  aplica dos veces su efecto al mismo pedido. Un efecto doble es una factura o
+  un descargue repetido, lo que ASR-4 prohíbe.
+
+U sale del supuesto S-12: 15 s, porque en D1 de la primera versión ninguna
+etapa tardó más de 13,7 s. Con un sondeo cada 2 s, el pedido llega a la cola
+cerca de 17 s después de entrar a la etapa, dentro de los 30 s de ASR-3.
 
 ### El escenario enlazado
 
 | ASR | Nombre en Helix | Historia | Cobertura |
 |---|---|---|---|
-| ASR-3 | Availability — Creación del pedido en la tienda | [HU-03](requirements.md) | Completa: la detección y la reacción, que es enviar el pedido a la Dead-Letter-Queue |
+| ASR-4 | Availability — Recepción del pedido escalado | [HU-14](requirements.md) | Parcial: los efectos duplicados, que deben ser cero. La reanudación en ≤ 5 s y la entrega a una persona quedan fuera, porque nadie consume la Dead-Letter-Queue |
+| ASR-3 | Availability — Creación del pedido en la tienda | [HU-03](requirements.md) | Paso previo: H2 tiene que detectar el pedido detenido para poder ponerlo en la Dead-Letter-Queue |
+
+H2 prueba ASR-4, pero el diseño la obliga a pasar antes por ASR-3. El
+estímulo de ASR-4 es un pedido ya señalado como detenido, y esa señal es la
+respuesta de ASR-3. Por eso las fases D1 a D3 miden la detección, y D5 mide el
+efecto duplicado.
 
 ### Las tácticas y los patrones
 
-La táctica es *monitor*, la misma que nombra
+La primera táctica es *monitor*, la misma que nombra
 [ADR-004](modelos/adrs-ccp-reto2.md). El Monitor de la cadena (EL-17 en el
-registro de ADR) sondea la salud de cada etapa cada T segundos. ADR-004 usa ese
-sondeo solo como apoyo del plazo por pedido; aquí es el único mecanismo.
+registro de ADR) sondea la salud de cada etapa cada T segundos. Su punto de
+salud no se limita a «estoy viva»: informa la edad de los pedidos en curso,
+como un monitoreo de condición. En la práctica, el plazo por pedido y etapa de
+ADR-004 lo mide la etapa y lo lee el Monitor, en vez de revisarlo el
+Coordinador.
+
+La segunda es el *receptor idempotente* de [ADR-005](modelos/adrs-ccp-reto2.md).
+Cada etapa guarda un recibo con la clave del pedido y la etapa antes de
+confirmar el mensaje al bróker. Si el mensaje llega otra vez, la etapa ve el
+recibo y no repite el efecto. Ese recibo es también lo que lee el punto de
+salud.
 
 La reacción sigue el panorama DG-CMP-001. El Monitor le notifica la falla al
 Coordinador de la cadena, que en el prototipo es el micro de ventas y guarda el
@@ -352,8 +409,8 @@ del equipo.
 
 Cada mensaje lleva como clave el pedido, la etapa y el intento, para que el
 mismo pedido no entre dos veces. La Dead-Letter-Queue separa la detección de
-quien atiende el pedido: reanudarlo o entregarlo a una persona le toca a ASR-4,
-y en el panorama lo atiende CCP Support. En este prototipo nadie la consume.
+quien atiende el pedido: reanudarlo o entregarlo a una persona es la parte de
+ASR-4 que este experimento no cubre, y en el panorama lo atiende CCP Support. En este prototipo nadie la consume.
 
 El registro de ADR dibuja otro camino: en ADR-004 y en DG-CMP-003 el Monitor
 encola él mismo en una cola de reintentos (CN-36). El experimento sigue el
@@ -383,48 +440,60 @@ Tres decisiones de montaje que el diagrama no dice:
   ventas espera la confirmación del bróker antes de dar el pedido por enviado.
   Un registrador lee la cola sin consumirla y anota la hora de llegada de cada
   mensaje.
-- **El sondeo es «ping/echo».** El Monitor llama al punto de salud de cada etapa
-  y cuenta las llamadas sin respuesta, como lo marca el panorama.
+- **El sondeo es «ping/echo» con datos.** El Monitor llama al punto de salud
+  de cada etapa, cuenta las llamadas sin respuesta y lee los pedidos que la
+  etapa lleva más de U segundos sin terminar.
 - **Las tres etapas corren en paralelo**, como en el diagrama. ADR-003 las ordena
   en serie, pero el orden no cambia lo que H2 evalúa, que es si la parada se
   detecta y el pedido llega a la cola.
 
 | Fase | Qué se hace | Duración o repeticiones | Tipo |
 |---|---|---|---|
-| D1 — Sin fallas | Carga normal sin ninguna falla inyectada | 1 h | Con criterio |
-| D2 — Etapa caída | Se detiene el proceso de una etapa con pedidos en curso | 10 veces por etapa, 30 en total | Con criterio |
-| D3 — Etapa viva, pedido congelado | La etapa sigue respondiendo al sondeo, pero un pedido se queda congelado dentro de ella, sin respuesta | 10 veces por etapa, 30 en total | Con criterio: es la fase que puede refutar H2 |
-| D4 — Combinaciones de T y N | Se combina un sondeo cada 1, 2 y 5 s con 1, 2, 3 y 5 sondeos sin respuesta | 12 combinaciones, con D1 y D2 en cada una | Exploratoria |
+| D1 — Sin fallas | Carga normal sin ninguna falla inyectada | 30 min | Con criterio |
+| D2 — Etapa caída | Se detiene el proceso de una etapa con pedidos en curso | 5 veces por etapa, 15 en total | Con criterio |
+| D3 — Etapa viva, pedido congelado | La etapa sigue respondiendo al sondeo, pero un pedido se queda congelado dentro de ella: la etapa lo acepta y lo olvida | 5 veces por etapa, 15 en total | Con criterio: es la fase que tumbó la primera versión |
+| D5 — Entrega repetida | El inyector le vuelve a entregar a una etapa un pedido que ya terminó, como lo haría el bróker tras una caída o quien reprocese la Dead-Letter-Queue | 20 veces por etapa, 60 en total | Con criterio |
+| D4 — Combinaciones de T y N | Se combina un sondeo cada 1, 2 y 5 s con 1, 2, 3 y 5 sondeos sin respuesta | 12 combinaciones, con D1 y D2 en cada una | Exploratoria. Corrió el 8 de octubre con la primera versión; no se repite, porque la detección de la etapa caída no cambió |
+
+**Tres niveles de corrida.** Las corridas de horas no dan retroalimentación a
+tiempo, así que el plan tiene tres niveles. El humo, de unos 5 min, comprueba
+que todo circula. El rápido, de unos 25 min, corre todas las fases en una sola
+corrida con 3 casos por etapa, para probar cada cambio. El de decisión, de cerca
+de 1 h 30, corre las fases de la tabla y es el que entra a los resultados.
 
 **Qué se mide.** El reloj arranca cuando el inyector detiene la etapa (D2) o
-congela el pedido (D3), y para cuando el bróker confirma el mensaje del pedido
-en la cola. El cruce es por identificador del pedido y nombre de la etapa. El
+cuando el pedido congelado entra a la etapa (D3), y para cuando el bróker
+confirma el mensaje del pedido en la cola. En D5 no hay reloj: se cuenta cuántas
+veces aplicó la etapa su efecto a cada pedido. El cruce es por identificador del pedido y nombre de la etapa. El
 tablero de Grafana muestra los sondeos sin respuesta y los mensajes en la cola.
 
-Un mensaje en la cola es **falsa alarma** cuando nombra un pedido que llegó a
-logística o una etapa que nunca se detuvo.
+Hay **falsa alarma** cuando el Monitor declara detenida una etapa que no cayó,
+o cuando el punto de salud informa como atascado un pedido que no estaba
+congelado ni detenido.
 
-**H2 se sostiene si se cumplen las cuatro condiciones:**
+**H2 se sostiene si se cumplen las cinco condiciones:**
 
-- En D2, los 30 pedidos llegan a la cola en ≤ 30 s, cada uno con el pedido, la
-  etapa y el tiempo transcurrido.
+- En D2, los pedidos detenidos llegan a la cola en ≤ 30 s, cada uno con el
+  pedido, la etapa y el tiempo transcurrido.
 - En D1, hay ≤ 1 falsa alarma por hora.
-- En D3, los 30 pedidos también llegan a la cola en ≤ 30 s.
+- En D3, los 15 pedidos congelados también llegan a la cola en ≤ 30 s.
+- En D5, ninguna etapa aplica dos veces su efecto al mismo pedido.
 - En todas las fases, cada pedido detenido entra a la cola una sola vez: cero
   pedidos perdidos y cero duplicados.
-
-Si D2 y D1 pasan y D3 falla, H2 queda refutada para la falla que describe ASR-3,
-aunque el Monitor detecte bien las caídas.
 
 **Limitaciones propias**, además de las comunes:
 
 - Nadie consume la Dead-Letter-Queue: reanudar el pedido o entregarlo a una
-  persona es de ASR-4. La caída del bróker es una falla de infraestructura y
+  persona, y el plazo de ≤ 5 s que ASR-4 fija para eso, quedan sin medir. La caída del bróker es una falla de infraestructura y
   queda fuera por el supuesto S-3.
 - El Monitor de la cadena es un solo proceso. Si cae, nadie detecta nada: es el
   mismo riesgo que el equipo anotó en ADR-004 (R-004a).
-- Una hora de D1 solo distingue entre cero, una y varias falsas alarmas.
+- Media hora de D1 solo distingue entre cero, una y varias falsas alarmas.
   Afirmar «una o menos por hora» con confianza pide más horas de corrida.
+- El punto de salud lee el recibo de la base de la etapa. Si esa base no
+  responde, la etapa tampoco responde al sondeo, y cuenta como etapa caída.
+- La idempotencia se prueba en las etapas. La caída del bróker entre la
+  confirmación y el recibo queda fuera, por el mismo supuesto S-3.
 
 ### Recursos, elementos y esfuerzo
 
@@ -437,7 +506,7 @@ cadena, el bróker con su Dead-Letter-Queue en RabbitMQ y el inyector de fallas.
   Monitor de la cadena; bróker de la cadena; facturación, inventario y
   validación de despacho; Dead-Letter-Queue; y logística.
 - Simulado: simulador de pedidos (k6).
-- Fuera: CCP Support, que consume la Dead-Letter-Queue en ASR-4.
+- Fuera: CCP Support, que consume la Dead-Letter-Queue para reanudar el pedido o entregarlo a una persona.
 
 **Estimated effort.** Unas 41 horas-persona y 20 horas de máquina, casi todas de
 D4, que corre de noche sin supervisión.
@@ -462,7 +531,10 @@ las corridas. Los resultados deben traer:
 - **Falsas detecciones:** mensajes sobre pedidos que llegaron a logística o
   sobre etapas que nunca se detuvieron.
 - **Demora:** mediana, percentil 95 y máximo.
-- **Número desconocido:** el menor N sin falsas alarmas, y su N × T (D4).
+- **Efectos duplicados:** veces que una etapa aplicó dos veces su efecto al
+  mismo pedido (D5).
+- **Número desconocido:** el menor N sin falsas alarmas, y su N × T (D4); y
+  el margen entre U y la etapa más lenta de D1.
 
 ### La decisión que sigue a cada resultado
 
@@ -471,8 +543,29 @@ resultado no se acomoda después a la decisión.
 
 | Resultado | Decisión de arquitectura |
 |---|---|
-| H2 se sostiene en D1, D2 y D3 | Adoptar el sondeo del Monitor de la cadena como mecanismo de detección de ASR-3, con la Dead-Letter-Queue como reacción, y reabrir ADR-004 |
-| H2 pasa D1 y D2 pero falla D3 | Confirmar ADR-004: el plazo por pedido y etapa es el mecanismo, y el sondeo del Monitor queda como apoyo para las caídas de etapas enteras |
-| H2 falla D2: no detecta ni la etapa caída en ≤ 30 s | Buscar en D4 una combinación de T y N que quepa; si ninguna cabe sin falsas alarmas, adoptar ADR-004 sin el sondeo de apoyo |
-| H2 detecta a tiempo pero pierde o duplica pedidos en la cola | Hacer la publicación idempotente con la clave de pedido, etapa e intento (NR-004a), y repetir D2 |
-| H2 falla D1: más falsas alarmas de las admitidas | Subir N con el resultado de D4, y verificar que N × T siga cabiendo en los 30 s |
+| H2 se sostiene en D1, D2, D3 y D5 | Adoptar el Monitor de la cadena con el punto de salud enriquecido como mecanismo de ASR-3, con la Dead-Letter-Queue como reacción. Actualizar ADR-004: el plazo por pedido y etapa lo mide la etapa y lo lee el Monitor. Actualizar ADR-005: el recibo se guarda antes de confirmar al bróker |
+| H2 pasa D1, D2 y D5 pero falla D3 | Volver a ADR-004 tal como está: el plazo por pedido lo revisa el Coordinador, que sabe qué envió y no ha vuelto |
+| H2 falla D1: pedidos sanos informados como atascados | Subir U con la etapa más lenta de D1, y verificar que U + T siga cabiendo en los 30 s |
+| H2 falla D5: una etapa aplica dos veces su efecto | Revisar el orden entre el recibo, el efecto y la confirmación al bróker, y repetir D5 antes de aceptar ADR-005 |
+| H2 falla D2: no detecta la etapa caída en ≤ 30 s | Buscar en D4 una combinación de T y N que quepa |
+| H2 detecta a tiempo pero pierde o duplica pedidos en la cola | Revisar la clave de pedido, etapa e intento (NR-004a), y repetir D2 |
+
+#### La primera versión de H2 y su resultado
+
+- **Creemos que** un Monitor de la cadena que sondea cada etapa y, cuando una
+  no responde N sondeos seguidos, avisa al micro de ventas para que envíe a la
+  Dead-Letter-Queue los pedidos pendientes en esa etapa,
+- **para** un pedido confirmado cuya cadena se detiene sin señalar error
+  ([ASR-3](quality-attributes.md)),
+- **dará como resultado** que todo pedido detenido llegue a la
+  Dead-Letter-Queue en ≤ 30 s,
+- **lo cual se validará cuando** los pedidos de las etapas caídas en D2 y los
+  congelados de D3 lleguen a la cola dentro del plazo, con ≤ 1 falsa alarma por
+  hora en D1.
+
+Corrió el 7 de octubre de 2026 con D1 de 1 h, 30 caídas y 30 congelamientos.
+Pasó D1 y D2 y cayó en D3: 0 de 30 pedidos congelados llegaron a la cola,
+porque el punto de salud respondía «estoy viva» con el pedido quieto dentro. Esa
+fila de la tabla llevaba a confirmar ADR-004. El equipo prefirió refinar el
+punto de salud antes de cerrar la decisión, y el detalle está en
+[los resultados](results.md).

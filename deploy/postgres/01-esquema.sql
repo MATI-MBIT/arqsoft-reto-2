@@ -47,6 +47,30 @@ CREATE TABLE operacion.senal (
     PRIMARY KEY (pedido_id, etapa, intento)
 );
 
+-- El recibo de cada etapa (ADR-005, receptor idempotente). La etapa lo guarda
+-- antes de confirmar el mensaje al bróker: si el mensaje llega otra vez, el
+-- recibo dice que ya lo tiene. El punto de salud lee de aquí los pedidos que la
+-- etapa aceptó y no ha terminado, aunque el hilo que los trabajaba ya no exista.
+CREATE TABLE operacion.recibo_etapa (
+    pedido_id     text        NOT NULL,
+    etapa         text        NOT NULL,
+    estado        text        NOT NULL,         -- EN_CURSO | TERMINADA
+    recibido_en   timestamptz NOT NULL,
+    terminado_en  timestamptz,
+    entregas      int         NOT NULL DEFAULT 1,
+    PRIMARY KEY (pedido_id, etapa)
+);
+CREATE INDEX recibo_etapa_en_curso ON operacion.recibo_etapa (etapa, recibido_en) WHERE estado = 'EN_CURSO';
+
+-- El efecto de la etapa: la factura, el descargue o la validación. Sin clave
+-- única a propósito: si la idempotencia falla, el duplicado queda a la vista.
+CREATE TABLE operacion.efecto_etapa (
+    id          bigserial   PRIMARY KEY,
+    pedido_id   text        NOT NULL,
+    etapa       text        NOT NULL,
+    aplicado_en timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+
 -- Registro ----------------------------------------------------------------
 CREATE TABLE registro.evento (
     id         bigserial   PRIMARY KEY,

@@ -30,7 +30,7 @@ e2e: ## Prueba de punta a punta del montaje (~9 min): compila, levanta, verifica
 	./load/e2e.sh
 
 .PHONY: experimentos
-experimentos: up ## E01 y E02 de corrido, con criterio (~5 h). D4 va aparte: make d4
+experimentos: up ## E01 y E02 de corrido, con criterio (~3 h 30). D4 va aparte: make d4
 	./load/experimento.sh e01 e02
 
 .PHONY: e01
@@ -38,15 +38,19 @@ e01: up ## E01 completo (~2 h): S1, S2, S3 y S4
 	./load/experimento.sh e01
 
 .PHONY: e02
-e02: up ## E02 con criterio (~3 h): D1, D2 y D3 con T=2 s y N=3
+e02: up ## E02 con criterio (~1 h 30): D1, D2, D3 y D5, con T=2 s, N=3 y U=15 s
 	./load/experimento.sh e02
+
+.PHONY: e02-rapido
+e02-rapido: up ## E02 rápido (~25 min): todas las fases en una corrida, 3 casos por etapa
+	./load/experimento.sh e02-rapido
 
 .PHONY: d4
 d4: up ## D4 exploratoria (~9 h, para la noche): las 12 combinaciones de T y N
 	./load/experimento.sh e02-d4
 
 .PHONY: experimento
-experimento: up ## El plan completo (~14 h): E01, E02 y D4
+experimento: up ## El plan completo (~12 h): E01, E02 y D4
 	./load/experimento.sh
 
 .PHONY: grupo

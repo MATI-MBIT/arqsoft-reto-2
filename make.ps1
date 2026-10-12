@@ -66,11 +66,12 @@ Add-Objetivo $GExp 'e2e' 'Prueba de punta a punta del montaje (~9 min): compila,
     & (Join-Path $Raiz 'load\e2e.ps1')
     exit $LASTEXITCODE
 }
-Add-Objetivo $GExp 'experimentos' 'E01 y E02 de corrido, con criterio (~5 h). D4 va aparte: make d4' { Invoke-Up; Invoke-Orquestador @('e01', 'e02') }
+Add-Objetivo $GExp 'experimentos' 'E01 y E02 de corrido, con criterio (~3 h 30). D4 va aparte: make d4' { Invoke-Up; Invoke-Orquestador @('e01', 'e02') }
 Add-Objetivo $GExp 'e01' 'E01 completo (~2 h): S1, S2, S3 y S4' { Invoke-Up; Invoke-Orquestador @('e01') }
-Add-Objetivo $GExp 'e02' 'E02 con criterio (~3 h): D1, D2 y D3 con T=2 s y N=3' { Invoke-Up; Invoke-Orquestador @('e02') }
+Add-Objetivo $GExp 'e02' 'E02 con criterio (~1 h 30): D1, D2, D3 y D5, con T=2 s, N=3 y U=15 s' { Invoke-Up; Invoke-Orquestador @('e02') }
+Add-Objetivo $GExp 'e02-rapido' 'E02 rápido (~25 min): todas las fases en una corrida, 3 casos por etapa' { Invoke-Up; Invoke-Orquestador @('e02-rapido') }
 Add-Objetivo $GExp 'd4' 'D4 exploratoria (~9 h, para la noche): las 12 combinaciones de T y N' { Invoke-Up; Invoke-Orquestador @('e02-d4') }
-Add-Objetivo $GExp 'experimento' 'El plan completo (~14 h): E01, E02 y D4' { Invoke-Up; Invoke-Orquestador @() }
+Add-Objetivo $GExp 'experimento' 'El plan completo (~12 h): E01, E02 y D4' { Invoke-Up; Invoke-Orquestador @() }
 Add-Objetivo $GExp 'grupo' 'Un grupo del plan: make grupo G=e01' {
     $g = Get-Var 'G'
     if (-not $g) {

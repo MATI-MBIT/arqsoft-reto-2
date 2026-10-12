@@ -14,7 +14,8 @@ $$;
 -- corrida, para que los pedidos detenidos de una no aparezcan como pendientes de
 -- la siguiente. El registro de eventos no se toca: es la evidencia.
 CREATE FUNCTION operacion.reiniciar() RETURNS void LANGUAGE sql AS $$
-    TRUNCATE operacion.sesion, operacion.pedido, operacion.pedido_etapa, operacion.senal;
+    TRUNCATE operacion.sesion, operacion.pedido, operacion.pedido_etapa, operacion.senal,
+             operacion.recibo_etapa, operacion.efecto_etapa;
     SELECT operacion.sembrar_vendedores();
 $$;
 

@@ -216,7 +216,7 @@ def e02():
     t.fila("Veredicto en vivo · registro de eventos, ventana del tablero")
     stat(t, "Fallas inyectadas", """
 SELECT count(*) FROM registro.evento WHERE tipo = 'falla.inyectada' AND $__timeFilter(ts)""",
-         "Caídas de etapa (D2) y congelamientos (D3) que ejecutó el inyector.", pasos=((None, AZUL),), w=3)
+         "Caídas de etapa (D2), congelamientos (D3) y entregas repetidas (D5) que ejecutó el inyector.", pasos=((None, AZUL),), w=3)
     stat(t, "Pedidos detenidos", """
 SELECT count(*) FROM registro.e02_detenidos WHERE $__timeFilter(t0)""",
          "Pedidos cuya etapa no cerró en los 30 s de ASR-3. D2: los que la etapa tenía en curso o recibió caída. D3: el pedido congelado.",
@@ -227,8 +227,8 @@ SELECT count(*) FROM registro.e02_cruce WHERE demora_ms <= 30000 AND $__timeFilt
     stat(t, "Escapes", """
 SELECT count(*) FROM registro.e02_cruce
 WHERE t0 < now() - interval '30 seconds' AND (encolado IS NULL OR demora_ms > 30000) AND $__timeFilter(t0)""",
-         "Detenidos que no llegaron a la cola o llegaron tarde. D3 los produce si el sondeo no ve el pedido "
-         "congelado, que es lo que ADR-004 predijo.", pasos=((None, VERDE), (1, ROJO)), w=3)
+         "Detenidos que no llegaron a la cola o llegaron tarde. D3 los produce si el punto de salud no informa "
+         "el pedido congelado.", pasos=((None, VERDE), (1, ROJO)), w=3)
     stat(t, "Duplicados", """
 SELECT count(*) FROM registro.e02_cruce WHERE mensajes > 1 AND $__timeFilter(t0)""",
          "Pedidos que entraron más de una vez a la cola. Uno solo haría repetir una etapa en ASR-4.",
@@ -246,6 +246,35 @@ SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY demora_ms) FROM registro.e02
 WHERE encolado IS NOT NULL AND $__timeFilter(t0)""",
          "Desde la falla, o desde el envío si el pedido llegó con la etapa ya caída (D-5), hasta la confirmación "
          "del bróker en la Dead-Letter-Queue.", pasos=((None, VERDE), (30000, ROJO)), unidad="ms", w=3)
+
+    t.fila("Punto de salud enriquecido e idempotencia de las etapas · registro de eventos")
+    stat(t, "Pedidos informados como atascados", """
+SELECT count(*) FROM registro.e02_atascos WHERE $__timeFilter(ts)""",
+         "Pedidos que el punto de salud de una etapa viva informó con más de U sin terminar (S-12).",
+         pasos=((None, AZUL),), w=4)
+    stat(t, "Atascados sin justificar", """
+SELECT count(*) FROM registro.e02_atascos WHERE NOT justificado AND $__timeFilter(ts)""",
+         "Pedidos sanos pero lentos que el umbral U confundió con atascados: cuentan como falsas alarmas.",
+         pasos=((None, VERDE), (1, NARANJA), (2, ROJO)), w=4)
+    stat(t, "Entregas repetidas descartadas", """
+SELECT count(*) FROM registro.evento WHERE tipo = 'etapa.entrega.repetida' AND $__timeFilter(ts)""",
+         "Entregas de un pedido que la etapa ya había terminado: vio el recibo y no repitió el efecto (D5).",
+         pasos=((None, AZUL),), w=4)
+    stat(t, "Entregas retomadas tras una caída", """
+SELECT count(*) FROM registro.evento WHERE tipo = 'etapa.entrega.retomada' AND $__timeFilter(ts)""",
+         "Pedidos que el bróker devolvió porque la etapa murió a mitad (D2): la etapa los retomó.",
+         pasos=((None, AZUL),), w=4)
+    stat(t, "Efectos dobles", """
+SELECT count(*) FROM (SELECT pedido_id, etapa FROM registro.evento
+                      WHERE tipo = 'etapa.efecto.aplicado' AND $__timeFilter(ts)
+                      GROUP BY pedido_id, etapa HAVING count(*) > 1) d""",
+         "Pedidos a los que una etapa aplicó dos veces su efecto: una factura o un descargue repetido.",
+         pasos=((None, VERDE), (1, ROJO)), w=4)
+    stat(t, "Demora p95 del pedido congelado (D3)", """
+SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY demora_ms) FROM registro.e02_cruce
+WHERE falla = 'D3' AND encolado IS NOT NULL AND $__timeFilter(t0)""",
+         "Desde que el pedido entra a la etapa hasta que el bróker lo confirma en la Dead-Letter-Queue: "
+         "cerca de U + T.", pasos=((None, VERDE), (30000, ROJO)), unidad="ms", w=4)
 
     t.fila("El Monitor de la cadena · Prometheus")
     t.panel("state-timeline", "Lo que declara el Monitor de cada etapa",
@@ -317,7 +346,7 @@ WHERE $__timeFilter(ts) AND NOT justificada
 UNION ALL
 SELECT ts, CASE WHEN llego_a_logistica THEN 'mensaje · llegó a logística' ELSE 'mensaje sin detenido' END,
        etapa, pedido_id, NULL FROM registro.e02_mensajes_falsos WHERE $__timeFilter(ts)
-ORDER BY 1 DESC LIMIT 100""", "Vacía es lo esperado, salvo los escapes de D3 si el sondeo no ve el pedido congelado.",
+ORDER BY 1 DESC LIMIT 100""", "Vacía es lo esperado, salvo los mensajes de pedidos que se recuperaron solos.",
           w=12)
     tabla(t, "Corridas de E02", CORRIDAS.format(exp="E02"),
           "La ventana de medición de cada corrida empieza al terminar el calentamiento.", h=6)
