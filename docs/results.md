@@ -163,16 +163,17 @@ el espacio vacío entre el aviso más lento y el umbral.
 *Cómo leerla.* Arriba a la izquierda está lo que hace el orquestador. Arriba a
 la derecha, lo que responden los micros en sus logs. Abajo, el tablero de
 Grafana. Los números marcan el orden de los hechos, y las horas de los logs
-están en UTC. La terminal de la izquierda muestra también los hechos de los
-30 s previos a abrir la toma; la de la derecha, solo los logs desde que se
+están en UTC. La terminal de la izquierda, al abrirse, muestra también los
+hechos de unos 30 s previos; la de la derecha, solo los logs desde que se
 abrió. Grafana refresca cada 10 s.
 
 *Qué pasa.* ① A las 21:42:31.893, el orquestador abre la sesión del vendedor
 V1722 desde `D-ATACANTE-647209`, un dispositivo que no es el suyo. ② Un
 milisegundo después, el Verificador compara la huella con la registrada,
 `D-V1722-1`, y no coincide. ③ El SMS llega a seguridad con el vendedor, el
-dispositivo y la hora. La tabla de eventos le mide 52 ms de demora; el log del
-receptor se escribe un instante después y marca 54 ms. ④ El tablero lleva 8
+dispositivo y la hora. La tabla de eventos le mide 52 ms de demora. El log del
+receptor se escribe un instante después: su hora, 21:42:31.947, queda 54 ms
+después de la apertura. ④ El tablero lleva 8
 intrusos en los últimos 5 minutos: 8 avisos a tiempo, 0 escapes (intrusos sin
 aviso) y 0 falsas alarmas.
 
@@ -189,8 +190,8 @@ tiempo, la huella distinta y el SMS a la derecha.
 
 *Cómo leerla.* La pantalla se lee como la de la Figura 3. Aquí lo que importa
 es lo que no aparece: ningún SMS. La izquierda muestra cinco aperturas y la
-derecha solo tres, porque V1201 y V1202 abrieron sesión antes de abrir la
-toma.
+derecha solo tres, porque V1201 y V1202 abrieron sesión antes de abrir las
+terminales.
 
 *Qué pasa.* ① En S3, cada vendedor registra un dispositivo nuevo y abre sesión
 desde él menos de 1 s después. Es el caso más difícil para el Verificador,
@@ -316,7 +317,7 @@ etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
 ### El resultado de un vistazo
 
-**Figura 6. ASR-3 se cumple: el pedido detenido más lento llegó a la cola 13,0 s antes del límite.**
+**Figura 6. ASR-3 se cumple: el pedido detenido más lento llegó a la cola 13,0 s antes del umbral.**
 
 *Cómo leerla.* Cada punto azul es un pedido detenido, ubicado según lo que
 tardó en llegar a la Dead-Letter-Queue. La fila de arriba son los 329 pedidos
@@ -330,7 +331,8 @@ confirma el pedido en la cola, así que incluye la detección y el envío.
 la etapa ya caída, y el más lento esperó los tres sondeos sin respuesta que
 necesita el Monitor para declarar la caída. Los de D3 llegan entre 15,3 y
 17,0 s, porque el punto de salud solo los informa cuando pasan de 15 s sin
-terminar. Ninguno se acerca al umbral.
+terminar. Ninguno se acerca al umbral, y la franja azul marca el margen que
+queda.
 
 ![ASR-3: 329 pedidos de D2 entre 0 y 6,2 s y 15 de D3 entre 15,3 y 17,0 s, frente al umbral de 30 s](assets/resultados/graficas/asr3-margen.svg)
 
@@ -342,8 +344,8 @@ fila de arriba son los 124 pedidos de D2 que ya estaban en la etapa cuando el
 Monitor la declaró detenida; la de abajo, los 15 de D3. La línea punteada es el
 umbral de ASR-4, 5 s, y el eje es logarítmico.
 
-*Qué muestra.* Los 139 puntos caen entre 3 y 111 ms: 45 veces por debajo del
-umbral, que es lo que marca la franja azul. ASR-4 pide además reanudar el
+*Qué muestra.* Los 139 puntos caen entre 3 y 111 ms. El más lento es 45 veces
+menor que el umbral, y la franja azul marca ese margen. ASR-4 pide además reanudar el
 pedido o entregarlo a una persona. En este prototipo nadie consume la cola, así
 que eso no se midió.
 
@@ -353,7 +355,7 @@ que eso no se midió.
 
 *Cómo leerla.* Arriba a la izquierda está lo que hace el orquestador. Arriba a
 la derecha, los logs del Monitor y de ventas. Abajo, el tablero de Grafana y la
-consola de RabbitMQ. La foto se tomó unos 2 s después del envío a la cola. Por
+consola de RabbitMQ. La toma se hizo unos 2 s después del envío a la cola. Por
 eso las tarjetas de Grafana, que refrescan cada 10 s, y RabbitMQ, que refresca
 cada 5 s, todavía no lo cuentan; en el clip se ve el cambio.
 
@@ -384,8 +386,8 @@ la consola de RabbitMQ cuenta los mensajes de la Dead-Letter-Queue.
 ② 5,8 s después, al tercer sondeo sin respuesta, el Monitor la declara
 detenida. ③ 12 ms más tarde, ventas empieza a enviar a la cola los pedidos que
 tenía en esa etapa, cada uno con la causa `ETAPA_CAIDA`. ④ En el tablero,
-despacho aparece en rojo en cada una de sus caídas; el rojo de inventario, a
-la izquierda, es su caída anterior. ⑤ RabbitMQ muestra 670 mensajes acumulados
+despacho aparece en rojo en cada una de sus caídas; el rojo de la izquierda es
+la caída anterior, la de inventario. ⑤ RabbitMQ muestra 670 mensajes acumulados
 en la cola desde el inicio de D2, porque nadie la consume. Son más que los
 pedidos detenidos porque incluyen los que se recuperaron solos, como explica el
 análisis.
@@ -404,14 +406,15 @@ hacia la cola, uno tras otro.
 *Cómo leerla.* La pantalla se lee como la de la Figura 3: el orquestador a la
 izquierda, los logs de las etapas a la derecha y el tablero abajo. La izquierda
 muestra seis entregas y la derecha cuatro, porque las dos primeras ocurrieron
-antes de abrir la toma.
+antes de abrir las terminales.
 
 *Qué pasa.* ① Cada 5 s, el orquestador le vuelve a entregar a facturación un
 pedido que ya facturó; aquí, P19-4. ② 9 ms después, facturación encuentra el
 recibo de ese pedido marcado como terminado y escribe «el efecto no se
 repite». ③ El tablero cuenta 5 entregas repetidas descartadas y 0 efectos
-dobles. Las tarjetas de pedidos atascados y en la cola son los últimos de D3,
-que siguen dentro de la ventana de 5 minutos.
+dobles. Las tarjetas de pedidos atascados (3) y en la cola (2) cuentan los
+últimos pedidos congelados de D3, que siguen dentro de la ventana de 5
+minutos.
 
 *El clip.* Llegan varias entregas repetidas, cada una con su respuesta a la
 derecha.
