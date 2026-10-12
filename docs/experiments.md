@@ -104,18 +104,15 @@ de dispositivo.**
 
 #### H1 — El Verificador de dispositivo detecta la huella de un dispositivo no registrado
 
-- **Creemos que** comparar la huella del dispositivo —el ID que la base guarda
-  para cada vendedor— en el Verificador de dispositivo, apenas el micro de
-  sesiones publica la apertura de la sesión,
-- **para** una sesión abierta con las credenciales correctas de un vendedor
-  desde un dispositivo que no es el suministrado ([ASR-1](quality-attributes.md)),
-- **dará como resultado** un aviso a seguridad con el vendedor, el dispositivo
-  y la hora, sin frenar el inicio de sesión del vendedor legítimo,
-- **lo cual se validará cuando** las 50 aperturas desde un dispositivo no
-  registrado de la fase S1 produzcan su aviso en ≤ 2 s, los 100 cambios
-  legítimos de S2 disparen ≤ 1 aviso, y ni las 20 aperturas de S3, hechas
-  menos de 1 s después de registrar el dispositivo, ni las sesiones desde el
-  dispositivo registrado disparen ninguno.
+**Creemos que** comparar en el Verificador de dispositivo la huella del
+dispositivo con la registrada, **para** una sesión con credenciales correctas
+desde un dispositivo no registrado ([ASR-1](quality-attributes.md)), **dará
+como resultado** un aviso a seguridad con el vendedor, el dispositivo y la
+hora, **lo cual se validará cuando** las 50 sesiones de S1 avisen en ≤ 2 s y
+los 100 cambios legítimos de S2 disparen ≤ 1 aviso. El dispositivo registrado
+es el que CCP le suministró al vendedor. Las 20 aperturas de S3, hechas menos
+de 1 s después de registrar el dispositivo nuevo, no deben disparar ninguno.
+Tampoco las sesiones desde un dispositivo que ya estaba registrado.
 
 - **Variable independiente:** dónde y cuándo se compara la huella. Se compara
   en el Verificador de dispositivo, al recibir el evento `sesion.abierta` del
@@ -221,8 +218,8 @@ durante la corrida.
   en ≤ 2 s, cada uno con el vendedor, el dispositivo y la hora.
 - En S2, hay ≤ 1 aviso en los 100 cambios legítimos.
 - En S3, ninguna de las 20 aperturas produce aviso.
-- En ninguna fase aparece un aviso por una sesión desde el dispositivo
-  registrado.
+- En ninguna fase aparece un aviso por una sesión desde el dispositivo que el
+  vendedor ya tenía registrado.
 
 **Limitaciones propias**, además de las comunes:
 
@@ -306,22 +303,16 @@ esta sección.
 
 #### H2 — El Monitor de la cadena detecta el pedido detenido, el micro de ventas lo envía a la Dead-Letter-Queue y ninguna etapa duplica su efecto
 
-- **Creemos que** un Monitor de la cadena que le pide al punto de salud de
-  cada etapa los pedidos con más de U segundos sin terminar, y que da por caída
-  la etapa que no responde N sondeos seguidos, con un micro de ventas que envía
-  a la Dead-Letter-Queue esos pedidos y los pendientes en la etapa caída, y con
-  etapas idempotentes,
-- **para** un pedido detenido con una o dos etapas ya completadas y una
-  pendiente ([ASR-4](quality-attributes.md)), que primero hay que detectar
-  ([ASR-3](quality-attributes.md)),
-- **dará como resultado** que todo pedido detenido llegue una sola vez a la
-  Dead-Letter-Queue, con la etapa y el tiempo transcurrido, y que ninguna etapa
-  duplique la factura, el descargue ni la orden de despacho,
-- **lo cual se validará cuando** los pedidos de las etapas caídas en D2 y los
-  15 congelados dentro de una etapa viva en D3 lleguen a la cola en ≤ 30 s y
-  sin duplicados, la media hora sin fallas de D1 deje ≤ 1 falsa alarma por
-  hora y ninguna de las 60 entregas repetidas de D5 aplique dos veces su
-  efecto.
+**Creemos que** un Monitor de la cadena que lee del punto de salud de cada
+etapa los pedidos atascados por más de U s, y etapas idempotentes, **para** un
+pedido detenido en una etapa ([ASR-4](quality-attributes.md)), **dará como
+resultado** que el pedido llegue a la Dead-Letter-Queue sin efectos duplicados,
+**lo cual se validará cuando** los pedidos de D2 y D3 lleguen una sola vez a la
+cola en ≤ 30 s. Ese plazo de detección es el de [ASR-3](quality-attributes.md).
+En D2 se caen etapas, y en D3 se congelan 15 pedidos dentro de una etapa que
+sigue viva. La media hora sin fallas de D1 debe dejar ≤ 1 falsa alarma por
+hora. Ninguna de las 60 entregas repetidas de D5 puede duplicar la factura, el
+descargue o la orden de despacho del mismo pedido.
 
 «Pedido detenido» incluye el que se congela dentro de una etapa que sigue
 respondiendo al sondeo. Es el caso que tumbó la primera versión, y la fase D3
@@ -343,7 +334,7 @@ Fundamento: el Monitor detecta la etapa caída contando los sondeos sin
 respuesta, sin necesitar que la etapa le informe nada. Cuando la etapa sí
 responde, el recibo que guarda para ser idempotente dice qué pedidos aceptó y no
 ha terminado, aunque el hilo que los trabajaba ya no exista. El Monitor fija U
-en la consulta, y el punto de salud le devuelve los pedidos que lo pasan. El
+en cada sondeo, y el punto de salud le devuelve los pedidos que lo pasan. El
 plazo alcanza porque N × T, para la etapa caída, y U + T, para el pedido
 congelado, caben en los 30 s.
 
@@ -366,7 +357,7 @@ Lo que la refutaría, cualquiera de tres casos:
   salud informa como atascados porque U quedó corto.
 - Un pedido detectado que no llega a la cola o llega dos veces, o una etapa que
   aplica dos veces su efecto al mismo pedido. Un efecto doble es una factura o
-  un descargue repetido, lo que ASR-4 prohíbe.
+  un descargue duplicado, lo que ASR-4 prohíbe.
 
 U sale del supuesto S-12: 15 s, porque en D1 de la primera versión ninguna
 etapa tardó más de 13,7 s. Con un sondeo cada 2 s, el pedido llega a la cola
@@ -552,16 +543,13 @@ resultado no se acomoda después a la decisión.
 
 #### La primera versión de H2 y su resultado
 
-- **Creemos que** un Monitor de la cadena que sondea cada etapa y, cuando una
-  no responde N sondeos seguidos, avisa al micro de ventas para que envíe a la
-  Dead-Letter-Queue los pedidos pendientes en esa etapa,
-- **para** un pedido confirmado cuya cadena se detiene sin señalar error
-  ([ASR-3](quality-attributes.md)),
-- **dará como resultado** que todo pedido detenido llegue a la
-  Dead-Letter-Queue en ≤ 30 s,
-- **lo cual se validará cuando** los pedidos de las etapas caídas en D2 y los
-  congelados de D3 lleguen a la cola dentro del plazo, con ≤ 1 falsa alarma por
-  hora en D1.
+**Creemos que** un Monitor de la cadena que sondea las etapas y, si una no
+responde N sondeos seguidos, hace que el micro de ventas envíe sus pedidos a la
+Dead-Letter-Queue, **para** un pedido cuya cadena se detiene sin error
+([ASR-3](quality-attributes.md)), **dará como resultado** que todo pedido
+detenido llegue a esa cola en ≤ 30 s, **lo cual se validará cuando** lo logren
+los pedidos de D2 y D3. D1 era una hora sin fallas y debía dejar ≤ 1 falsa
+alarma. D2 tumbaba etapas y D3 congelaba pedidos dentro de una etapa viva.
 
 Corrió el 7 de octubre de 2026 con D1 de 1 h, 30 caídas y 30 congelamientos.
 Pasó D1 y D2 y cayó en D3: 0 de 30 pedidos congelados llegaron a la cola,

@@ -104,7 +104,7 @@ contra él.
 | S1 · aviso en ≤ 2 s, con vendedor, dispositivo y hora | 50 | 50 | 0 | **Pasa** |
 | S2 · ≤ 1 aviso por cada 100 cambios legítimos | 100 | 100 | 0 | **Pasa**: 0 avisos |
 | S3 · 0 avisos en aperturas a menos de 1 s del registro | 20 | 20 | 0 | **Pasa** |
-| Las cuatro fases · 0 avisos por el dispositivo registrado | 17 893 | 17 893 | 0 | **Pasa** |
+| Las cuatro fases · 0 avisos por el dispositivo que el vendedor ya tenía registrado | 17 893 | 17 893 | 0 | **Pasa** |
 | S4 · tasa a la que el aviso se atrasa | 30 | 30 | 0 | Exploratoria: no se atrasa hasta 10 aperturas por segundo |
 
 **Tabla 2. Cuánto tardó el aviso.** Es el tiempo desde que el micro de sesiones
@@ -143,7 +143,9 @@ de ellos por el bróker. Cada fila mide un tramo en las 50 sesiones de intruso.
 probamos, sumando S1 y S4, el aviso más lento tardó 115 ms. Es menos de la
 décima parte de los 2 s que permite ASR-1, aunque cada aviso cruza el bróker
 dos veces. Ningún tramo pasó de 59 ms. El micro de sesiones publica el evento y
-responde sin esperar la comparación, así que el vendedor no nota nada.
+responde sin esperar la comparación. En S1, k6 midió las 3 771 aperturas de
+sesión: el p95 fue de 8,1 ms y la más lenta tardó 26 ms. Ningún criterio de H1
+fija un límite para esa cifra; se reporta como observación.
 
 **No hubo una sola falsa alarma.** En S2, 100 vendedores registraron un
 dispositivo nuevo y abrieron sesión desde él entre 6 y 60 s después. En S3,

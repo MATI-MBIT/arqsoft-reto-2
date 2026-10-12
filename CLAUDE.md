@@ -52,7 +52,7 @@ consume, y por eso los nombres de archivo son los del paquete.
 | `docs/requirements.md` | `Requirements & Quality` | Insumo |
 | `docs/glossary.md` | `Objective → Glossary` | Insumo |
 | `docs/quality-attributes.md` | escenarios colgados de las historias | **Producto de los insumos** |
-| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1 · E02: H2 sobre ASR-3) | Validación de decisiones |
+| `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1 · E02: H2 sobre ASR-4, con ASR-3 como paso previo) | Validación de decisiones |
 | `docs/results.md` | `Experiments → Results & analysis` | Resultado de las corridas y decisión que sale de cada una |
 
 ---
@@ -88,8 +88,17 @@ de los ASR.
 El 2026-10-04 Nicolás partió el experimento en dos, uno por hipótesis, porque
 cada una lleva a una decisión distinta (ADR-007 y ADR-004) y puede caer sin la
 otra. `docs/experiments.md` tiene una sección de montaje común y luego E01
-(seguridad, ASR-1) y E02 (disponibilidad, ASR-3). En Helix son dos
+(seguridad, ASR-1) y E02 (disponibilidad). En Helix son dos
 experimentos, cada uno legible solo.
+
+El 2026-10-12 Nicolás fijó dos cosas. Las hipótesis siguen la plantilla
+«Creemos que / para / dará como resultado / lo cual se validará cuando». Y H2,
+desde que su versión refinada sumó la idempotencia por etapa, prueba **ASR-4**
+(HU-14, cobertura parcial: cero efectos duplicados; la reanudación en ≤ 5 s y la
+entrega a una persona quedan fuera) y pasa por **ASR-3** solo porque el estímulo
+de ASR-4 es un pedido ya señalado como detenido. La decisión que valida E02 es
+ADR-005, con ADR-004 para la detección. La primera versión de H2 sigue atada a
+ASR-3, porque eso fue lo que corrió el 2026-10-07.
 
 El 2026-10-06 cada experimento recibió su diagrama de componentes en draw.io,
 acotado y congruente con el panorama DG-CMP-001: DG-CMP-004 (E01) y DG-CMP-005
