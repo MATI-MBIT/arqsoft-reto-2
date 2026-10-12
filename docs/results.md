@@ -82,11 +82,11 @@ en D4, y k6 no tuvo ninguna solicitud fallida.
 
 E02 detiene su carga de pedidos unos segundos entre una fase y la siguiente.
 Para que ese corte no dejara un hueco en la carga de fondo de E01, un relleno
-creó un pedido cada vez que pasaban 10 s sin uno. Actuó 18 veces. Una fue
-dentro de D1, cuando la carga de E02 pasó 10 s sin un pedido, y cuatro, entre
-fases de E02. Las otras 13 fueron después de que E02 terminó, mientras E01
-cerraba S3 y su minuto de gracia: el minuto que sigue a cada ventana, en el que
-el orquestador todavía recoge las salidas tardías.
+creó un pedido cada vez que pasaban 10 s sin uno. Actuó 18 veces: 1 dentro de
+D1, cuando la carga de E02 pasó 10 s sin un pedido, y 4 entre fases de E02. Las
+otras 13 fueron después de que E02 terminó, mientras E01 cerraba S3 y su minuto
+de gracia. El minuto de gracia es el que sigue a cada ventana, en el que el
+orquestador todavía recoge las salidas tardías.
 
 El enunciado no da algunas cifras que los experimentos necesitan. Las fijamos
 como supuestos, y cada una se cambia con una variable, sin tocar el código:
@@ -391,9 +391,9 @@ la cola, no la reanudación ni la entrega a una persona; la consulta está en
 
 **Figura 12. D1 sobre toda su ventana.** Arriba, el veredicto: ninguna etapa
 declarada detenida y ningún pedido sano informado como atascado en 30 minutos.
-Los 5 408 pares de pedido y etapa con un solo efecto son los 5 217 de los
-1 739 pedidos de la ventana, más 191 de 62 pedidos que entraron en el minuto de
-gracia y de 4 del calentamiento que cerraron dentro de la ventana. Abajo, el tablero de E02
+De los 5 408 pares de pedido y etapa con un solo efecto, 5 217 son de los
+1 739 pedidos de la ventana. Los otros 191 son de 62 pedidos que entraron en el
+minuto de gracia y de 4 del calentamiento que cerraron dentro de la ventana. Abajo, el tablero de E02
 sobre la misma media hora, con todos los contadores de fallas en cero.
 
 ![E02 de lote, D1: arriba, el veredicto sin falsas alarmas; abajo, el tablero de E02 sobre la ventana de D1](assets/resultados/evidencias/lote-e02-d1.png)
@@ -595,7 +595,7 @@ o como se explica aquí, y ninguna cambia una decisión.
 | Tasa de aperturas de S4 | 1, 3 y 5 veces la del Ambiente A, que no la fija | S-10: 2 aperturas por segundo | El límite de H1 queda por encima de 10 aperturas por segundo |
 | S4 en el ciclo del 12 de octubre | Parte de E01 | No se repitió; se cita la corrida del 7 de octubre | Es exploratoria y la decisión no depende de ella. Entre las dos corridas solo cambió una línea de log en el Verificador y en el receptor del SMS |
 | Carga de pedidos de E01 | La lanza cada corrida de E01 | La de E02, que corría en paralelo, y un relleno de 18 pedidos cuando pasaban 10 s sin uno | No duplica el Ambiente A. En los últimos 79 s de S3, ya sin E02, la carga de pedidos bajó a uno cada 10 s. Las sesiones de E01 siguieron a su tasa |
-| Calentamiento de E02 | 5 min por corrida | 2 min | Lo fija `load/plan.tsv` para E02. En esos 2 min las etapas ya atienden la carga de pedidos de E02, y en D2 a D5 vienen además de la fase anterior. Los 2 min no entran a ningún criterio |
+| Calentamiento de E02 | 5 min por corrida | 2 min | Lo fija `load/plan.tsv` para E02. En esos 2 min las etapas ya atienden la carga de pedidos de E02, y en D2 a D5 ya vienen calientes de la fase anterior. Los 2 min no entran a ningún criterio |
 
 ---
 
