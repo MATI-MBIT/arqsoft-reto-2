@@ -243,15 +243,18 @@ etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
 ### La evidencia, grabada durante la corrida de decisión
 
-**Figura 5. Un pedido congelado en una etapa viva.** A la izquierda, validación
-de despacho acepta el pedido P7-2 y lo olvida. La etapa responde HTTP 200 en
-cada sondeo, y al final ventas muestra el estado del pedido: facturación e
-inventario completados y despacho en curso, que es el estímulo de ASR-4. A la
-derecha, el Monitor lo detecta como atascado, y 19 ms después ventas lo
+**Figura 5. Un pedido congelado en una etapa viva, en D3.** A la izquierda,
+el orquestador congela validación de despacho a las 22:06:55.646 UTC, y el
+pedido P7-7 entra a la etapa y se queda quieto. A la derecha, 16,9 s después el
+Monitor lo detecta como atascado con la etapa viva, y 46 ms más tarde ventas lo
 confirma en la Dead-Letter-Queue con la etapa que falta y la causa
-`PEDIDO_ATASCADO`.
+`PEDIDO_ATASCADO`. Abajo, el Monitor no declara caída ninguna etapa: el pedido
+se detecta aunque la etapa sigue respondiendo. En el video se ve llegar el
+mensaje a la consola de RabbitMQ.
 
-![Captura de E02: despacho responde HTTP 200 mientras el pedido P7-2 queda atascado; el Monitor lo detecta y ventas lo envía a la Dead-Letter-Queue con causa PEDIDO_ATASCADO](assets/resultados/evidencias/asr4-pedido-congelado.png)
+![E02 en vivo, D3: arriba, el congelamiento del pedido P7-7, su detección como atascado a los 16,9 s y su envío a la Dead-Letter-Queue con causa PEDIDO_ATASCADO; abajo, el Monitor con las etapas vivas y la cola en RabbitMQ](assets/resultados/evidencias/asr4-congelado-vivo.png)
+
+<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-congelado-vivo.png" src="assets/resultados/evidencias/asr4-congelado-vivo.mp4"></video>
 
 **Figura 6. Una entrega repetida.** El bróker le vuelve a entregar a
 facturación el pedido P6-13, que ya había facturado. Antes de la entrega, el
