@@ -5,6 +5,7 @@
 #
 #   load/evidencias.sh intruso      # ASR-1: sesión desde un dispositivo que no es el suyo
 #   load/evidencias.sh cambio       # ASR-1: cambio legítimo de dispositivo, sin aviso
+#   load/evidencias.sh fondo [n]    # ASR-1: n sesiones legítimas, una por segundo, desde el dispositivo registrado
 #   load/evidencias.sh congelado    # ASR-4: pedido congelado en una etapa viva
 #   load/evidencias.sh caida        # ASR-4: etapa caída con pedidos pendientes
 #   load/evidencias.sh repetida     # ASR-4: entrega repetida a una etapa que ya terminó
@@ -31,7 +32,8 @@ abrir_sesion() {   # vendedor dispositivo sesion
 mirar() {
   local servicios filtro
   case "$1" in
-    intruso|cambio) servicios="usuario-no-valido receptor-sms"; filtro='huella|SMS' ;;
+    intruso) servicios="usuario-no-valido receptor-sms"; filtro='huella distinta|SMS' ;;
+    cambio) servicios="usuario-no-valido receptor-sms"; filtro='V0777|SMS' ;;
     congelado|caida) servicios="monitor ventas"; filtro='atascado|declarada|Dead-Letter' ;;
     repetida) servicios="etapa-facturacion etapa-inventario etapa-despacho"; filtro='entrega repetida' ;;
     *) echo "caso desconocido: $1" >&2; exit 2 ;;
@@ -56,6 +58,14 @@ case "${1:-}" in
     curl -s -o /dev/null -w 'registrado: HTTP %{http_code}\n\n' -X POST localhost:8084/vendedores/V0777/dispositivos \
       -H 'Content-Type: application/json' -d "{\"dispositivoId\":\"$nuevo\"}"
     abrir_sesion V0777 "$nuevo" "DEMO-CAMBIO-$(date +%s)"
+    ;;
+  fondo)
+    for i in $(seq 1 "${2:-60}"); do
+      v=$(printf 'V%04d' $(( (RANDOM % 1000) + 1 )))
+      curl -s -o /dev/null -X POST localhost:8081/sesiones -H 'Content-Type: application/json' \
+        -d "{\"sesionId\":\"DEMO-LEGIT-$(date +%s)-$i\",\"vendedorId\":\"$v\",\"password\":\"clave-$v\",\"dispositivoId\":\"D-$v-1\"}"
+      sleep 1
+    done
     ;;
   congelado)
     titulo "Estímulo · ASR-4" "Validación de despacho acepta el próximo pedido y lo olvida; la etapa sigue viva."

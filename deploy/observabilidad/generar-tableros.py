@@ -360,9 +360,11 @@ SELECT ts AS time, etapa || ' responde de nuevo' AS text, 'reinicio' AS tags
 FROM registro.evento WHERE tipo = 'etapa.reiniciada' AND $__timeFilter(ts)""", VERDE),
         anotacion_pg("Corridas", ANOT_CORRIDA.format(exp="E02"), AZUL),
     ]
-    return t.json("e02", "E02 · Detección del pedido detenido y envío a la Dead-Letter-Queue (H2, ASR-3)",
-                  "Si el Monitor sondea cada etapa y avisa a ventas cuando una no responde N sondeos seguidos, y ventas "
-                  "envía sus pedidos pendientes a la Dead-Letter-Queue, todo pedido detenido llega a ella en ≤ 30 s.",
+    return t.json("e02", "E02 · El pedido detenido, con destino y sin efectos duplicados (H2, ASR-4; detección de ASR-3)",
+                  "Creemos que un Monitor de la cadena que lee del punto de salud de cada etapa los pedidos atascados "
+                  "por más de U s, y etapas idempotentes, para un pedido detenido en una etapa (ASR-4), dará como "
+                  "resultado que el pedido llegue a la Dead-Letter-Queue sin efectos duplicados, con la etapa que falta "
+                  "y la causa, en ≤ 30 s, que es el plazo de detección de ASR-3.",
                   anot)
 
 
