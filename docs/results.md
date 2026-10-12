@@ -177,8 +177,9 @@ de la apertura. ④ El tablero lleva 8
 intrusos en los últimos 5 minutos: 8 avisos a tiempo, 0 escapes (intrusos sin
 aviso) y 0 falsas alarmas.
 
-*El clip.* Se ve aparecer la línea del intruso a la izquierda y, casi al mismo
-tiempo, la huella distinta y el SMS a la derecha.
+*El clip.* Empieza con 7 intrusos en el tablero. Se ve aparecer la línea de
+V1722 a la izquierda y, casi al mismo tiempo, la huella distinta y el SMS a la
+derecha. Al refrescar, el tablero sube a 8.
 
 ![E01 en vivo, S1, anotada: 1 el estímulo, 2 la huella distinta, 3 el SMS a seguridad, 4 el tablero](assets/resultados/testigos/asr1-intruso.png)
 
@@ -357,7 +358,7 @@ que eso no se midió.
 la derecha, los logs del Monitor y de ventas. Abajo, el tablero de Grafana y la
 consola de RabbitMQ. La toma se hizo unos 2 s después del envío a la cola. Por
 eso las tarjetas de Grafana, que refrescan cada 10 s, y RabbitMQ, que refresca
-cada 5 s, todavía no lo cuentan; en el clip se ve el cambio.
+cada 5 s, todavía no lo cuentan.
 
 *Qué pasa.* ① A las 22:06:55.646, el orquestador le ordena a validación de
 despacho aceptar su próximo pedido y olvidarlo. A las 22:06:55.901, el pedido
@@ -368,8 +369,9 @@ la causa `PEDIDO_ATASCADO`. ④ Durante toda la espera, de 17:06:55 a 17:07:12
 en el eje del tablero, el Monitor ve las tres etapas en verde: la etapa nunca
 dejó de responder. La franja roja de la izquierda es la última caída de D2.
 
-*El clip.* Muestra los últimos segundos de la espera y el momento en que
-aparecen, juntas, la detección y la llegada a la cola.
+*El clip.* Se ven aparecer, juntas, la detección y la llegada a la cola. Unos
+segundos después, la tarjeta de pedidos atascados sube a 1 y RabbitMQ marca 1
+mensaje en la Dead-Letter-Queue.
 
 ![E02 en vivo, D3, anotada: 1 el congelamiento, 2 la detección como atascado, 3 la llegada a la cola con su causa, 4 el Monitor sin caídas](assets/resultados/testigos/asr4-congelado.png)
 

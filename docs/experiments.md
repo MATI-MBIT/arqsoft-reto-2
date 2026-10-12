@@ -102,7 +102,7 @@ de dispositivo.**
 
 ### La hipótesis de diseño
 
-#### H1 — El Verificador de dispositivo detecta la huella de un dispositivo no registrado
+#### H1 — Detectar el dispositivo no registrado
 
 **Creemos que** comparar en el Verificador de dispositivo la huella del
 dispositivo con la registrada, **para** una sesión con credenciales correctas
@@ -301,10 +301,10 @@ etapa informa qué pedidos lleva demasiado tiempo sin terminar, y cada etapa es
 idempotente. Lo que sigue es la versión vigente; la primera queda al final de
 esta sección.
 
-#### H2 — El Monitor de la cadena detecta el pedido detenido, el micro de ventas lo envía a la Dead-Letter-Queue y ninguna etapa duplica su efecto
+#### H2 — Llevar el pedido detenido a la Dead-Letter-Queue sin efectos duplicados
 
 **Creemos que** un Monitor de la cadena que lee del punto de salud de cada
-etapa los pedidos atascados por más de U s, y etapas idempotentes, **para** un
+etapa los pedidos atascados por más de U = 15 s, y etapas idempotentes, **para** un
 pedido detenido en una etapa ([ASR-4](quality-attributes.md)), **dará como
 resultado** que el pedido llegue a la Dead-Letter-Queue sin efectos duplicados,
 **lo cual se validará cuando** los pedidos de D2 y D3 lleguen una sola vez a la

@@ -91,7 +91,7 @@ otra. `docs/experiments.md` tiene una sección de montaje común y luego E01
 (seguridad, ASR-1) y E02 (disponibilidad). En Helix son dos
 experimentos, cada uno legible solo.
 
-El 2026-10-12 Nicolás fijó dos cosas. Las hipótesis siguen la plantilla
+El 2026-10-12 Nicolás fijó la versión final de los ASR: los umbrales no cambian, y ASR-1 y ASR-4 pasan a prioridad **Muy alta** (ASR-2 y ASR-3 quedan en Alta). Los títulos de las hipótesis son «H1 — Detectar el dispositivo no registrado» y «H2 — Llevar el pedido detenido a la Dead-Letter-Queue sin efectos duplicados»: H2 no reanuda, porque nadie consume la cola; el umbral U sigue en 15 s. También fijó dos cosas. Las hipótesis siguen la plantilla
 «Creemos que / para / dará como resultado / lo cual se validará cuando». Y H2,
 desde que su versión refinada sumó la idempotencia por etapa, prueba **ASR-4**
 (HU-14, cobertura parcial: cero efectos duplicados; la reanudación en ≤ 5 s y la

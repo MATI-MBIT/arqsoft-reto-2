@@ -35,10 +35,10 @@ Las dos exigencias comparten un rasgo: la falla no se anuncia. El atacante entra
 
 | ASR | Atributo | Fuente | Estímulo | Artefacto | Ambiente | Respuesta | Medida | Prioridad | Impacto |
 |---|---|---|---|---|---|---|---|---|---|
-| ASR-1 | Seguridad | Tercero con las credenciales correctas de un vendedor y un dispositivo distinto al suministrado | Abre sesión con éxito y empieza a operar; arribo esporádico | La sesión del vendedor y el dispositivo suministrado como parte de su identidad | A: operación normal, carga `[PREGUNTA]`, sin fallas | Marca la sesión como abierta desde un dispositivo no reconocido y avisa al área de seguridad con vendedor, dispositivo y hora | Aviso en ≤ 2 s desde la apertura de la sesión, con ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo (supuesto de la ficha), en Ambiente A | Alta | Medio |
+| ASR-1 | Seguridad | Tercero con las credenciales correctas de un vendedor y un dispositivo distinto al suministrado | Abre sesión con éxito y empieza a operar; arribo esporádico | La sesión del vendedor y el dispositivo suministrado como parte de su identidad | A: operación normal, carga `[PREGUNTA]`, sin fallas | Marca la sesión como abierta desde un dispositivo no reconocido y avisa al área de seguridad con vendedor, dispositivo y hora | Aviso en ≤ 2 s desde la apertura de la sesión, con ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo (supuesto de la ficha), en Ambiente A | Muy alta | Medio |
 | ASR-2 | Seguridad | El mecanismo de detección de accesos indebidos, a partir de una escritura ya ejecutada | Un actor autenticado con permiso solo de consulta registró o modificó un pedido, o descargó inventario, con la sesión aún abierta | El registro del pedido, el descargue de inventario y la sesión del actor | A | Bloquea al actor, cierra su sesión, revierte la escritura y avisa a seguridad | Bloqueo, cierre y reversión en ≤ 5 s desde la detección; escrituras posteriores del actor = 0; efecto residual 60 s después = 0, en Ambiente A | Alta | Medio |
 | ASR-3 | Disponibilidad | La cadena de tres etapas que sigue al pedido | Una etapa no responde ni señala error y el pedido espera sin pasar a logística | Facturación, descargue de inventario y validación de despacho | A | Identifica el pedido detenido, la etapa y el tiempo transcurrido, y lo señala como fallo de la cadena | Señal en ≤ 30 s desde que la etapa dejó de avanzar, con ≤ 1 falsa alarma por hora, en Ambiente A | Alta | Alto |
-| ASR-4 | Disponibilidad | La recuperación, a partir de la señal de ASR-3 | Pedido señalado como detenido, con una o dos etapas completadas y una pendiente | La cadena del pedido y sus efectos ya producidos | A | Reanuda desde la etapa que falló sin repetir las completadas; si ese intento no completa, entrega el pedido a una persona con el estado exacto | Reanudada o entregada a una persona en ≤ 5 s desde la señal; duplicados de factura, descargue u orden de despacho = 0; pedidos sin destino = 0, en Ambiente A | Alta | Alto |
+| ASR-4 | Disponibilidad | La recuperación, a partir de la señal de ASR-3 | Pedido señalado como detenido, con una o dos etapas completadas y una pendiente | La cadena del pedido y sus efectos ya producidos | A | Reanuda desde la etapa que falló sin repetir las completadas; si ese intento no completa, entrega el pedido a una persona con el estado exacto | Reanudada o entregada a una persona en ≤ 5 s desde la señal; duplicados de factura, descargue u orden de despacho = 0; pedidos sin destino = 0, en Ambiente A | Muy alta | Alto |
 
 Presupuesto conjunto: ASR-3 + ASR-4 suman 35 s entre que la cadena se detiene y queda reanudada o en manos de una persona.
 
@@ -190,7 +190,7 @@ Construiremos el sistema como servicios que se comunican por eventos a través d
 | Transacciones (locales por servicio) | Disponibilidad · prevenir | EL-23 | «tactic:transaccion-local» |
 
 **A3. Alternativas**
-Drivers: ASR-1 (Alta), ASR-2 (Alta), ASR-3 (Alta), ASR-4 (Alta), R-1, R-4, R-12 — fijados antes de evaluar.
+Drivers: ASR-1 (Muy alta), ASR-2 (Alta), ASR-3 (Alta), ASR-4 (Muy alta), R-1, R-4, R-12 — fijados antes de evaluar.
 
 | Criterio | Opción A: Servicios con eventos y bróker durable (elegida) | Opción B: Monolito modular síncrono, como el BPMN | Opción C: Servicios con llamadas síncronas REST |
 |---|---|---|---|
@@ -262,7 +262,7 @@ Usaremos un Coordinador de la cadena que orquesta las tres etapas: les envía el
 | Log de transacciones (estado por pedido y etapa) | Disponibilidad · recuperar | EL-16, EL-23 | «tactic:estado-por-etapa» |
 
 **A3. Alternativas**
-Drivers: ASR-3 (Alta), ASR-4 (Alta), S-2 — fijados antes de evaluar.
+Drivers: ASR-3 (Alta), ASR-4 (Muy alta), S-2 — fijados antes de evaluar.
 
 | Criterio | Opción A: Coordinador que orquesta con estado persistido (elegida) | Opción B: Coreografía, cada etapa reacciona al evento de la anterior | Opción C: Llamada síncrona encadenada con timeout, como el BPMN |
 |---|---|---|---|
@@ -329,7 +329,7 @@ Adoptaremos etapas consecutivas: el Coordinador envía la facturación, luego el
 | Protocolo de comportamiento (orden de las etapas) | Integración · cerrar distancia | EL-16 | «tactic:etapas-consecutivas» |
 
 **A3. Alternativas**
-Drivers: ASR-4 (Alta), ASR-3 (Alta), S-1, SUP-06, C-03 — fijados antes de evaluar.
+Drivers: ASR-4 (Muy alta), ASR-3 (Alta), S-1, SUP-06, C-03 — fijados antes de evaluar.
 
 | Criterio | Opción A: Etapas consecutivas (elegida) | Opción B: Etapas en paralelo con unión, como el BPMN |
 |---|---|---|
@@ -468,7 +468,7 @@ Haremos idempotente cada etapa, es decir, que repetir la misma orden no produzca
 | Transacciones (idempotencia por clave única) | Disponibilidad · prevenir | EL-18, EL-08, EL-19 | «tactic:idempotencia» |
 
 **A3. Alternativas**
-Drivers: ASR-4 (Alta), R-12 — fijados antes de evaluar.
+Drivers: ASR-4 (Muy alta), R-12 — fijados antes de evaluar.
 
 | Criterio | Opción A: Clave única en la transacción del efecto (elegida) | Opción B: Consultar al Coordinador antes de reenviar | Opción C: Transacción distribuida entre Coordinador y etapa |
 |---|---|---|---|
@@ -534,7 +534,7 @@ Haremos un solo intento de reanudación: el Coordinador reenvía solo la etapa p
 | Degradación con gracia (entrega a una persona) | Disponibilidad · recuperar | EL-16, EL-20 | «tactic:escalamiento» |
 
 **A3. Alternativas**
-Drivers: ASR-4 (Alta), ASR-3 (Alta, por el presupuesto conjunto de 35 s) — fijados antes de evaluar.
+Drivers: ASR-4 (Muy alta), ASR-3 (Alta, por el presupuesto conjunto de 35 s) — fijados antes de evaluar.
 
 | Criterio | Opción A: Un intento y escalamiento (elegida) | Opción B: Dos reintentos con espera creciente, como el BPMN | Opción C: Escalamiento inmediato, sin intento |
 |---|---|---|---|
@@ -603,7 +603,7 @@ Incluiremos la huella del dispositivo en la identidad del vendedor: un resumen d
 | Informar | Seguridad · reaccionar | EL-13 | «tactic:informar» |
 
 **A3. Alternativas**
-Drivers: ASR-1 (Alta), R-1, R-2 — fijados antes de evaluar. STRIDE: S.
+Drivers: ASR-1 (Muy alta), R-1, R-2 — fijados antes de evaluar. STRIDE: S.
 
 | Criterio | Opción A: Verificación por evento tras abrir la sesión (elegida) | Opción B: Verificación dentro del inicio de sesión | Opción C: Revisión por lotes de las sesiones del día |
 |---|---|---|---|
@@ -837,10 +837,10 @@ Descartes: B — KO: viola R-4, porque restaurar el valor anterior borra los des
 
 | ASR | Prioridad | ADR-001 | ADR-002 | ADR-003 | ADR-004 | ADR-005 | ADR-006 | ADR-007 | ADR-008 | ADR-009 | ADR-010 | Hueco |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ASR-1 | Alta | C | — | — | — | — | — | S | — | — | — | — |
+| ASR-1 | Muy alta | C | — | — | — | — | — | S | — | — | — | — |
 | ASR-2 | Alta | C | — | — | — | — | — | — | C | S | S | — |
 | ASR-3 | Alta | C | C | C | S | — | — | — | — | — | — | — |
-| ASR-4 | Alta | C | C | C | C | S | S | — | — | — | — | — |
+| ASR-4 | Muy alta | C | C | C | C | S | S | — | — | — | — | — |
 
 ## 6. Plan de diagramas
 

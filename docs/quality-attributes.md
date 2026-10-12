@@ -14,10 +14,10 @@ Vocabulario: se dice **pedido**, como en el enunciado, y no compra ni orden de c
 
 | ID | Atributo · rama | Enunciado corto | Amb. | Prioridad | Impacto | Origen |
 |---|---|---|---|---|---|---|
-| ASR-1 | Seguridad · detección | Detectar en ≤ 2 s que una sesión de vendedor abierta con credenciales correctas la opera un dispositivo que no es el suministrado, y avisar a seguridad | A | Alta | Medio | STRIDE (S) · R-9 |
+| ASR-1 | Seguridad · detección | Detectar en ≤ 2 s que una sesión de vendedor abierta con credenciales correctas la opera un dispositivo que no es el suministrado, y avisar a seguridad | A | Muy alta | Medio | STRIDE (S) · R-9 |
 | ASR-2 | Seguridad · reacción | Ante una escritura ya ejecutada por un actor cuyo permiso solo cubre consulta, bloquear al actor, cerrar su sesión y revertir la escritura en ≤ 5 s; escrituras posteriores del mismo actor = 0 | A | Alta | Medio | STRIDE (E) · R-7 |
 | ASR-3 | Disponibilidad · detección | Detectar en ≤ 30 s que la cadena de un pedido confirmado quedó detenida en facturación, inventario o despacho sin señalar error, con ≤ 1 falsa alarma por hora | A | Alta | Alto | R-1 · S-2 |
-| ASR-4 | Disponibilidad · reparación | Reanudar la cadena detenida desde la etapa que falló, sin duplicar factura, descargue ni orden de despacho, en ≤ 5 s; lo que no se reanuda se entrega a una persona con el estado exacto | A | Alta | Alto | R-1 · S-2 |
+| ASR-4 | Disponibilidad · reparación | Reanudar la cadena detenida desde la etapa que falló, sin duplicar factura, descargue ni orden de despacho, en ≤ 5 s; lo que no se reanuda se entrega a una persona con el estado exacto | A | Muy alta | Alto | R-1 · S-2 |
 
 ## 1b. De qué historia cuelga cada escenario
 
@@ -91,7 +91,7 @@ Dos celdas producen un ASR; las demás se listan con su razón, para que la omis
 | **Ambiente** | A: 60 pedidos/min y 600 consultas/min, 80 cambios legítimos de dispositivo al mes |
 | **Respuesta** | El sistema marca la sesión como abierta desde un dispositivo no reconocido y avisa al área de seguridad con la identidad del vendedor, el dispositivo y la hora |
 | **Medida** | Aviso emitido en ≤ 2 s desde que la sesión queda abierta, con ≤ 1 falsa alarma por cada 100 cambios legítimos de dispositivo (menos de una al mes con S-6), medido desde la apertura de sesión hasta el aviso, en Ambiente A |
-| **Prioridad · Impacto · Origen** | Alta · Medio · STRIDE (S) · R-9 |
+| **Prioridad · Impacto · Origen** | Muy alta · Medio · STRIDE (S) · R-9 |
 
 #### Matriz STRIDE del escenario
 
@@ -171,7 +171,7 @@ flowchart LR
 | **Ambiente** | A: 60 pedidos/min |
 | **Respuesta** | El sistema reanuda la cadena desde la etapa que falló, sin repetir las etapas completadas; si ese intento no la completa, entrega el pedido a una persona con el estado exacto (qué etapa falta y por qué) para que lo termine o lo cancele |
 | **Medida** | Reanudación desde la etapa que falló, o entrega a una persona, en ≤ 5 s desde la señal de detención; facturas, descargues de inventario y órdenes de despacho duplicados = 0; pedidos señalados que no han llegado a logística ni a una persona 60 s después de la señal = 0, en Ambiente A |
-| **Prioridad · Impacto · Origen** | Alta · Alto · R-1 · S-2 |
+| **Prioridad · Impacto · Origen** | Muy alta · Alto · R-1 · S-2 |
 
 ```mermaid
 flowchart LR
