@@ -2,9 +2,9 @@
 <title>ASR-4 · de la señal de detención a la Dead-Letter-Queue, un punto por pedido</title>
 <rect width="960" height="458" fill="#fcfcfb"/>
 <text x="40" y="34" font-size="18" font-weight="600" fill="#0b0b0b">ASR-4 · de la señal de detención a la Dead-Letter-Queue, un punto por pedido</text>
-<text x="40" y="60" font-size="14" fill="#52514e">139 de 139 pedidos dentro del umbral · máximo 111 ms · mide la entrega a la cola, no la reanudación</text>
+<text x="40" y="60" font-size="14" fill="#52514e">139 de 139 pedidos dentro del umbral · máximo 111 ms · el envío a la cola, no la reanudación</text>
 <rect x="562.9" y="86" width="317.9" height="320" fill="#eaf2fc"/>
-<text x="721.8" y="104" font-size="13" fill="#52514e" text-anchor="middle">margen: 45 veces por debajo del umbral</text>
+<text x="721.8" y="104" font-size="13" fill="#52514e" text-anchor="middle">margen: 45 veces menor que el umbral</text>
 <line x1="170.0" x2="170.0" y1="86" y2="406" stroke="#e6e5e1"/>
 <text x="170.0" y="426" font-size="12" fill="#8a8985" text-anchor="middle">1 ms</text>
 <line x1="362.2" x2="362.2" y1="86" y2="406" stroke="#e6e5e1"/>

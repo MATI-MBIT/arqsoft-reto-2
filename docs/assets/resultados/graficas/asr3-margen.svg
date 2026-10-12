@@ -4,7 +4,7 @@
 <text x="40" y="34" font-size="18" font-weight="600" fill="#0b0b0b">ASR-3 · del pedido detenido a la Dead-Letter-Queue, un punto por pedido</text>
 <text x="40" y="60" font-size="14" fill="#52514e">329 de 329 en D2 y 15 de 15 en D3 dentro del umbral · máximo 17,0 s</text>
 <rect x="566.0" y="86" width="304.9" height="320" fill="#eaf2fc"/>
-<text x="718.5" y="104" font-size="13" fill="#52514e" text-anchor="middle">margen: 13,0 s de holgura</text>
+<text x="718.5" y="104" font-size="13" fill="#52514e" text-anchor="middle">margen: 13,0 s por debajo del umbral</text>
 <line x1="170.0" x2="170.0" y1="86" y2="406" stroke="#e6e5e1"/>
 <text x="170.0" y="426" font-size="12" fill="#8a8985" text-anchor="middle">0 s</text>
 <line x1="286.8" x2="286.8" y1="86" y2="406" stroke="#e6e5e1"/>

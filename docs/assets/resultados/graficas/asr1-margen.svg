@@ -4,7 +4,7 @@
 <text x="40" y="34" font-size="18" font-weight="600" fill="#0b0b0b">ASR-1 · demora del aviso a seguridad, un punto por intruso</text>
 <text x="40" y="60" font-size="14" fill="#52514e">50 de 50 avisos dentro del umbral · mediana 19 ms · máximo 52 ms</text>
 <rect x="536.6" y="86" width="339.7" height="170" fill="#eaf2fc"/>
-<text x="706.5" y="104" font-size="13" fill="#52514e" text-anchor="middle">margen: 38 veces por debajo del umbral</text>
+<text x="706.5" y="104" font-size="13" fill="#52514e" text-anchor="middle">margen: 38 veces menor que el umbral</text>
 <line x1="170.0" x2="170.0" y1="86" y2="256" stroke="#e6e5e1"/>
 <text x="170.0" y="276" font-size="12" fill="#8a8985" text-anchor="middle">1 ms</text>
 <line x1="384.0" x2="384.0" y1="86" y2="256" stroke="#e6e5e1"/>

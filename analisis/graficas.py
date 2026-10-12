@@ -111,7 +111,7 @@ def asr1():
            "ASR-1 · demora del aviso a seguridad, un punto por intruso",
            f"{len(demoras)} de {len(demoras)} avisos dentro del umbral · mediana {mediana:.0f} ms · "
            f"máximo {max(demoras):.0f} ms",
-           "umbral de ASR-1: 2 s", f"margen: {math.floor(2000 / max(demoras))} veces por debajo del umbral",
+           "umbral de ASR-1: 2 s", f"margen: {math.floor(2000 / max(demoras))} veces menor que el umbral",
            "ms", "asr1-margen.svg")
 
 
@@ -128,7 +128,7 @@ def asr3():
            "ASR-3 · del pedido detenido a la Dead-Letter-Queue, un punto por pedido",
            f"{len(d2)} de {len(d2)} en D2 y {len(d3)} de {len(d3)} en D3 dentro del umbral · "
            f"máximo {coma(maximo)} s",
-           "umbral de ASR-3: 30 s", f"margen: {coma(30 - float(coma(maximo).replace(',', '.')))} s de holgura", "segundos", "asr3-margen.svg")
+           "umbral de ASR-3: 30 s", f"margen: {coma(30 - float(coma(maximo).replace(',', '.')))} s por debajo del umbral", "segundos", "asr3-margen.svg")
 
 
 def asr4():
@@ -159,8 +159,8 @@ def asr4():
            [(1, "1 ms"), (10, "10 ms"), (100, "100 ms"), (1000, "1 s")],
            "ASR-4 · de la señal de detención a la Dead-Letter-Queue, un punto por pedido",
            f"{len(d2) + len(d3)} de {len(d2) + len(d3)} pedidos dentro del umbral · máximo {maximo:.0f} ms · "
-           f"mide la entrega a la cola, no la reanudación",
-           "umbral de ASR-4: 5 s", f"margen: {math.floor(5000 / maximo)} veces por debajo del umbral",
+           f"el envío a la cola, no la reanudación",
+           "umbral de ASR-4: 5 s", f"margen: {math.floor(5000 / maximo)} veces menor que el umbral",
            "ms", "asr4-margen.svg")
 
 
