@@ -241,7 +241,7 @@ U = 15 s sin terminar (S-12), y cada etapa es idempotente. A esos pedidos los
 llamamos atascados. La primera versión, con un sondeo que solo comprobaba si la
 etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
-### Tres casos de punta a punta
+### La evidencia, grabada durante la corrida de decisión
 
 **Figura 5. Un pedido congelado en una etapa viva.** A la izquierda, validación
 de despacho acepta el pedido P7-2 y lo olvida. La etapa responde HTTP 200 en
@@ -260,12 +260,19 @@ repite el efecto. Después, el pedido tiene 2 entregas y sigue con 1 factura.
 
 ![Captura de E02: facturación recibe dos veces el pedido P6-13 y emite una sola factura](assets/resultados/evidencias/asr4-entrega-repetida.png)
 
-**Figura 7. Una etapa caída.** Descargue de inventario muere con pedidos en
-curso. El Monitor la declara detenida 5,0 s después, al tercer sondeo sin
-respuesta, y 8 ms más tarde ventas empieza a confirmar en la cola sus pedidos
-pendientes. Cada uno lleva la etapa que falta y la causa `ETAPA_CAIDA`.
+**Figura 7. Una etapa caída en D2.** A la izquierda, el orquestador mata
+validación de despacho a las 22:01:01.210 UTC. A la derecha, el Monitor la
+declara detenida 5,8 s después, al tercer sondeo sin respuesta, y 12 ms más
+tarde ventas empieza a confirmar en la Dead-Letter-Queue los pedidos que
+estaban en ella. Cada mensaje lleva la etapa que falta y la causa
+`ETAPA_CAIDA`. Abajo, el tablero marca en rojo cada caída de despacho y
+cuenta 82 pedidos en la cola en ≤ 30 s en los últimos 5 minutos. La consola de
+RabbitMQ muestra los mensajes acumulados en la Dead-Letter-Queue, que nadie
+consume.
 
-![Captura de E02: inventario cae, el Monitor la declara detenida a los 5 s y ventas envía sus pedidos pendientes a la Dead-Letter-Queue con causa ETAPA_CAIDA](assets/resultados/evidencias/asr4-etapa-caida.png)
+![E02 en vivo, D2: arriba, la caída de despacho, su declaración a los 5,8 s y los pedidos a la Dead-Letter-Queue con causa ETAPA_CAIDA; abajo, el tablero con las caídas en rojo y la cola en RabbitMQ](assets/resultados/evidencias/asr4-caida-vivo.png)
+
+<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-caida-vivo.png" src="assets/resultados/evidencias/asr4-caida-vivo.mp4"></video>
 
 ### Lo que midieron las corridas
 
