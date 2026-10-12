@@ -113,12 +113,12 @@ busca a qué tasa empieza a atrasarse el aviso.
 
 **Figura 2. Un intruso.** A la izquierda, el vendedor V1961 abre sesión con
 sus credenciales correctas desde `D-ATACANTE-DEMO`, que no es su dispositivo
-registrado (`D-V1961-1`). El inicio de sesión responde en 14 ms, sin esperar
-la comparación. A la derecha, el Verificador ve la huella distinta 28 ms
-después del envío, y el SMS llega a seguridad a los 49 ms con el vendedor, el
+registrado (`D-V1961-1`). El inicio de sesión responde en 6 ms, sin esperar
+la comparación. A la derecha, el Verificador ve la huella distinta 19 ms
+después del envío, y el SMS llega a seguridad a los 29 ms con el vendedor, el
 dispositivo y la hora de apertura.
 
-![Captura de E01: a la izquierda, V1961 abre sesión desde D-ATACANTE-DEMO; a la derecha, el Verificador marca la huella distinta y el SMS llega a seguridad 49 ms después](assets/resultados/evidencias/asr1-intruso.png)
+![Captura de E01: a la izquierda, V1961 abre sesión desde D-ATACANTE-DEMO; a la derecha, el Verificador marca la huella distinta y el SMS llega a seguridad 29 ms después](assets/resultados/evidencias/asr1-intruso.png)
 
 **Figura 3. El contraste: un cambio legítimo de dispositivo.** El vendedor
 V0777 registra un dispositivo nuevo y abre sesión desde él un instante
