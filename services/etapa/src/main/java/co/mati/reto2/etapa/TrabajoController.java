@@ -58,8 +58,8 @@ class TrabajoController {
 
     TrabajoController(Registro registro, RabbitTemplate bus, ReciboDeEtapa recibo, MeterRegistry metricas,
                       @Value("${ETAPA}") String etapa,
-                      @Value("${ETAPA_MEDIANA_MS:2000}") long medianaMs,
-                      @Value("${ETAPA_SIGMA:0.5}") double sigma) {
+                      @Value("${ETAPA_MEDIANA_MS:1000}") long medianaMs,
+                      @Value("${ETAPA_SIGMA:0.35}") double sigma) {
         this.etapa = etapa;
         this.registro = registro;
         this.bus = bus;

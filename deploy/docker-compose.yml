@@ -109,19 +109,19 @@ services:
   etapa-facturacion:
     <<: *etapa
     container_name: etapa-facturacion
-    environment: { <<: *entorno, ETAPA: facturacion, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-2000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.5}" }
+    environment: { <<: *entorno, ETAPA: facturacion, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-1000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.35}" }
     ports: ["8091:8080"]
 
   etapa-inventario:
     <<: *etapa
     container_name: etapa-inventario
-    environment: { <<: *entorno, ETAPA: inventario, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-2000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.5}" }
+    environment: { <<: *entorno, ETAPA: inventario, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-1000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.35}" }
     ports: ["8092:8080"]
 
   etapa-despacho:
     <<: *etapa
     container_name: etapa-despacho
-    environment: { <<: *entorno, ETAPA: despacho, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-2000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.5}" }
+    environment: { <<: *entorno, ETAPA: despacho, ETAPA_MEDIANA_MS: "${ETAPA_MEDIANA_MS:-1000}", ETAPA_SIGMA: "${ETAPA_SIGMA:-0.35}" }
     ports: ["8093:8080"]
 
   logistica:
@@ -142,7 +142,7 @@ services:
       SONDEO_T_MS: "${SONDEO_T_MS:-2000}"
       SONDEO_N: "${SONDEO_N:-3}"
       SONDEO_ESPERA_MS: "${SONDEO_ESPERA_MS:-500}"
-      UMBRAL_ATASCO_MS: "${UMBRAL_ATASCO_MS:-15000}"
+      UMBRAL_ATASCO_MS: "${UMBRAL_ATASCO_MS:-5000}"
     ports: ["8095:8080"]
 
   auditor-cola:

@@ -157,7 +157,7 @@ correr() { # grupo id experimento fase criterio vars pregunta
   local grupo="$1" id="$2" experimento="$3" fase="$4" criterio="$5" vars="$6" pregunta="$7"
 
   # Valores por omisión; la fila los sobrescribe.
-  WARMUP_S=300 TASA_BASE=2 SONDEO_T_MS=2000 SONDEO_N=3 SONDEO_ESPERA_MS=500 UMBRAL_ATASCO_MS=15000
+  WARMUP_S=300 TASA_BASE=2 SONDEO_T_MS=2000 SONDEO_N=3 SONDEO_ESPERA_MS=500 UMBRAL_ATASCO_MS=5000
   D1_S=0 REPS=0 CAIDA_S=45 PAUSA_S=30 CONGELAR=0 ESPACIO_S=60 REPETIR=0 ESPACIO_REPETIR_S=5 GRACIA_S=60
   if [ "$vars" != "-" ]; then
     IFS=';' read -ra pares <<<"$vars"

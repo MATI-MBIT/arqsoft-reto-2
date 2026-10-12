@@ -122,8 +122,9 @@ muestra en tres capas:
 - **Un caso testigo anotado.** Es una toma en vivo de la ejecución, con las
   piezas del caso numeradas. Esas piezas son el estímulo que el orquestador le
   aplica por medio del inyector, la respuesta en los logs y el
-  tablero de Grafana o la consola de RabbitMQ. Debajo va un clip de 15 s, que se
-  abre con un clic, con el momento del hecho.
+  tablero de Grafana o la consola de RabbitMQ. Debajo va un clip de unos 40 s,
+  que se abre con un clic, con lo que pasó antes, durante y después del
+  hecho.
 - **El respaldo por fase, en el anexo A.** Son las tomas en vivo sin anotar y las
   tomas de lote: el veredicto de cada fase sobre el tablero completo de su
   ventana.
@@ -177,13 +178,14 @@ de la apertura. ④ El tablero lleva 8
 intrusos en los últimos 5 minutos: 8 avisos a tiempo, 0 escapes (intrusos sin
 aviso) y 0 falsas alarmas.
 
-*El clip.* Empieza con 7 intrusos en el tablero. Se ve aparecer la línea de
-V1722 a la izquierda y, casi al mismo tiempo, la huella distinta y el SMS a la
-derecha. Al refrescar, el tablero sube a 8.
+*El clip (40 s).* Empieza con las terminales en calma y 7 intrusos en el
+tablero. Hacia el segundo 13 aparece la línea de V1722 a la izquierda y, casi
+al mismo tiempo, la huella distinta y el SMS a la derecha. Al refrescar, el
+tablero sube a 8, y el resto del clip muestra el sistema de nuevo en espera.
 
 ![E01 en vivo, S1, anotada: 1 el estímulo, 2 la huella distinta, 3 el SMS a seguridad, 4 el tablero](assets/resultados/testigos/asr1-intruso.png)
 
-<details><summary>▶ Ver el momento (15 s)</summary>
+<details><summary>▶ Ver el clip (40 s)</summary>
 <video controls preload="none" width="100%" src="assets/resultados/clips/asr1-intruso.mp4"></video>
 </details>
 
@@ -200,12 +202,13 @@ porque el registro acaba de hacerse. ② El Verificador lee ese registro, ve que
 la huella coincide y escribe «sin aviso». ③ El tablero sigue en 0 falsas
 alarmas.
 
-*El clip.* Llega una apertura más; su huella coincide y a la derecha no sale
-ningún SMS.
+*El clip (45 s).* Llegan varias aperturas pegadas al registro, una cada pocos
+segundos. Cada una produce a la derecha una «huella coincide», y en todo el
+clip no sale ningún SMS.
 
 ![E01 en vivo, S3, anotada: 1 las aperturas pegadas al registro, 2 las huellas que coinciden sin aviso, 3 cero falsas alarmas](assets/resultados/testigos/asr1-pegado.png)
 
-<details><summary>▶ Ver el momento (15 s)</summary>
+<details><summary>▶ Ver el clip (45 s)</summary>
 <video controls preload="none" width="100%" src="assets/resultados/clips/asr1-pegado.mp4"></video>
 </details>
 

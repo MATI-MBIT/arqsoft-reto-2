@@ -360,9 +360,11 @@ Lo que la refutaría, cualquiera de tres casos:
   aplica dos veces su efecto al mismo pedido. Un efecto doble es una factura o
   un descargue duplicado, lo que ASR-4 prohíbe.
 
-U sale del supuesto S-12: 15 s, porque en D1 de la primera versión ninguna
-etapa tardó más de 13,7 s. Con un sondeo cada 2 s, el pedido llega a la cola
-cerca de 17 s después de entrar a la etapa, dentro de los 30 s de ASR-3.
+U = 5 s es el valor que fijó el equipo (S-12). Para que un pedido sano no pase
+de 5 s en su etapa, las etapas simuladas duran según S-11: mediana de 1 s y
+p99,9 cercano a 3 s. Con un sondeo cada 2 s y su espera de 500 ms, el pedido
+congelado llega a la cola a más tardar unos 7,5 s después de entrar a la etapa,
+dentro de los 30 s de ASR-3.
 
 ### El escenario enlazado
 

@@ -68,7 +68,7 @@ class MonitorDeLaCadena {
                       @Value("${SONDEO_T_MS:2000}") long tMs,
                       @Value("${SONDEO_N:3}") int n,
                       @Value("${SONDEO_ESPERA_MS:500}") long esperaMs,
-                      @Value("${UMBRAL_ATASCO_MS:15000}") long umbralMs,
+                      @Value("${UMBRAL_ATASCO_MS:5000}") long umbralMs,
                       @Value("${FACTURACION_URL:http://localhost:8091}") String facturacion,
                       @Value("${INVENTARIO_URL:http://localhost:8092}") String inventario,
                       @Value("${DESPACHO_URL:http://localhost:8093}") String despacho) {

@@ -12,7 +12,7 @@
 # criterio     decide = la corrida entra al veredicto de la hipótesis | observa
 # vars         K=V;K=V. Por omisión: WARMUP_S=300 · TASA_BASE=2 (S-10)
 #              SONDEO_T_MS=2000 · SONDEO_N=3 · SONDEO_ESPERA_MS=500
-#              UMBRAL_ATASCO_MS=15000 (U, S-12: pedido atascado en una etapa viva)
+#              UMBRAL_ATASCO_MS=5000 (U, S-12: pedido atascado en una etapa viva)
 #              D1_S=0 (segundos sin fallas) · REPS=0 (caídas, D2) · CAIDA_S=45
 #              PAUSA_S=30 · CONGELAR=0 (congelamientos, D3) · ESPACIO_S=60
 #              REPETIR=0 (entregas repetidas, D5) · ESPACIO_REPETIR_S=5
