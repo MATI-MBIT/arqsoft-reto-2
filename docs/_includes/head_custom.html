@@ -1,4 +1,4 @@
-<!-- Visor de diagramas Mermaid y de las imágenes de diagramas: botón «Ampliar» y pantalla completa con zoom y arrastre. -->
+<!-- Visor de diagramas Mermaid y de todas las imágenes del contenido: botón «Ampliar» y pantalla completa con zoom y arrastre. -->
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.2/dist/svg-pan-zoom.min.js" defer></script>
 <style>
   .mmd-wrap { position: relative; padding-top: 2.4rem !important; }
@@ -116,7 +116,8 @@
     // Mermaid dibuja los SVG después de cargar la página: se espera a que aparezcan.
     function revisar() {
       document.querySelectorAll(".language-mermaid").forEach(preparar);
-      document.querySelectorAll('.main-content img[src*="png-v"]').forEach(prepararImagen);
+      // Todas las imágenes del contenido: diagramas, capturas de las pruebas y tableros.
+      document.querySelectorAll('.main-content img').forEach(prepararImagen);
     }
     new MutationObserver(revisar).observe(document.body, { childList: true, subtree: true });
     revisar();
