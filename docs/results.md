@@ -49,7 +49,7 @@ veces menor es, o cuántos segundos le sobran.
 | ASR-1 · seguridad | Avisos por cambios legítimos de dispositivo | ≤ 1 por cada 100 | 0 en 100 (S2) y 0 en 20 (S3) | — | **Pasa** |
 | ASR-3 · disponibilidad | Pedido detenido, detectado y en la Dead-Letter-Queue | ≤ 30 s | 344 de 344, máximo 17,0 s | 13,0 s por debajo | **Pasa** |
 | ASR-3 · disponibilidad | Falsas alarmas | ≤ 1 por hora | 0 en los 30 min de D1 | — | **Pasa** |
-| ASR-4 · disponibilidad | De la señal de detención a la Dead-Letter-Queue | ≤ 5 s | 139 de 139, máximo 111 ms | 45 veces menor | **Pasa** en el envío a la cola. La reanudación no se midió |
+| ASR-4 · disponibilidad | De la señal de detención a la Dead-Letter-Queue | ≤ 5 s | 139 de 139 (los que estaban en la etapa al declararla detenida, y los 15 de D3), máximo 111 ms | 45 veces menor | **Pasa** en el envío a la cola. La reanudación no se midió |
 | ASR-4 · disponibilidad | Estado exacto: qué etapa falta y por qué | En cada mensaje | 344 de 344 con su causa | — | **Pasa** |
 | ASR-4 · disponibilidad | Facturas, descargues u órdenes de despacho duplicados | 0 | 0 en 11 641 pares de pedido y etapa | — | **Pasa** |
 
@@ -121,9 +121,9 @@ muestra en tres capas:
   una línea. La genera `analisis/graficas.py` desde la tabla de eventos.
 - **Un caso testigo anotado.** Es una toma en vivo de la ejecución, con las
   piezas del caso numeradas. Esas piezas son el estímulo que el orquestador le
-  aplica al sistema por medio del inyector, la respuesta en los logs y el
-  tablero de Grafana o la consola de RabbitMQ. Debajo va un clip de 15 s con el
-  momento del hecho, que se abre con un clic.
+  aplica por medio del inyector, la respuesta en los logs y el
+  tablero de Grafana o la consola de RabbitMQ. Debajo va un clip de 15 s, que se
+  abre con un clic, con el momento del hecho.
 - **El respaldo por fase, en el anexo A.** Son las tomas en vivo sin anotar y las
   tomas de lote: el veredicto de cada fase sobre el tablero completo de su
   ventana.
@@ -159,7 +159,7 @@ la sesión de V1722 desde `D-ATACANTE-647209`. ② El Verificador ve la huella
 distinta 1 ms después. ③ El SMS llega a seguridad con el vendedor, el
 dispositivo y la hora; según la tabla de eventos, la demora total fue de 52 ms.
 ④ El tablero cuenta 8 intrusos en los últimos 5 minutos, 8 avisos a tiempo, 0
-escapes, es decir, intrusos sin aviso a tiempo, y 0 falsas alarmas.
+escapes (intrusos sin aviso a tiempo) y 0 falsas alarmas.
 
 ![E01 en vivo, S1, anotada: 1 el estímulo, 2 la huella distinta, 3 el SMS a seguridad, 4 el tablero](assets/resultados/testigos/asr1-intruso.png)
 
@@ -291,8 +291,8 @@ etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 **Figura 6. ASR-3 se cumple con un margen de 13,0 s.** Cada punto es lo que
 tardó en llegar a la cola uno de los pedidos detenidos: los 329 de las caídas
 de D2 y los 15 congelados de D3. El reloj arranca como en la Tabla 5: en la
-caída o en el envío de ventas en D2, y cuando el pedido congelado entra a la
-etapa en D3. Se detiene cuando el bróker lo confirma en la Dead-Letter-Queue,
+caída, o en el envío de ventas si el pedido llegó con la etapa ya caída, en D2;
+y cuando el pedido congelado entra a la etapa, en D3. Se detiene cuando el bróker lo confirma en la Dead-Letter-Queue,
 así que incluye la detección y el envío. La línea punteada es el umbral de
 30 s.
 
@@ -327,8 +327,8 @@ mata validación de despacho. ② El Monitor la declara detenida 5,8 s después,
 al tercer sondeo sin respuesta. ③ Ventas empieza 12 ms más tarde a enviar a la
 Dead-Letter-Queue los pedidos que estaban en la etapa, cada uno con la causa
 `ETAPA_CAIDA`. ④ El tablero marca en rojo cada caída de despacho. ⑤ La consola
-de RabbitMQ muestra los 670 mensajes que la cola, que nadie consume, había
-acumulado hasta esa caída.
+de RabbitMQ muestra los 670 mensajes acumulados en la cola hasta esa caída;
+nadie la consume.
 
 ![E02 en vivo, D2, anotada: 1 la caída, 2 la declaración, 3 los pedidos a la cola con su causa, 4 el Monitor en rojo, 5 la cola en RabbitMQ](assets/resultados/testigos/asr4-caida.png)
 
