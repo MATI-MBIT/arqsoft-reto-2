@@ -53,7 +53,7 @@ consume, y por eso los nombres de archivo son los del paquete.
 | `docs/glossary.md` | `Objective → Glossary` | Insumo |
 | `docs/quality-attributes.md` | escenarios colgados de las historias | **Producto de los insumos** |
 | `docs/experiments.md` | `Experiments` (E01: H1 sobre ASR-1 · E02: H2 sobre ASR-4, con ASR-3 como paso previo) | Validación de decisiones |
-| `docs/results.md` | `Experiments → Results & analysis` | Resultado de las corridas y decisión que sale de cada una |
+| `docs/results.md` | `Experiments → Results & analysis` | Resultado de las ejecuciones y decisión que sale de cada una |
 
 ---
 
@@ -131,7 +131,7 @@ tabla de escenarios cayó en cuenta de que eso es **ASR-1**, no ASR-2: H1 quedó
 atada a ASR-1 y HU-01, con ADR-007 como la decisión que valida. ASR-2 no entra
 al experimento. Stack fijado: local, Java
 21 + Spring Boot 3 por micro, PostgreSQL y RabbitMQ en Docker Compose;
-Prometheus y Grafana para ver la corrida, y una tabla de eventos por
+Prometheus y Grafana para ver la ejecución, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
 Resultados (en `docs/results.md`), con el diseño de DG-CMP-004 y DG-CMP-005.
@@ -147,7 +147,7 @@ valiendo: menor N = 1, solo para una máquina. `analisis/resultados/` guarda
 solo lo que `results.md` cita.
 
 **Evidencia.** Nicolás pidió el 2026-10-12 evidencia intencional, en vivo y de
-lote, con foto y video. En vivo: una pantalla por caso durante la corrida de
+lote, con foto y video. En vivo: una pantalla por caso durante la ejecución de
 decisión (estímulo leído del registro de eventos, respuesta en los logs,
 tablero `ev-e01`/`ev-e02` y RabbitMQ). De lote: el veredicto de cada fase sobre
 el tablero completo de su ventana. Todo en `docs/assets/resultados/evidencias/`,
@@ -163,7 +163,7 @@ para Windows) y `analisis/` (veredicto en SQL y resultados del ciclo vigente).
 `make help` lista todo; `make e2e` verifica el montaje; `make paralelo` corre
 E01 y E02 a la vez (cada uno reinicia solo lo suyo); `make e02-rapido`
 corre E02 en ~25 min y `make e02` el de decisión en ~1 h 30 (Nicolás pidió el
-2026-10-12 retroalimentación corta: nada de corridas de 9 h). En Windows,
+2026-10-12 retroalimentación corta: nada de ejecuciones de 9 h). En Windows,
 `make.bat` con los mismos objetivos.
 
 **Evidencias de un caso.** Nicolás pidió el 2026-10-12 evidencias
@@ -171,21 +171,21 @@ intencionales en vez de tableros de Grafana: un caso por escenario, con el
 estímulo a la izquierda y la respuesta a la derecha. `load/evidencias.sh` las
 reproduce (`limpiar`, `intruso`, `cambio`, `congelado`, `caida`, `repetida` y
 `mirar <caso>`, que filtra los logs). Las capturas son de una demostración, no
-de las corridas de decisión, y viven en `docs/assets/resultados/evidencias/`.
+de las ejecuciones de decisión, y viven en `docs/assets/resultados/evidencias/`.
 Para eso se agregó una línea de log por hecho en cinco micros, después de la
-corrida de E01; no cambia lo que mide H1. El mensaje de la Dead-Letter-Queue
+ejecución de E01; no cambia lo que mide H1. El mensaje de la Dead-Letter-Queue
 lleva `causa` (`ETAPA_CAIDA` o `PEDIDO_ATASCADO`), que es el «por qué» del
 estado exacto de ASR-4, y `analisis/e02.sql` tiene el criterio que lo verifica.
 `analisis/e02-senal.sql` mide de la señal a la cola contra los ≤ 5 s de ASR-4.
 
-El orquestador invalida una corrida si la carga de fondo tiene un hueco de más
+El orquestador invalida una ejecución si la carga de fondo tiene un hueco de más
 de 30 s, si el equipo se suspendió o si k6 pasa del 1 % de solicitudes
 fallidas, y entonces reinicia el ciclo completo: Nicolás pidió el 2026-10-07 no
 reanudar nunca un ciclo a medias. Con batería no arranca (`FORZAR_BATERIA=1`
 para forzarlo). Hay que desactivar las actualizaciones automáticas de Docker
-Desktop: una reinició Docker a mitad de una corrida.
+Desktop: una reinició Docker a mitad de una ejecución.
 El plan y los supuestos S-10 y S-11 están en `notas/plan-implementacion-experimentos.md`.
-No abrir Grafana mientras una corrida de E02 mide: su carga llegó a vencer
+No abrir Grafana mientras una ejecución de E02 mide: su carga llegó a vencer
 sondeos del Monitor.
 
 ### Los ASR
@@ -338,6 +338,6 @@ conjunto entre ASR-3 y ASR-4 · el símbolo
 **≤** para los umbrales · **ASR-1** a **ASR-4** · **R-1** en adelante para
 restricciones · **HU-01** en adelante para historias.
 
-Vocabulario fijado: se dice **pedido**, no compra ni orden. Las tres etapas que
+Vocabulario fijado: se dice **pedido**, no compra ni orden; y **ejecución**, no corrida (Nicolás, 2026-10-12). Las tres etapas que
 siguen al pedido son **facturación**, **descargue de inventario** y **validación
 de despacho**; su cierre habilita a **logística**, que es distinta de despacho.

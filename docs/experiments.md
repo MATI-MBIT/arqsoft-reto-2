@@ -41,13 +41,13 @@ Todo corre en local, en una sola máquina:
 | Micros | Java 21 y Spring Boot 3, un proceso por micro. Spring Web para abrir sesiones, crear pedidos y sondear la salud de las etapas; Spring AMQP para los eventos, que pasan por el bróker como en DG-CMP-004 y DG-CMP-005 | Que el inyector pueda detener cada etapa por separado | Los dos |
 | SIMULADOR-DB | PostgreSQL en Docker Compose | Usuarios, ID de dispositivo registrado y estado de cada pedido por etapa | Los dos |
 | Carga | k6, con arribo aleatorio, como en el reto 1 | Reproducir el Ambiente A | Los dos |
-| Observabilidad en vivo | Micrometer en cada micro, con Prometheus y Grafana en Docker Compose | Ver la corrida mientras pasa y parar a tiempo una corrida dañada | Los dos |
-| Registro de eventos | Cada componente escribe una fila con el identificador, el evento y el instante en una tabla de PostgreSQL. Un script cruza las filas al final de cada corrida | Probar uno a uno que cada salida corresponde a su falla. Prometheus no sirve para esto porque agrega los datos y pierde el identificador | Los dos |
+| Observabilidad en vivo | Micrometer en cada micro, con Prometheus y Grafana en Docker Compose | Ver la ejecución mientras pasa y parar a tiempo una ejecución dañada | Los dos |
+| Registro de eventos | Cada componente escribe una fila con el identificador, el evento y el instante en una tabla de PostgreSQL. Un script cruza las filas al final de cada ejecución | Probar uno a uno que cada salida corresponde a su falla. Prometheus no sirve para esto porque agrega los datos y pierde el identificador | Los dos |
 | Monitor de la cadena | Un micro aparte con una tarea programada (`@Scheduled`) que sondea un punto de salud de cada etapa cada T segundos y cuenta los sondeos sin respuesta | Variar T y N en D4 sin tocar código | E02 |
 | Bróker y Dead-Letter-Queue | RabbitMQ en Docker Compose: el bróker de la cadena, con una cola de mensajes fallidos durable, confirmación de publicación y Spring AMQP | Medir cero pedidos perdidos y cero duplicados | E02 |
 | Inyección | Un inyector que detiene procesos y congela pedidos marcados | Las fases D2 y D3 | E02 |
 
-Grafana sirve para mirar la corrida; el veredicto de cada criterio sale del
+Grafana sirve para mirar la ejecución; el veredicto de cada criterio sale del
 registro de eventos, que conserva el identificador de cada operación y de cada
 pedido.
 
@@ -59,7 +59,7 @@ aleatorio. Cada pedido recorre las tres etapas, y cada etapa tarda un tiempo
 aleatorio, para que la detección conviva con la variación normal de la
 operación.
 
-Cada corrida empieza con un calentamiento de 5 minutos que no entra en ningún
+Cada ejecución empieza con un calentamiento de 5 minutos que no entra en ningún
 criterio. Las cifras de repeticiones y duraciones de las fases son una
 propuesta del equipo; no salen del enunciado.
 
@@ -210,7 +210,7 @@ Tres decisiones de montaje que el diagrama no dice:
 **Qué se mide.** El reloj arranca cuando el micro de sesiones registra la
 apertura de la sesión y para cuando el receptor recibe el aviso. El cruce es por
 identificador de la sesión. El tablero de Grafana muestra la demora del aviso
-durante la corrida.
+durante la ejecución.
 
 **H1 se sostiene si se cumplen las cuatro condiciones:**
 
@@ -250,13 +250,13 @@ SIMULADOR-DB en PostgreSQL, k6, Prometheus y Grafana, y el registro de eventos.
 | Micros de seguridad: Gestor de sesión, Verificador de dispositivo, Notificador a seguridad, Onboarding y la base simulada | 12 |
 | Simulador de sesiones y guiones de k6 para las aperturas | 4 |
 | Mitad de la observabilidad y del registro de eventos, que comparte con E02 | 5 |
-| Atención de las corridas | 2 |
+| Atención de las ejecuciones | 2 |
 | Análisis, resultados y decisión | 8 |
 
 ### Resultados y análisis
 
 Los campos `Results`, `Analysis of results` y `Links & evidence` se llenan con
-las corridas. Los resultados deben traer:
+las ejecuciones. Los resultados deben traer:
 
 - **Fallas inyectadas:** aperturas desde dispositivos no registrados, cambios
   legítimos y aperturas pegadas al registro.
@@ -449,10 +449,10 @@ Tres decisiones de montaje que el diagrama no dice:
 | D5 — Entrega repetida | El inyector le vuelve a entregar a una etapa un pedido que ya terminó, como lo haría el bróker tras una caída o quien reprocese la Dead-Letter-Queue | 20 veces por etapa, 60 en total | Con criterio |
 | D4 — Combinaciones de T y N | Se combina un sondeo cada 1, 2 y 5 s con 1, 2, 3 y 5 sondeos sin respuesta | 12 combinaciones, con D1 y D2 en cada una | Exploratoria. Corrió el 8 de octubre con la primera versión; no se repite, porque la detección de la etapa caída no cambió |
 
-**Tres niveles de corrida.** Las corridas de horas no dan retroalimentación a
+**Tres niveles de ejecución.** Las ejecuciones de horas no dan retroalimentación a
 tiempo, así que el plan tiene tres niveles. El humo, de unos 5 min, comprueba
 que todo circula. El rápido, de unos 25 min, corre todas las fases en una sola
-corrida con 3 casos por etapa, para probar cada cambio. El de decisión, de cerca
+ejecución con 3 casos por etapa, para probar cada cambio. El de decisión, de cerca
 de 1 h 30, corre las fases de la tabla y es el que entra a los resultados.
 
 **Qué se mide.** El reloj arranca cuando el inyector detiene la etapa (D2) o
@@ -488,7 +488,7 @@ congelado ni detenido.
   mismo riesgo que el equipo anotó en ADR-004 (R-004a).
 - Cero falsas alarmas en la media hora de D1 no prueba que la tasa real sea
   ≤ 1 por hora: solo muestra que no hubo evidencia en contra. Afirmarlo con
-  confianza pide más horas de corrida.
+  confianza pide más horas de ejecución.
 - El punto de salud lee el recibo de la base de la etapa. Si esa base no
   responde, la etapa tampoco responde al sondeo, y cuenta como etapa caída.
 - La idempotencia se prueba en las etapas. La caída del bróker entre la
@@ -515,13 +515,13 @@ D4, que corre de noche sin supervisión.
 | Micros de la cadena: ventas, las tres etapas, el Monitor de la cadena, el bróker y la Dead-Letter-Queue | 16 |
 | Guiones de k6 para los pedidos e inyector de fallas | 8 |
 | Mitad de la observabilidad y del registro de eventos, que comparte con E01 | 5 |
-| Atención de las corridas | 4 |
+| Atención de las ejecuciones | 4 |
 | Análisis, resultados y decisión | 8 |
 
 ### Resultados y análisis
 
 Los campos `Results`, `Analysis of results` y `Links & evidence` se llenan con
-las corridas. Los resultados deben traer:
+las ejecuciones. Los resultados deben traer:
 
 - **Fallas inyectadas:** etapas detenidas y pedidos congelados.
 - **Detectadas:** mensajes en la cola cruzados con su pedido y su etapa.

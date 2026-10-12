@@ -197,7 +197,7 @@ Se cargó el experimento **E01** desde `docs/experiments.md`.
 | `Tactics and Patterns` | Cargado; la tabla de alternativas entró como viñetas |
 | `Experiment Design` | Cargado sin la imagen ni el Mermaid, con enlace a la página del wiki; las tablas de fases y de relojes entraron como viñetas |
 | `Required resources` · `Architecture elements involved` · `Estimated effort` | Cargados como texto plano |
-| `Results & analysis` | Solo `External report`, con el enlace a la página del wiki. Resultados, análisis, conclusión y decisión quedan vacíos hasta las corridas |
+| `Results & analysis` | Solo `External report`, con el enlace a la página del wiki. Resultados, análisis, conclusión y decisión quedan vacíos hasta las ejecuciones |
 
 `[PREGUNTA]` `Code repository` quedó vacío: falta decidir dónde vive el código
 del prototipo.

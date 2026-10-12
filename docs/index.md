@@ -48,7 +48,7 @@ cualquiera. Para buscar un término en todo el sitio, usa `Ctrl` + `K` o `⌘` +
 | Modelos | [Diagramas de arquitectura](modelos/diagramas-ccp-reto2.md) | La portada de los diagramas, con la trazabilidad entre ASR, ADR y diagrama |
 | Modelos | [Componentes](modelos/vista-componentes.md) · [Concurrencia](modelos/vista-concurrencia.md) · [Información](modelos/vista-informacion.md) · [Despliegue](modelos/vista-despliegue.md) | Las cuatro vistas, con diez diagramas dibujados en draw.io |
 | Validación | [Experimentos E01 y E02](experiments.md) | Las dos hipótesis, el montaje común, la carga y cómo se decide cada una |
-| Validación | [Resultados de E01 y E02](results.md) | Qué arrojaron las corridas y qué decisión sale de cada experimento |
+| Validación | [Resultados de E01 y E02](results.md) | Qué arrojaron las ejecuciones y qué decisión sale de cada experimento |
 
 ## Los cuatro escenarios
 
@@ -68,7 +68,7 @@ detiene hasta que se reanuda.
 
 ## Lo que dijeron los experimentos
 
-Las corridas de octubre de 2026 probaron dos hipótesis por separado, para que
+Las ejecuciones de octubre de 2026 probaron dos hipótesis por separado, para que
 una pudiera caer sin arrastrar a la otra. E01 prueba la decisión que el
 equipo propuso para ASR-1. E02 prueba una alternativa más simple a la decisión
 propuesta para ASR-3.

@@ -32,7 +32,7 @@ make plan        # las corridas del plan y a qué pregunta responde cada una
 make help        # todos los comandos
 ```
 
-Cada corrida deja en `analisis/resultados/<corrida>/` el `veredicto.txt`, los
+Cada ejecución deja en `analisis/resultados/<corrida>/` el `veredicto.txt`, los
 eventos crudos en CSV, la salida de k6 y la copia del plan con que corrió.
 `make veredicto CORRIDA=<id>` lo recalcula desde el registro de eventos.
 
@@ -57,7 +57,7 @@ eventos crudos en CSV, la salida de k6 y la copia del plan con que corrió.
 | D-11 | El reloj | Todo t0 y todo t1 los anota un contenedor; el inyector corre dentro de Docker | En macOS, k6 y los scripts del host leen otro reloj | — |
 | D-14 | Qué informa el punto de salud de cada etapa | Además de responder, cuántos pedidos tiene en curso, la edad del más viejo y los que llevan más de `mayorQueMs` sin terminar. El umbral U lo pone el Monitor (S-12: 15 s). Nicolás lo pidió el 2026-10-12, después de que D3 tumbara el sondeo de solo vida | La etapa informa hechos y el Monitor decide. El dato sale del recibo de la idempotencia, así que ve también el pedido que la etapa aceptó y olvidó | `UMBRAL_ATASCO_MS` |
 | D-15 | Cómo es idempotente cada etapa | Guarda un recibo `(pedido, etapa)` antes de confirmar el mensaje al bróker, y aplica su efecto en la misma transacción que cierra el recibo, solo si seguía en curso. Una entrega repetida de un pedido terminado no repite el efecto y vuelve a publicar `etapa.completada`. Nicolás lo pidió el 2026-10-12 | Es el receptor idempotente de ADR-005. D5 lo prueba con entregas repetidas que inyecta el inyector por la API de RabbitMQ | — |
-| D-16 | Cuánto dura una corrida | Tres niveles: humo (~6 min), `e02-rapido` (~25 min, todas las fases en una corrida, 3 casos por etapa) y `e02` de decisión (~1 h 30: D1 30 min, D2 15 caídas, D3 15 congelados, D5 60 entregas). Nicolás lo pidió el 2026-10-12: las corridas de 9 h no dan retroalimentación | Cada fase de decisión sigue dando cientos de casos. D4 no se repite: la detección de la etapa caída no cambió | `D1_S`, `REPS`, `CONGELAR`, `REPETIR` |
+| D-16 | Cuánto dura una ejecución | Tres niveles: humo (~6 min), `e02-rapido` (~25 min, todas las fases en una ejecución, 3 casos por etapa) y `e02` de decisión (~1 h 30: D1 30 min, D2 15 caídas, D3 15 congelados, D5 60 entregas). Nicolás lo pidió el 2026-10-12: las ejecuciones de 9 h no dan retroalimentación | Cada fase de decisión sigue dando cientos de casos. D4 no se repite: la detección de la etapa caída no cambió | `D1_S`, `REPS`, `CONGELAR`, `REPETIR` |
 | — | T y N para D1 a D3 | **T = 2 s, N = 3**: N × T = 6 s, con 500 ms de espera por sondeo | Deja 24 s de margen dentro de los 30 s. D4 dirá si hay una combinación mejor | `SONDEO_T_MS`, `SONDEO_N`, `SONDEO_ESPERA_MS` |
 | — | Repartición de vendedores | V0001–V1000 fondo · V1001–V1100 S2 · V1201–V1220 S3 · V1501–V2000 intrusos | Que las fases no se pisen: un cambio de S2 no puede volver intruso a una sesión de fondo | — |
 
@@ -146,27 +146,27 @@ Cada uno combina dos fuentes:
   duración de cada etapa en p50 y p99,9 y la CPU.
 
 Las anotaciones marcan cada falla inyectada (rojo), cada etapa que vuelve a
-responder (verde) y la ventana de medición de cada corrida (azul).
+responder (verde) y la ventana de medición de cada ejecución (azul).
 
 El veredicto no sale de Prometheus, que agrega y pierde el identificador. Sale
 del registro de eventos, y Grafana muestra ese mismo cruce.
 
 ---
 
-## 5. Validez de cada corrida
+## 5. Validez de cada ejecución
 
-El orquestador comprueba cada corrida al cerrarla y la da por inválida si pasa
+El orquestador comprueba cada ejecución al cerrarla y la da por inválida si pasa
 cualquiera de estas tres cosas:
 
 - **Hueco en la carga de fondo** de más de 30 s entre dos pedidos: la máquina se
-  congeló. En corridas sanas no pasa de 13 s.
-- **Suspensión del equipo** durante la corrida: `pmset` en macOS y el evento 42
+  congeló. En ejecuciones sanas no pasa de 13 s.
+- **Suspensión del equipo** durante la ejecución: `pmset` en macOS y el evento 42
   de Kernel-Power en Windows.
 - **Más de 1 % de solicitudes fallidas** en k6: la carga no fue la del diseño.
 
-Una corrida inválida descarta el ciclo, que vuelve a empezar desde la primera
-corrida. Nicolás lo pidió el 2026-10-07: un ciclo no se reanuda a medias. El
-veredicto de cada corrida trae su validez y su hueco máximo. Los resultados
+Una ejecución inválida descarta el ciclo, que vuelve a empezar desde la primera
+ejecución. Nicolás lo pidió el 2026-10-07: un ciclo no se reanuda a medias. El
+veredicto de cada ejecución trae su validez y su hueco máximo. Los resultados
 están en `docs/results.md`.
 
 ---
@@ -176,8 +176,8 @@ están en `docs/results.md`.
 | Riesgo | Qué se hace |
 |---|---|
 | Doce JVM, PostgreSQL, RabbitMQ y la observabilidad en un portátil se pelean por CPU, y un sondeo lento parece una etapa caída | Heap de 256 MB por micro, sondeos con espera de 500 ms, RabbitMQ sin *busy-wait* y el panel de CPU |
-| El equipo se suspende a mitad de una corrida | `caffeinate -dims`; con batería el orquestador no arranca; la corrida se invalida si hubo suspensión |
-| Docker Desktop se actualiza y se reinicia a mitad de una corrida | Desactivar las actualizaciones automáticas mientras se corre; la preparación levanta toda la topología y la corrida se invalida |
+| El equipo se suspende a mitad de una ejecución | `caffeinate -dims`; con batería el orquestador no arranca; la ejecución se invalida si hubo suspensión |
+| Docker Desktop se actualiza y se reinicia a mitad de una ejecución | Desactivar las actualizaciones automáticas mientras se corre; la preparación levanta toda la topología y la ejecución se invalida |
 | Abrir Grafana durante una medición carga la máquina | `make up` precalienta Grafana; las capturas se toman al final, con Chrome sin interfaz |
 | El registro en memoria pierde eventos si un contenedor muere con la cola llena | El inyector solo mata etapas, que no escriben ni t0 ni t1 de E02. El registro se vacía cada 200 ms y al apagar |
 
