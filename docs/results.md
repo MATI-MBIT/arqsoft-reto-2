@@ -139,6 +139,15 @@ cuenta intrusos ni falsas alarmas.
 
 <video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-cambio-vivo.png" src="assets/resultados/evidencias/asr1-cambio-vivo.mp4"></video>
 
+**Figura 4. Aperturas pegadas al registro en S3.** Cada vendedor registra un
+dispositivo nuevo y abre sesión desde él menos de 1 s después. A la derecha, el
+Verificador lee el registro recién hecho, ve que la huella coincide y no avisa:
+no aparece ningún SMS. Abajo, el tablero no cuenta intrusos ni falsas alarmas.
+
+![E01 en vivo, S3: arriba, aperturas a menos de 1 s del registro y huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas](assets/resultados/evidencias/asr1-pegado-vivo.png)
+
+<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-pegado-vivo.png" src="assets/resultados/evidencias/asr1-pegado-vivo.mp4"></video>
+
 ### Lo que midieron las corridas
 
 **Tabla 1. Criterios de H1.** Cada fila es un criterio de
@@ -165,7 +174,7 @@ cual llegó el 95 % de los avisos.
 | S4 a 3× (6 aperturas/s) | 10 | 17 ms | 23 ms | 23 ms |
 | S4 a 5× (10 aperturas/s) | 10 | 17 ms | 34 ms | 38 ms |
 
-**Figura 4. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
+**Figura 5. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
 reloj arranca en t0, cuando el micro de sesiones (Gestor de sesión en el
 diagrama) publica `sesion.abierta`, y se detiene en t1, cuando el aviso llega al
 receptor del SMS. Si la huella coincide con la registrada, el Verificador
@@ -243,7 +252,7 @@ etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
 ### La evidencia, grabada durante la corrida de decisión
 
-**Figura 5. Un pedido congelado en una etapa viva, en D3.** A la izquierda,
+**Figura 6. Un pedido congelado en una etapa viva, en D3.** A la izquierda,
 el orquestador congela validación de despacho a las 22:06:55.646 UTC, y el
 pedido P7-7 entra a la etapa y se queda quieto. A la derecha, 16,9 s después el
 Monitor lo detecta como atascado con la etapa viva, y 46 ms más tarde ventas lo
@@ -256,14 +265,19 @@ mensaje a la consola de RabbitMQ.
 
 <video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-congelado-vivo.png" src="assets/resultados/evidencias/asr4-congelado-vivo.mp4"></video>
 
-**Figura 6. Una entrega repetida.** El bróker le vuelve a entregar a
-facturación el pedido P6-13, que ya había facturado. Antes de la entrega, el
-pedido tiene 1 entrega y 1 factura. La etapa encuentra su recibo terminado y no
-repite el efecto. Después, el pedido tiene 2 entregas y sigue con 1 factura.
+**Figura 7. Entregas repetidas en D5.** A la izquierda, el orquestador le
+vuelve a entregar a facturación, cada 5 s, un pedido que ya facturó. A la
+derecha, unos 10 ms después de cada entrega, facturación encuentra el recibo
+del pedido terminado y no repite el efecto. Abajo, el tablero cuenta las
+entregas repetidas descartadas y 0 efectos dobles; los pedidos atascados que
+aún aparecen son los últimos de D3, que siguen dentro de la ventana de 5
+minutos.
 
-![Captura de E02: facturación recibe dos veces el pedido P6-13 y emite una sola factura](assets/resultados/evidencias/asr4-entrega-repetida.png)
+![E02 en vivo, D5: arriba, cinco entregas repetidas a facturación y la etapa que no repite el efecto; abajo, el tablero con las entregas descartadas y 0 efectos dobles](assets/resultados/evidencias/asr4-repetida-vivo.png)
 
-**Figura 7. Una etapa caída en D2.** A la izquierda, el orquestador mata
+<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr4-repetida-vivo.png" src="assets/resultados/evidencias/asr4-repetida-vivo.mp4"></video>
+
+**Figura 8. Una etapa caída en D2.** A la izquierda, el orquestador mata
 validación de despacho a las 22:01:01.210 UTC. A la derecha, el Monitor la
 declara detenida 5,8 s después, al tercer sondeo sin respuesta, y 12 ms más
 tarde ventas empieza a confirmar en la Dead-Letter-Queue los pedidos que
@@ -335,7 +349,7 @@ la cola, no la reanudación ni la entrega a una persona; la consulta está en
 
 #### La idempotencia: ningún efecto duplicado
 
-**Figura 8. Una entrega repetida en D5 (DG-SEQ-004).** El inyector toma un
+**Figura 9. Una entrega repetida en D5 (DG-SEQ-004).** El inyector toma un
 pedido que la etapa ya terminó y se lo vuelve a entregar por el bróker. La
 etapa busca el recibo, lo encuentra terminado y descarta la entrega sin repetir
 el efecto. Vuelve a publicar `etapa.completada`, por si el aviso anterior se
@@ -367,7 +381,7 @@ idempotente, y D5 muestra que una entrega repetida no repite el efecto.
 
 #### La detección que lo precede (ASR-3)
 
-**Figura 9. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
+**Figura 10. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
 etapa que acepte el próximo pedido y lo olvide sin terminarlo. La etapa guarda
 el recibo antes de confirmar el mensaje al bróker, así que el pedido queda en
 curso en su tabla. En cada sondeo, el punto de salud lee esa tabla y responde
@@ -390,7 +404,7 @@ lleva demasiado tiempo sin terminar, y lo lee del recibo que la etapa guardó
 antes de confirmar el mensaje. Por eso ve también el pedido que la etapa aceptó
 y olvidó.
 
-**Figura 10. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
+**Figura 11. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
 y el Monitor la declara detenida al tercer sondeo sin respuesta. Desde ahí avisa
 en cada ciclo al Coordinador, que es el micro de ventas como en DG-CMP-005, y
 este publica cada pedido pendiente de esa etapa como `pedido.detenido`. El
