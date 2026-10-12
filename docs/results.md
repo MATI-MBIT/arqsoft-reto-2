@@ -224,7 +224,7 @@ pedidos que la etapa ya había terminado (D5).
 
 | Fase | Casos | Cumplen | Fallan | Veredicto |
 |---|---|---|---|---|
-| D1 · ≤ 1 falsa alarma por hora, en 30 min sin fallas | 0 declaraciones y 0 pedidos informados como atascados | — | 0 | **Pasa** |
+| D1 · ninguna falsa alarma en 30 min sin fallas | 0 declaraciones y 0 pedidos informados como atascados | — | 0 | **Pasa** |
 | D2 · los pedidos detenidos, en la Dead-Letter-Queue en ≤ 30 s | 362 | 362 | 0 | **Pasa**: demora máxima de 6,4 s |
 | D3 · el pedido congelado en una etapa viva, en la Dead-Letter-Queue en ≤ 30 s | 15 | 15 | 0 | **Pasa**: demora máxima de 17,6 s |
 | D5 · la entrega repetida no repite el efecto de la etapa | 60 | 60 | 0 | **Pasa**: 60 descartadas, un solo efecto cada una |

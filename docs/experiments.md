@@ -310,8 +310,8 @@ resultado** que el pedido llegue a la Dead-Letter-Queue sin efectos duplicados,
 **lo cual se validará cuando** los pedidos de D2 y D3 lleguen una sola vez a la
 cola en ≤ 30 s. Ese plazo de detección es el de [ASR-3](quality-attributes.md).
 En D2 se caen etapas, y en D3 se congelan 15 pedidos dentro de una etapa que
-sigue viva. La media hora sin fallas de D1 debe dejar ≤ 1 falsa alarma por
-hora. Ninguna de las 60 entregas repetidas de D5 puede duplicar la factura, el
+sigue viva. La media hora sin fallas de D1 no debe dar ninguna falsa
+alarma. Ninguna de las 60 entregas repetidas de D5 puede duplicar la factura, el
 descargue o la orden de despacho del mismo pedido.
 
 «Pedido detenido» incluye el que se congela dentro de una etapa que sigue
@@ -466,7 +466,8 @@ congelado ni detenido.
 
 - En D2, los pedidos detenidos llegan a la cola en ≤ 30 s, cada uno con el
   pedido, la etapa y el tiempo transcurrido.
-- En D1, hay ≤ 1 falsa alarma por hora.
+- En D1, no hay ninguna falsa alarma. El techo de ASR-3, ≤ 1 por hora, equivale
+  a 0,5 en media hora, y una sola alarma ya lo pasa.
 - En D3, los 15 pedidos congelados también llegan a la cola en ≤ 30 s.
 - En D5, ninguna etapa aplica dos veces su efecto al mismo pedido.
 - En todas las fases, cada pedido detenido entra a la cola una sola vez: cero
@@ -479,8 +480,9 @@ congelado ni detenido.
   queda fuera por el supuesto S-3.
 - El Monitor de la cadena es un solo proceso. Si cae, nadie detecta nada: es el
   mismo riesgo que el equipo anotó en ADR-004 (R-004a).
-- Media hora de D1 solo distingue entre cero, una y varias falsas alarmas.
-  Afirmar «una o menos por hora» con confianza pide más horas de corrida.
+- Cero falsas alarmas en la media hora de D1 no prueba que la tasa real sea
+  ≤ 1 por hora: solo muestra que no hubo evidencia en contra. Afirmarlo con
+  confianza pide más horas de corrida.
 - El punto de salud lee el recibo de la base de la etapa. Si esa base no
   responde, la etapa tampoco responde al sondeo, y cuenta como etapa caída.
 - La idempotencia se prueba en las etapas. La caída del bróker entre la
