@@ -135,20 +135,24 @@ Prometheus y Grafana para ver la corrida, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
 Resultados (en `docs/results.md`), con el diseño de DG-CMP-004 y DG-CMP-005.
-E01 (ciclo del 2026-10-07, 18:17–22:32): H1 se sostiene en S1, S2 y S3 (50 de
-50 avisos, máximo 115 ms; 0 falsas alarmas en 17 893 sesiones) → aceptar
-ADR-007 tal como está. E02, primera versión (sondeo de solo vida, 2026-10-07):
-cayó en D3, 0 de 30 congelados. El 2026-10-12 Nicolás pidió refinar H2 en vez
-de cerrar la decisión: **punto de salud enriquecido** (la etapa informa los
-pedidos con más de U = 15 s sin terminar, S-12, leídos de su recibo) y **etapa
-idempotente** (recibo antes de confirmar al bróker; efecto en la misma
-transacción que lo cierra; fase nueva D5 de entregas repetidas). E02 refinado
-(2026-10-12, 13:18–14:33, ciclo `20261012-131837`): pasa D1, D2 (362 de 362,
-≤ 6,4 s), D3 (15 de 15, ≤ 17,6 s) y D5 (60 de 60 sin efecto doble) → adoptar
-el Monitor con punto de salud enriquecido y actualizar ADR-004 (el plazo lo
-mide la etapa y lo lee el Monitor) y ADR-005. D4 corrió con la primera versión
-la noche del 2026-10-08 y sigue valiendo: menor N = 1, N × T = 1 s, solo para
-una máquina. `analisis/resultados/` guarda solo lo que `results.md` cita.
+El 2026-10-12 E01 y E02 corrieron **en paralelo**, de 16:08 a 17:28 (ciclos
+`20261012-160847` y `20261012-160845`), y todo pasa. E01: S1 50 de 50 avisos
+(máximo 52 ms), S2 0 avisos en 100 cambios, S3 0 en 20, 0 falsas alarmas en
+7 081 sesiones → aceptar ADR-007. S4 no se repitió: se cita la del 2026-10-07.
+E02: D1 0 falsas alarmas; D2 329 de 329 en la cola (≤ 6,2 s); D3 15 de 15
+(≤ 17,0 s); D5 60 de 60 sin efecto doble; 344 mensajes con su causa; de la
+señal a la cola, ≤ 111 ms → aceptar ADR-005 con un ajuste y actualizar
+ADR-004. E02 primera versión (2026-10-07) cayó en D3; D4 (2026-10-08) sigue
+valiendo: menor N = 1, solo para una máquina. `analisis/resultados/` guarda
+solo lo que `results.md` cita.
+
+**Evidencia.** Nicolás pidió el 2026-10-12 evidencia intencional, en vivo y de
+lote, con foto y video. En vivo: una pantalla por caso durante la corrida de
+decisión (estímulo leído del registro de eventos, respuesta en los logs,
+tablero `ev-e01`/`ev-e02` y RabbitMQ). De lote: el veredicto de cada fase sobre
+el tablero completo de su ventana. Todo en `docs/assets/resultados/evidencias/`,
+grabado con `load/evidencias-captura.sh` (solo macOS) y `load/evidencias.sh`.
+No abrir Grafana durante D1, que mide las falsas alarmas.
 
 ### El prototipo
 
@@ -156,7 +160,8 @@ Vive en este repositorio: `services/` (12 micros; los eventos van por RabbitMQ
 como en DG-CMP-004 y DG-CMP-005), `deploy/` (Compose, Grafana, Prometheus,
 inyector), `load/` (k6, `plan.tsv`, `experimento.sh` y sus versiones `.ps1`
 para Windows) y `analisis/` (veredicto en SQL y resultados del ciclo vigente).
-`make help` lista todo; `make e2e` verifica el montaje; `make e02-rapido`
+`make help` lista todo; `make e2e` verifica el montaje; `make paralelo` corre
+E01 y E02 a la vez (cada uno reinicia solo lo suyo); `make e02-rapido`
 corre E02 en ~25 min y `make e02` el de decisión en ~1 h 30 (Nicolás pidió el
 2026-10-12 retroalimentación corta: nada de corridas de 9 h). En Windows,
 `make.bat` con los mismos objetivos.

@@ -1,0 +1,28 @@
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 601     2.003311/s
+    checks_succeeded...: 100.00% 601 out of 601
+    checks_failed......: 0.00%   0 out of 601
+
+    ✓ sesión abierta
+
+    HTTP
+    http_req_duration..............: med=2.52ms p(95)=8.09ms p(99)=247.38ms max=800.12ms
+      { expected_response:true }...: med=2.52ms p(95)=8.09ms p(99)=247.38ms max=800.12ms
+    http_req_failed................: 0.00%  0 out of 601
+    http_reqs......................: 601    2.003311/s
+
+    EXECUTION
+    iteration_duration.............: med=2.93ms p(95)=9.1ms  p(99)=252.19ms max=800.41ms
+    iterations.....................: 601    2.003311/s
+    vus............................: 0      min=0        max=1 
+    vus_max........................: 10     min=10       max=10
+
+    NETWORK
+    data_received..................: 119 kB 396 B/s
+    data_sent......................: 168 kB 559 B/s
+
+
+

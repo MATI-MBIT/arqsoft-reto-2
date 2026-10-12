@@ -1,0 +1,138 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                                                     variables                                                                                     |            inicio             |              fin              |    duracion     | valida 
+------------------------+-------------+------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
+ e02-d2-20261012-160845 | E02         | D2   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "WARMUP_S=120;REPS=15", "caidas": 15, "caida_s": 45, "repetir": 0, "congelar": 0, "espera_ms": 500, "tasa_base": 2, "umbral_ms": 15000} | 2026-10-12 21:44:15.206996+00 | 2026-10-12 22:03:36.390433+00 | 00:19:21.183437 | t
+
+
+== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
+ valida | motivo | hueco_maximo_s 
+--------+--------+----------------
+ t      | —      |            6.7
+
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+
+== Criterios de H2
+                                            criterio                                            | casos | cumplen | fallan | veredicto 
+------------------------------------------------------------------------------------------------+-------+---------+--------+-----------
+ D2 · todo pedido de una etapa caída llega a la cola en ≤ 30 s                                  |   329 |     329 |      0 | PASA
+ D3 · todo pedido congelado en una etapa viva llega a la cola en ≤ 30 s                         |     0 |       0 |      0 | NO APLICA
+ D1 · ≤ 1 falsa alarma por hora (etapas declaradas y pedidos informados como atascados)         |    15 |      15 |      0 | PASA
+ Todas · cada pedido encolado entra a la cola una sola vez (0 perdidos, 0 duplicados)           |   329 |     329 |      0 | PASA
+ D5 · la entrega repetida no repite el efecto de la etapa                                       |     0 |       0 |      0 | NO APLICA
+ Todas · cada etapa aplica su efecto una sola vez por pedido                                    |  3747 |    3747 |      0 | PASA
+ Todas · cada mensaje dice qué etapa falta y por qué (ETAPA_CAIDA en D2, PEDIDO_ATASCADO en D3) |   329 |     329 |      0 | PASA
+
+
+== Demora hasta la cola (ms), por tipo de falla y etapa
+ falla |    etapa    | detenidos | encolados | escapes | duplicados | mediana |  p95   | maximo 
+-------+-------------+-----------+-----------+---------+------------+---------+--------+--------
+ D2    | despacho    |       114 |       114 |       0 |          0 |  1348.9 | 5639.9 | 6193.5
+ D2    | facturacion |        98 |        98 |       0 |          0 |  1491.6 | 5858.4 | 5862.9
+ D2    | inventario  |       117 |       117 |       0 |          0 |  1401.5 | 4737.2 | 5750.8
+
+
+== D2 · cada caída con sus pedidos detenidos
+ falla_id |    etapa    |             falla             |      caida      | detenidos | encolados | demora_max_ms | declarada_tras  
+----------+-------------+-------------------------------+-----------------+-----------+-----------+---------------+-----------------
+   929503 | facturacion | 2026-10-12 21:44:15.300609+00 | 00:00:48.489492 |        17 |        17 |        5309.9 | 00:00:05.242429
+   930442 | facturacion | 2026-10-12 21:45:33.881554+00 | 00:00:45.245795 |         0 |         0 |             — | 00:00:04.661879
+   931452 | facturacion | 2026-10-12 21:46:49.200939+00 | 00:00:47.379278 |        31 |        31 |        5862.9 | 00:00:05.83957
+   932677 | facturacion | 2026-10-12 21:48:06.694065+00 | 00:00:47.387859 |        26 |        26 |        5860.9 | 00:00:05.847208
+   933873 | facturacion | 2026-10-12 21:49:24.176018+00 | 00:00:47.386411 |        24 |        24 |        4403.0 | 00:00:04.376315
+   935015 | inventario  | 2026-10-12 21:50:41.64708+00  | 00:00:47.136842 |        24 |        24 |        4922.2 | 00:00:04.899865
+   936256 | inventario  | 2026-10-12 21:51:58.879462+00 | 00:00:47.367278 |        23 |        23 |        5678.5 | 00:00:05.667751
+   937338 | inventario  | 2026-10-12 21:53:16.346593+00 | 00:00:47.442824 |        21 |        21 |        4209.4 | 00:00:04.197456
+   938473 | inventario  | 2026-10-12 21:54:33.862261+00 | 00:00:47.347247 |        24 |        24 |        4701.9 | 00:00:04.683769
+   939553 | inventario  | 2026-10-12 21:55:51.298978+00 | 00:00:47.045086 |        25 |        25 |        5750.8 | 00:00:05.742912
+   940718 | despacho    | 2026-10-12 21:57:08.421567+00 | 00:00:48.057602 |        23 |        23 |        4643.9 | 00:00:04.622077
+   941881 | despacho    | 2026-10-12 21:58:26.549111+00 | 00:00:47.482858 |        29 |        29 |        6007.4 | 00:00:05.997435
+   943128 | despacho    | 2026-10-12 21:59:44.122712+00 | 00:00:46.975972 |        21 |        21 |        4939.5 | 00:00:04.922721
+   944297 | despacho    | 2026-10-12 22:01:01.210675+00 | 00:00:47.565532 |        19 |        19 |        5849.0 | 00:00:05.83397
+   945441 | despacho    | 2026-10-12 22:02:18.870977+00 | 00:00:47.386968 |        22 |        22 |        6193.5 | 00:00:06.174605
+
+
+== D3 · cada pedido congelado: cuándo lo informó el punto de salud y cuándo llegó a la cola
+ etapa | pedido_id | t0 | informado_tras | demora_ms 
+-------+-----------+----+----------------+-----------
+
+
+== D5 · entregas repetidas: detectadas y efectos por pedido
+ etapa | repeticiones | detectadas | un_efecto | efecto_doble | sin_efecto 
+-------+--------------+------------+-----------+--------------+------------
+
+
+== Entregas que el bróker devolvió y la etapa retomó (tras una caída)
+    etapa    | retomadas 
+-------------+-----------
+ despacho    |        10
+ facturacion |        16
+ inventario  |        12
+
+
+== Falsas alarmas: declaraciones sin caída, pedidos sanos informados como atascados y mensajes sin pedido detenido
+   que   |              ts               |    etapa    |           pedido_id           | llego_a_logistica 
+---------+-------------------------------+-------------+-------------------------------+-------------------
+ mensaje | 2026-10-12 21:44:38.548947+00 | facturacion | e02-d2-20261012-160845-P19-5  | t
+ mensaje | 2026-10-12 21:44:42.547241+00 | facturacion | e02-d2-20261012-160845-P5-7   | t
+ mensaje | 2026-10-12 21:44:42.550795+00 | facturacion | e02-d2-20261012-160845-P20-7  | t
+ mensaje | 2026-10-12 21:44:42.552767+00 | facturacion | e02-d2-20261012-160845-P13-6  | t
+ mensaje | 2026-10-12 21:44:44.556745+00 | facturacion | e02-d2-20261012-160845-P5-8   | t
+ mensaje | 2026-10-12 21:44:44.56283+00  | facturacion | e02-d2-20261012-160845-P7-6   | t
+ mensaje | 2026-10-12 21:44:46.554169+00 | facturacion | e02-d2-20261012-160845-P10-14 | t
+ mensaje | 2026-10-12 21:44:46.561586+00 | facturacion | e02-d2-20261012-160845-P20-8  | t
+ mensaje | 2026-10-12 21:44:46.563497+00 | facturacion | e02-d2-20261012-160845-P17-7  | t
+ mensaje | 2026-10-12 21:44:48.54728+00  | facturacion | e02-d2-20261012-160845-P18-8  | t
+ mensaje | 2026-10-12 21:44:52.563854+00 | facturacion | e02-d2-20261012-160845-P12-6  | t
+ mensaje | 2026-10-12 21:44:52.567185+00 | facturacion | e02-d2-20261012-160845-P17-8  | t
+ mensaje | 2026-10-12 21:44:52.568956+00 | facturacion | e02-d2-20261012-160845-P9-3   | t
+ mensaje | 2026-10-12 21:44:54.555619+00 | facturacion | e02-d2-20261012-160845-P16-5  | t
+ mensaje | 2026-10-12 21:44:54.562039+00 | facturacion | e02-d2-20261012-160845-P17-9  | t
+ mensaje | 2026-10-12 21:44:54.564466+00 | facturacion | e02-d2-20261012-160845-P2-14  | t
+ mensaje | 2026-10-12 21:44:54.566385+00 | facturacion | e02-d2-20261012-160845-P10-15 | t
+ mensaje | 2026-10-12 21:44:54.568371+00 | facturacion | e02-d2-20261012-160845-P5-9   | t
+ mensaje | 2026-10-12 21:44:54.570195+00 | facturacion | e02-d2-20261012-160845-P18-9  | t
+ mensaje | 2026-10-12 21:44:54.572311+00 | facturacion | e02-d2-20261012-160845-P14-5  | t
+ mensaje | 2026-10-12 21:44:56.548854+00 | facturacion | e02-d2-20261012-160845-P14-6  | t
+ mensaje | 2026-10-12 21:44:58.546164+00 | facturacion | e02-d2-20261012-160845-P16-6  | t
+ mensaje | 2026-10-12 21:44:58.548606+00 | facturacion | e02-d2-20261012-160845-P19-6  | t
+ mensaje | 2026-10-12 21:44:58.549966+00 | facturacion | e02-d2-20261012-160845-P7-7   | t
+ mensaje | 2026-10-12 21:44:58.551653+00 | facturacion | e02-d2-20261012-160845-P14-7  | t
+ mensaje | 2026-10-12 21:45:00.567769+00 | facturacion | e02-d2-20261012-160845-P17-10 | t
+ mensaje | 2026-10-12 21:45:02.553262+00 | facturacion | e02-d2-20261012-160845-P4-4   | t
+ mensaje | 2026-10-12 21:45:02.557544+00 | facturacion | e02-d2-20261012-160845-P4-5   | t
+ mensaje | 2026-10-12 21:45:38.551713+00 | facturacion | e02-d2-20261012-160845-P7-12  | t
+ mensaje | 2026-10-12 21:45:38.557094+00 | facturacion | e02-d2-20261012-160845-P7-13  | t
+ mensaje | 2026-10-12 21:45:38.558937+00 | facturacion | e02-d2-20261012-160845-P20-11 | t
+ mensaje | 2026-10-12 21:45:38.560668+00 | facturacion | e02-d2-20261012-160845-P14-8  | t
+ mensaje | 2026-10-12 21:45:38.563475+00 | facturacion | e02-d2-20261012-160845-P4-8   | t
+ mensaje | 2026-10-12 21:45:38.565437+00 | facturacion | e02-d2-20261012-160845-P1-6   | t
+ mensaje | 2026-10-12 21:45:38.568408+00 | facturacion | e02-d2-20261012-160845-P12-7  | t
+ mensaje | 2026-10-12 21:45:38.572405+00 | facturacion | e02-d2-20261012-160845-P15-8  | t
+ mensaje | 2026-10-12 21:45:40.557585+00 | facturacion | e02-d2-20261012-160845-P17-12 | t
+ mensaje | 2026-10-12 21:45:42.544762+00 | facturacion | e02-d2-20261012-160845-P2-17  | t
+ mensaje | 2026-10-12 21:45:42.54754+00  | facturacion | e02-d2-20261012-160845-P18-13 | t
+ mensaje | 2026-10-12 21:45:42.549106+00 | facturacion | e02-d2-20261012-160845-P13-9  | t
+ mensaje | 2026-10-12 21:45:42.550372+00 | facturacion | e02-d2-20261012-160845-P16-9  | t
+ mensaje | 2026-10-12 21:45:46.563291+00 | facturacion | e02-d2-20261012-160845-P5-13  | t
+ mensaje | 2026-10-12 21:45:46.567329+00 | facturacion | e02-d2-20261012-160845-P13-10 | t
+ mensaje | 2026-10-12 21:45:46.570064+00 | facturacion | e02-d2-20261012-160845-P16-10 | t
+ mensaje | 2026-10-12 21:45:46.572182+00 | facturacion | e02-d2-20261012-160845-P8-6   | t
+ mensaje | 2026-10-12 21:45:48.560692+00 | facturacion | e02-d2-20261012-160845-P13-11 | t
+ mensaje | 2026-10-12 21:45:50.546709+00 | facturacion | e02-d2-20261012-160845-P12-8  | t
+ mensaje | 2026-10-12 21:45:52.551319+00 | facturacion | e02-d2-20261012-160845-P9-5   | t
+ mensaje | 2026-10-12 21:45:54.545116+00 | facturacion | e02-d2-20261012-160845-P6-7   | t
+ mensaje | 2026-10-12 21:45:54.547594+00 | facturacion | e02-d2-20261012-160845-P9-6   | t
+
+
+== Escapes: pedidos detenidos que no llegaron a la cola o llegaron tarde
+ falla | etapa | pedido_id | t0 | encolado | demora_ms 
+-------+-------+-----------+----+----------+-----------
+

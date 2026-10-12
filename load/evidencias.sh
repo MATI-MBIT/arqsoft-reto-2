@@ -11,6 +11,7 @@
 #   load/evidencias.sh repetida     # ASR-4: entrega repetida a una etapa que ya terminó
 #   load/evidencias.sh mirar <caso> # la respuesta: los logs del caso, filtrados
 #   load/evidencias.sh limpiar      # operación reiniciada, colas vacías y Monitor nuevo
+#   load/evidencias.sh veredicto <corrida> <sección>...  # los criterios y el detalle de una corrida ya cerrada
 #   load/evidencias.sh vivo e01|e02 [s] # el estímulo de la corrida de decisión en curso, a medida que ocurre
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -156,6 +157,15 @@ print("HTTP %s · etapa viva · en curso %d · atascados: %s" % (codigo, s["enCu
         desde=$(tail -1 <<<"$filas" | sed -E 's/^.* · ([0-9-]+ [0-9:.+]+)$/\1/')
       fi
       sleep 1
+    done
+    ;;
+  veredicto)
+    corrida=$2; shift 2
+    v=analisis/resultados/$corrida/veredicto.txt
+    titulo "Veredicto de la corrida $corrida" "Lo calcula analisis/$(cut -d- -f1 <<<"$corrida").sql sobre la tabla de eventos, caso por caso."
+    for seccion in "Criterios" "$@"; do
+      awk -v s="== $seccion" 'index($0, s) == 1 {p = 1} p && /^$/ {exit} p' "$v" | grep -v "NO APLICA"  || true
+      echo
     done
     ;;
   mirar) mirar "${2:-}" ;;

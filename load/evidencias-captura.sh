@@ -10,6 +10,7 @@
 #   load/evidencias-captura.sh abrir "<izquierda>" <caso> <url-grafana> [url-rabbitmq|-] [segundos de video]
 #     <izquierda> es lo que corre load/evidencias.sh a la izquierda: el caso de la demo, o «vivo e01»
 #     durante una corrida de decisión; <caso> elige los logs de la derecha (load/evidencias.sh mirar).
+#   load/evidencias-captura.sh lote <corrida> <url-grafana> <segundos> "<sección>"...
 #   load/evidencias-captura.sh foto <archivo.png>
 #   load/evidencias-captura.sh cerrar <archivo.mp4>
 set -euo pipefail
@@ -67,6 +68,31 @@ OSA
     w2=$(cut -d' ' -f2 "$ESTADO/terminal")
     osascript -e "tell application \"Terminal\" to do script \"cd $R && clear && load/evidencias.sh $izquierda\" in (selected tab of (first window whose id is $w2))" >/dev/null
     echo "grabando $segundos s; la foto se toma con: $0 foto <archivo.png>"
+    ;;
+  lote)
+    # Una corrida ya cerrada: su veredicto arriba, a todo lo ancho, y el tablero
+    # completo de Grafana abajo, sobre la ventana de medición de la corrida.
+    corrida=$2; grafana=$3; segundos=${4:-25}; shift 4
+    rm -f "$ESTADO"/*
+    chrome "$grafana" 0 $((MITAD - BARRAS)) $ANCHO $ABAJO > "$ESTADO/chrome"
+    osascript > "$ESTADO/terminal" <<OSA
+tell application "Terminal"
+  activate
+  set t1 to do script ""
+  set w1 to front window
+  set bounds of w1 to {0, $ARRIBA, $ANCHO, $MITAD}
+  delay 6
+  do script "cd $R && clear && load/evidencias.sh veredicto $corrida $*" in t1
+  delay 2
+  return (id of w1 as text)
+end tell
+OSA
+    sleep 6
+    nohup screencapture -x -v -V"$segundos" -R0,$ARRIBA,$ANCHO,$((ABAJO - ARRIBA)) "$ESTADO/video.mov" \
+      >/dev/null 2>&1 &
+    echo $! > "$ESTADO/grabando"
+    disown
+    echo "grabando $segundos s; desplaza el tablero y toma la foto con: $0 foto <archivo.png>"
     ;;
   foto)
     screencapture -x -R0,$ARRIBA,$ANCHO,$((ABAJO - ARRIBA)) "$2"
