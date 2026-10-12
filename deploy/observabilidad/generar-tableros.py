@@ -368,8 +368,44 @@ FROM registro.evento WHERE tipo = 'etapa.reiniciada' AND $__timeFilter(ts)""", V
                   anot)
 
 
+def evidencias(base, uid, titulo, distribucion):
+    """Un tablero compacto para las capturas de load/evidencias.sh: los paneles de
+    base que cuentan cada caso, con las mismas consultas, en media pantalla."""
+    por_titulo = {p["title"]: p for p in base["panels"]}
+    paneles = []
+    for i, (nombre, x, y, w, h) in enumerate(distribucion, start=1):
+        p = json.loads(json.dumps(por_titulo[nombre]))
+        p.update(id=i, gridPos={"x": x, "y": y, "w": w, "h": h})
+        paneles.append(p)
+    return {
+        "uid": uid, "title": titulo, "description": "Vista para las capturas de un caso (load/evidencias.sh).",
+        "tags": ["reto2", "evidencias"], "timezone": "browser", "refresh": "5s", "schemaVersion": 39,
+        "version": 1, "time": {"from": "now-3m", "to": "now"}, "annotations": {"list": []},
+        "panels": paneles, "templating": {"list": []},
+    }
+
+
+def evidencias_e01(base):
+    return evidencias(base, "ev-e01", "Evidencias de E01 · ASR-1", [
+        ("Sesiones de intruso", 0, 0, 6, 4), ("Avisos a tiempo (≤ 2 s)", 6, 0, 6, 4),
+        ("Escapes", 12, 0, 6, 4), ("Falsas alarmas", 18, 0, 6, 4),
+        ("Demora de cada aviso, por fase (ms)", 0, 4, 10, 11), ("Últimos avisos", 10, 4, 14, 11)])
+
+
+def evidencias_e02(base):
+    return evidencias(base, "ev-e02", "Evidencias de E02 · ASR-4, con la detección de ASR-3", [
+        ("Pedidos informados como atascados", 0, 0, 6, 4), ("En la cola ≤ 30 s", 6, 0, 6, 4),
+        ("Entregas repetidas descartadas", 12, 0, 6, 4), ("Efectos dobles", 18, 0, 6, 4),
+        ("Lo que declara el Monitor de cada etapa", 0, 4, 24, 5),
+        ("Mensajes en las colas del bróker de la cadena", 0, 9, 12, 6),
+        ("A la Dead-Letter-Queue por segundo: ventas y auditor", 12, 9, 12, 6)])
+
+
 if __name__ == "__main__":
     DESTINO.mkdir(parents=True, exist_ok=True)
-    for nombre, tablero in (("e01.json", e01()), ("e02.json", e02())):
+    t1, t2 = e01(), e02()
+    for nombre, tablero in (("e01.json", t1), ("e02.json", t2),
+                            ("evidencias-e01.json", evidencias_e01(t1)),
+                            ("evidencias-e02.json", evidencias_e02(t2))):
         (DESTINO / nombre).write_text(json.dumps(tablero, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"escrito {DESTINO / nombre}")

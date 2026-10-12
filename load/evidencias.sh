@@ -11,6 +11,7 @@
 #   load/evidencias.sh repetida     # ASR-4: entrega repetida a una etapa que ya terminó
 #   load/evidencias.sh mirar <caso> # la respuesta: los logs del caso, filtrados
 #   load/evidencias.sh limpiar      # operación reiniciada, colas vacías y Monitor nuevo
+#   load/evidencias.sh vivo e01|e02 [s] # el estímulo de la corrida de decisión en curso, a medida que ocurre
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -34,6 +35,11 @@ mirar() {
   case "$1" in
     intruso) servicios="usuario-no-valido receptor-sms"; filtro='huella distinta|SMS' ;;
     cambio) servicios="usuario-no-valido receptor-sms"; filtro='V0777|SMS' ;;
+    # S2 y S3 de la corrida de decisión: cambios legítimos de V1001 a V1100 y de V1201 a V1220.
+    cambios) servicios="usuario-no-valido receptor-sms"
+             filtro='SMS|huella distinta|huella coincide · vendedor V1(0[1-9][0-9]|00[1-9]|100) ' ;;
+    pegados) servicios="usuario-no-valido receptor-sms"
+             filtro='SMS|huella distinta|huella coincide · vendedor V12(0[1-9]|1[0-9]|20) ' ;;
     congelado|caida) servicios="monitor ventas"; filtro='atascado|declarada|Dead-Letter' ;;
     repetida) servicios="etapa-facturacion etapa-inventario etapa-despacho"; filtro='entrega repetida' ;;
     *) echo "caso desconocido: $1" >&2; exit 2 ;;
@@ -128,6 +134,29 @@ print("HTTP %s · etapa viva · en curso %d · atascados: %s" % (codigo, s["enCu
     done
     $COMPOSE up -d --force-recreate --no-deps monitor >/dev/null 2>&1
     echo "operación reiniciada, colas vacías y Monitor nuevo"
+    ;;
+  vivo)
+    case "${2:-}" in
+      e01) filtro="tipo = 'sesion.abierta' AND split_part(sesion_id, '-', 2) IN ('INTRUSO', 'CAMBIO', 'PEGADO')"
+           columnas="split_part(sesion_id, '-', 1) || ' · ' || split_part(sesion_id, '-', 2) || ' · vendedor ' ||
+                     (datos->>'vendedorId') || ' · dispositivo ' || (datos->>'dispositivoId')" ;;
+      e02) filtro="tipo IN ('falla.inyectada', 'falla.congelada')"
+           columnas="tipo || ' · ' || coalesce(etapa, '') || coalesce(' · pedido ' || regexp_replace(pedido_id, '^.*-(P[0-9]+-[0-9]+)$', '\\1'), '') ||
+                     coalesce(' · ' || nullif(datos::text, '{}'), '')" ;;
+      *) echo "uso: $0 vivo e01|e02" >&2; exit 2 ;;
+    esac
+    corrida=$(ls -t analisis/resultados | grep -E '^e0[12]-' | head -1)
+    titulo "Estímulo · corrida de decisión en curso" "Corrida $corrida. Lo que el orquestador le hace al sistema, leído del registro de eventos."
+    desde=$(psql_q "SELECT now() - interval '${3:-0} seconds'")
+    while true; do
+      filas=$(psql_q "SELECT to_char(ts AT TIME ZONE 'UTC', 'HH24:MI:SS.MS') || '  ' || $columnas, ts
+                      FROM registro.evento WHERE $filtro AND ts > '$desde' ORDER BY ts")
+      if [ -n "$filas" ]; then
+        cut -d'·' -f1-99 <<<"$filas" | sed -E 's/ · [0-9-]+ [0-9:.+]+$//'
+        desde=$(tail -1 <<<"$filas" | sed -E 's/^.* · ([0-9-]+ [0-9:.+]+)$/\1/')
+      fi
+      sleep 1
+    done
     ;;
   mirar) mirar "${2:-}" ;;
   *) sed -n '2,12p' "$0"; exit 2 ;;

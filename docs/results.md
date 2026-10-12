@@ -87,16 +87,16 @@ como supuestos, y cada una se cambia con una variable, sin tocar el código:
 | S-12 · umbral U | Pedido atascado tras 15 s sin terminar en una etapa viva | En D1 de las dos versiones, el pedido más lento en su etapa tardó 13,7 s. U, más un sondeo de 2 s y su espera de 500 ms, da 17,5 s, dentro de los 30 s de ASR-3 |
 | Caída de una etapa (D2) | El proceso muere con SIGKILL durante 45 s y luego se reinicia | El trabajo que la etapa tenía sin terminar vuelve a su cola del bróker y se retoma al reiniciar |
 
-**Dos clases de evidencia.** Las cifras salen de las corridas de decisión.
-Las capturas de cada escenario salen de demostraciones aparte, hechas el 12 de
-octubre de 2026 con el mismo prototipo y el guion `load/evidencias.sh`. Cada
-captura de terminal muestra un solo caso: a la izquierda, lo que se le hizo al
-sistema; a la derecha, lo que el sistema registró, con la hora en UTC. Debajo,
-el tablero de Grafana o la consola del bróker muestran el mismo caso desde la
-operación, con la hora de Bogotá.
+**Dos clases de evidencia.** Las cifras salen de las tablas de eventos de las
+corridas de decisión. Las imágenes y los videos muestran esas mismas corridas
+mientras miden: se graban con `load/evidencias-captura.sh`, que pone en una
+pantalla el estímulo, la respuesta en los logs, el tablero de evidencias de
+Grafana y, cuando hace falta, la consola de RabbitMQ. Las horas de los logs
+están en UTC y las del tablero, en la hora de Bogotá.
 
-Para la demostración se agregó a cinco micros una línea de log por hecho. Ese
-cambio no altera lo que se mide, así que E01 no se repitió por él.
+Las capturas que todavía vienen de una demostración aparte, con el guion
+`load/evidencias.sh`, lo dicen en su pie. Para las dos se agregó a cinco micros
+una línea de log por hecho, que no altera lo que se mide.
 
 ---
 
@@ -110,39 +110,31 @@ probó esa detección y ese aviso, y que el cambio legítimo de dispositivo no
 dispare el aviso. Las fases S1 a S3 deciden la hipótesis; S4 es exploratoria y
 busca a qué tasa empieza a atrasarse el aviso.
 
-### Un caso de punta a punta
+### La evidencia, grabada durante la corrida de decisión
 
-**Figura 2. Un intruso.** A la izquierda, el vendedor V1961 abre sesión con
-sus credenciales correctas desde `D-ATACANTE-DEMO`, que no es su dispositivo
-registrado (`D-V1961-1`). El inicio de sesión responde en 2 ms, sin esperar
-la comparación. A la derecha, el Verificador ve la huella distinta 11 ms
-después del envío, y el SMS llega a seguridad a los 47 ms con el vendedor, el
-dispositivo y la hora de apertura.
+Cada toma muestra en una sola pantalla lo que pasa en la corrida de decisión
+mientras mide. Arriba a la izquierda, lo que el orquestador le hace al sistema,
+leído del registro de eventos. Arriba a la derecha, la respuesta en los logs de
+los micros. Abajo, el tablero de evidencias de Grafana con la ventana de los
+últimos 5 minutos. Cada figura trae su video.
 
-![Captura de E01: a la izquierda, V1961 abre sesión desde D-ATACANTE-DEMO; a la derecha, el Verificador marca la huella distinta y el SMS llega a seguridad 47 ms después](assets/resultados/evidencias/asr1-intruso.png)
+**Figura 2. Un intruso en S1.** El orquestador abre la sesión del vendedor
+V1885 desde `D-ATACANTE-883743` a las 20:54:38.860 UTC. El Verificador ve la
+huella distinta 2 ms después, y el SMS llega a seguridad a los 38 ms con el
+vendedor, el dispositivo y la hora de apertura. Abajo, el tablero lleva 8
+intrusos en los últimos 5 minutos, todos con aviso a tiempo, sin escapes ni
+falsas alarmas; en el video se ve llegar el noveno.
 
-**Figura 3. El contraste: un cambio legítimo de dispositivo.** El vendedor
+![E01 en vivo, S1: arriba, el intruso V1885 y su SMS a seguridad 38 ms después; abajo, el tablero con 8 intrusos, 8 avisos a tiempo, 0 escapes y 0 falsas alarmas](assets/resultados/evidencias/asr1-intruso-vivo.png)
+
+<video controls preload="metadata" width="100%" poster="assets/resultados/evidencias/asr1-intruso-vivo.png" src="assets/resultados/evidencias/asr1-intruso-vivo.mp4"></video>
+
+**Figura 3. El contraste: un cambio legítimo de dispositivo (demostración).** El vendedor
 V0777 registra un dispositivo nuevo y abre sesión desde él un instante
 después. El Verificador compara la huella, ve que coincide con la que se acaba
 de registrar y no avisa.
 
 ![Captura de E01: V0777 registra un dispositivo nuevo y abre sesión desde él; el Verificador ve que la huella coincide y no envía aviso](assets/resultados/evidencias/asr1-cambio-legitimo.png)
-
-**Figura 4. Lo mismo en el tablero de E01.** Durante la demostración corrieron
-75 sesiones legítimas de fondo, una por segundo, desde el dispositivo que cada
-vendedor ya tenía registrado. El tablero cuenta 2 sesiones de intruso en la
-ventana: la de la Figura 2 y un intento anterior de la misma captura. Las dos
-tienen su aviso a tiempo, no hay escapes y no hay falsas alarmas. En «Demora de
-cada aviso», cada punto es un intruso, y los dos quedan lejos de la línea de
-2 s.
-
-![Tablero de E01 en la ventana de la demostración: 2 sesiones de intruso, 2 avisos a tiempo, 0 escapes, 0 falsas alarmas y la demora de cada aviso](assets/resultados/evidencias/asr1-grafana.png)
-
-**Figura 5. Lo que recibió seguridad.** El panel «Últimos avisos» cruza cada
-aviso con su sesión. Los dos llevan el vendedor V1961 y el dispositivo
-`D-ATACANTE-DEMO`, están completos y llegaron en 36,5 ms y 606 ms.
-
-![Panel «Últimos avisos» del tablero de E01: dos avisos de V1961 desde D-ATACANTE-DEMO, completos, con demoras de 36,5 ms y 606 ms](assets/resultados/evidencias/asr1-grafana-avisos.png)
 
 ### Lo que midieron las corridas
 
@@ -170,7 +162,7 @@ cual llegó el 95 % de los avisos.
 | S4 a 3× (6 aperturas/s) | 10 | 17 ms | 23 ms | 23 ms |
 | S4 a 5× (10 aperturas/s) | 10 | 17 ms | 34 ms | 38 ms |
 
-**Figura 6. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
+**Figura 4. Recorrido de una apertura de sesión en E01 (DG-SEQ-001).** El
 reloj arranca en t0, cuando el micro de sesiones (Gestor de sesión en el
 diagrama) publica `sesion.abierta`, y se detiene en t1, cuando el aviso llega al
 receptor del SMS. Si la huella coincide con la registrada, el Verificador
@@ -248,7 +240,7 @@ etapa estaba viva, cayó en D3; su resultado está al final de esta sección.
 
 ### Tres casos de punta a punta
 
-**Figura 7. Un pedido congelado en una etapa viva.** A la izquierda, validación
+**Figura 5. Un pedido congelado en una etapa viva.** A la izquierda, validación
 de despacho acepta el pedido P7-2 y lo olvida. La etapa responde HTTP 200 en
 cada sondeo, y al final ventas muestra el estado del pedido: facturación e
 inventario completados y despacho en curso, que es el estímulo de ASR-4. A la
@@ -258,14 +250,14 @@ confirma en la Dead-Letter-Queue con la etapa que falta y la causa
 
 ![Captura de E02: despacho responde HTTP 200 mientras el pedido P7-2 queda atascado; el Monitor lo detecta y ventas lo envía a la Dead-Letter-Queue con causa PEDIDO_ATASCADO](assets/resultados/evidencias/asr4-pedido-congelado.png)
 
-**Figura 8. Una entrega repetida.** El bróker le vuelve a entregar a
+**Figura 6. Una entrega repetida.** El bróker le vuelve a entregar a
 facturación el pedido P6-13, que ya había facturado. Antes de la entrega, el
 pedido tiene 1 entrega y 1 factura. La etapa encuentra su recibo terminado y no
 repite el efecto. Después, el pedido tiene 2 entregas y sigue con 1 factura.
 
 ![Captura de E02: facturación recibe dos veces el pedido P6-13 y emite una sola factura](assets/resultados/evidencias/asr4-entrega-repetida.png)
 
-**Figura 9. Una etapa caída.** Descargue de inventario muere con pedidos en
+**Figura 7. Una etapa caída.** Descargue de inventario muere con pedidos en
 curso. El Monitor la declara detenida 5,0 s después, al tercer sondeo sin
 respuesta, y 8 ms más tarde ventas empieza a confirmar en la cola sus pedidos
 pendientes. Cada uno lleva la etapa que falta y la causa `ETAPA_CAIDA`.
@@ -330,7 +322,7 @@ la cola, no la reanudación ni la entrega a una persona; la consulta está en
 
 #### La idempotencia: ningún efecto duplicado
 
-**Figura 10. Una entrega repetida en D5 (DG-SEQ-004).** El inyector toma un
+**Figura 8. Una entrega repetida en D5 (DG-SEQ-004).** El inyector toma un
 pedido que la etapa ya terminó y se lo vuelve a entregar por el bróker. La
 etapa busca el recibo, lo encuentra terminado y descarta la entrega sin repetir
 el efecto. Vuelve a publicar `etapa.completada`, por si el aviso anterior se
@@ -362,7 +354,7 @@ idempotente, y D5 muestra que una entrega repetida no repite el efecto.
 
 #### La detección que lo precede (ASR-3)
 
-**Figura 11. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
+**Figura 9. Un pedido congelado en D3 (DG-SEQ-003).** El inyector le pide a la
 etapa que acepte el próximo pedido y lo olvide sin terminarlo. La etapa guarda
 el recibo antes de confirmar el mensaje al bróker, así que el pedido queda en
 curso en su tabla. En cada sondeo, el punto de salud lee esa tabla y responde
@@ -385,7 +377,7 @@ lleva demasiado tiempo sin terminar, y lo lee del recibo que la etapa guardó
 antes de confirmar el mensaje. Por eso ve también el pedido que la etapa aceptó
 y olvidó.
 
-**Figura 12. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
+**Figura 10. Una caída de etapa en D2 (DG-SEQ-002).** El inyector mata la etapa,
 y el Monitor la declara detenida al tercer sondeo sin respuesta. Desde ahí avisa
 en cada ciclo al Coordinador, que es el micro de ventas como en DG-CMP-005, y
 este publica cada pedido pendiente de esa etapa como `pedido.detenido`. El
