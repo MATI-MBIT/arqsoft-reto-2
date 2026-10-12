@@ -172,8 +172,8 @@ V1722 desde `D-ATACANTE-647209`, un dispositivo que no es el suyo. ② Un
 milisegundo después, el Verificador compara la huella con la registrada,
 `D-V1722-1`, y no coincide. ③ El SMS llega a seguridad con el vendedor, el
 dispositivo y la hora. La tabla de eventos le mide 52 ms de demora. El log del
-receptor se escribe un instante después: su hora, 21:42:31.947, queda 54 ms
-después de la apertura. ④ El tablero lleva 8
+receptor se escribe un instante más tarde: su hora, 21:42:31.947, queda a 54 ms
+de la apertura. ④ El tablero lleva 8
 intrusos en los últimos 5 minutos: 8 avisos a tiempo, 0 escapes (intrusos sin
 aviso) y 0 falsas alarmas.
 
@@ -190,8 +190,8 @@ tiempo, la huella distinta y el SMS a la derecha.
 
 *Cómo leerla.* La pantalla se lee como la de la Figura 3. Aquí lo que importa
 es lo que no aparece: ningún SMS. La izquierda muestra cinco aperturas y la
-derecha solo tres, porque V1201 y V1202 abrieron sesión antes de abrir las
-terminales.
+derecha solo tres, porque V1201 y V1202 abrieron sesión antes de que se abrieran
+las terminales.
 
 *Qué pasa.* ① En S3, cada vendedor registra un dispositivo nuevo y abre sesión
 desde él menos de 1 s después. Es el caso más difícil para el Verificador,
