@@ -1,15 +1,15 @@
 Null display is "—".
 
 == Corrida
-           id           | experimento | fase |                                                                           variables                                                                           |            inicio             |              fin              |    duracion     | valida 
-------------------------+-------------+------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
- e01-s3-20261012-160847 | E01         | S3   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "-", "caidas": 0, "caida_s": 45, "repetir": 0, "congelar": 0, "espera_ms": 500, "tasa_base": 2, "umbral_ms": 15000} | 2026-10-12 22:19:08.375522+00 | 2026-10-12 22:25:08.872839+00 | 00:06:00.497317 | t
+           id           | experimento | fase |                                                                          variables                                                                           |            inicio             |              fin              |    duracion     | valida 
+------------------------+-------------+------+--------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
+ e01-s3-20261012-205833 | E01         | S3   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "-", "caidas": 0, "caida_s": 45, "repetir": 0, "congelar": 0, "espera_ms": 500, "tasa_base": 2, "umbral_ms": 5000} | 2026-10-13 02:03:35.925779+00 | 2026-10-13 02:09:36.454703+00 | 00:06:00.528924 | t
 
 
 == Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
  valida | motivo | hueco_maximo_s 
 --------+--------+----------------
- t      | —      |           10.5
+ t      | —      |            6.4
 
 CREATE VIEW
 
@@ -19,7 +19,7 @@ CREATE VIEW
  S1 · 50 intrusos con aviso en ≤ 2 s y con vendedor, dispositivo y hora |     0 |       0 |      0 | NO APLICA
  S2 · ≤ 1 aviso por cada 100 cambios legítimos                          |     0 |       0 |      0 | NO APLICA
  S3 · 0 avisos en aperturas a menos de 1 s del registro                 |    20 |      20 |      0 | PASA
- Todas · 0 avisos por sesiones desde el dispositivo registrado          |   721 |     721 |      0 | PASA
+ Todas · 0 avisos por sesiones desde el dispositivo registrado          |   720 |     720 |      0 | PASA
 
 
 == Demora del aviso por fase (ms), solo sesiones de intruso

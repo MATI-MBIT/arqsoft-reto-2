@@ -156,7 +156,9 @@ por fase, plegado en el anexo. Los videos largos se quitaron: casi no cambiaban
 frente a la foto. Las tomas se graban con `load/evidencias-captura.sh` (solo
 macOS) durante las ejecuciones de decisión; no abrir Grafana durante D1. Antes
 de grabar, responder cualquier diálogo del sistema que esté abierto: el 2026-10-12
-uno de Chrome («buscar dispositivos en las redes locales») tapó la toma de S3.
+uno de Chrome («buscar dispositivos en las redes locales») tapó la toma de S3. S3 se repitió sola a las
+20:58 (`PLAN=` con una sola fila; ciclo `20261012-205833`, también pasa) y la Figura 4 sale
+de esa repetición.
 
 ### El prototipo
 

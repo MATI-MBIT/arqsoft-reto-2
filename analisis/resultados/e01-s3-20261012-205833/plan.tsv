@@ -1,0 +1,27 @@
+# Plan de corridas de los experimentos E01 y E02.
+#
+# Esto es DATO, no código: cada fila es una corrida y dice a qué hipótesis
+# sirve. Agregar un punto de medida es agregar una línea. El orquestador
+# (experimento.sh) lo lee y lo ejecuta en orden.
+#
+# grupo        para correr por partes: ./load/experimento.sh e02
+# id           nombre de la corrida; la carpeta de resultados le agrega la hora
+# experimento  E01 (H1, ASR-1) o E02 (H2, ASR-3)
+# fase         E01: la FASE de load/k6/e01.js. E02: solo etiqueta; lo que se
+#              corre lo dicen las variables D1_S, REPS, CONGELAR y REPETIR
+# criterio     decide = la corrida entra al veredicto de la hipótesis | observa
+# vars         K=V;K=V. Por omisión: WARMUP_S=300 · TASA_BASE=2 (S-10)
+#              SONDEO_T_MS=2000 · SONDEO_N=3 · SONDEO_ESPERA_MS=500
+#              UMBRAL_ATASCO_MS=5000 (U, S-12: pedido atascado en una etapa viva)
+#              D1_S=0 (segundos sin fallas) · REPS=0 (caídas, D2) · CAIDA_S=45
+#              PAUSA_S=30 · CONGELAR=0 (congelamientos, D3) · ESPACIO_S=60
+#              REPETIR=0 (entregas repetidas, D5) · ESPACIO_REPETIR_S=5
+#              GRACIA_S=60 (espera tras el fin para que lleguen las salidas)
+#
+# Tres niveles para E02: humo (~5 min, ¿circula?), e02-rapido (~25 min, todas
+# las fases en una corrida con 3 casos por etapa, para probar cada cambio) y
+# e02 (~1 h 30, el de decisión, que entra a docs/results.md). D4 corrió el
+# 2026-10-08 con la primera versión de H2 y no se repite: queda al final.
+#
+# grupo	id	experimento	fase	criterio	vars	pregunta
+s3	e01-s3	E01	S3	decide	-	¿Ve el registro hecho menos de 1 s antes de abrir la sesión?

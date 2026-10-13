@@ -116,7 +116,7 @@ como supuestos, y cada una se cambia con una variable, sin tocar el código:
 
 **La evidencia viene de las ejecuciones de decisión**, las del 12 de octubre
 que deciden H1 y H2, y no de las exploratorias S4 y D4. La única excepción es
-la toma de la Figura 4, como explica su pie. Cada escenario se muestra en tres
+la toma de la Figura 4, que viene de una repetición de S3, como explica su pie. Cada escenario se muestra en tres
 capas:
 
 - **Una gráfica de margen.** Cada caso es un punto y el umbral del escenario,
@@ -124,11 +124,12 @@ capas:
 - **Un caso testigo anotado.** Es una toma en vivo de la ejecución, con las
   piezas del caso numeradas. Esas piezas son el estímulo que el orquestador le
   aplica por medio del inyector, la respuesta en los logs y el
-  tablero de Grafana o la consola de RabbitMQ. Debajo va un clip de 45 a 50 s,
+  tablero de Grafana o la consola de RabbitMQ. Debajo va un clip de 50 s,
   que se abre con un clic, con lo que pasó antes, durante y después del
   hecho.
 - **El respaldo por fase, en los anexos.** El anexo A trae las tomas en vivo sin
-  anotar, y el anexo B, el veredicto de cada fase.
+  anotar y las tomas de cierre: el resultado de la consulta SQL encima del
+  tablero de toda la ventana. El anexo B enlaza el veredicto de cada fase.
 
 Las horas de los logs están en UTC y las del tablero, en la hora de Bogotá.
 Para la evidencia en vivo se agregó a cinco micros una línea de log por hecho,
@@ -194,13 +195,12 @@ clip muestra el sistema en espera.
 
 **Figura 4. El cambio legítimo de dispositivo no dispara aviso, ni siquiera un instante después del registro.**
 
-*Cómo leerla.* La pantalla se lee como la de la Figura 3. Esta toma es de la
-ejecución anterior de S3, la de las 16:08 del mismo día: un ciclo
-completo y válido, con U = 15 s, que también pasó. S3 no depende de U. La
-toma del ciclo de las 19:11 la tapó un diálogo del sistema operativo. Aquí lo que importa
-es lo que no aparece: ningún SMS. La izquierda muestra cinco aperturas y la
-derecha solo tres, porque V1201 y V1202 abrieron sesión antes de que arrancaran
-las terminales.
+*Cómo leerla.* La pantalla se lee como la de la Figura 3. Un diálogo del
+sistema operativo tapó la toma de S3 del ciclo de las 19:11. Por eso se
+repitió solo S3, aparte del ciclo, a las 20:58, y esta toma es de esa repetición, que también pasó: 0
+avisos en 20 aperturas. Aquí lo que importa es lo que no aparece: ningún SMS.
+La izquierda muestra cinco aperturas y la derecha cuatro, porque V1201 abrió
+sesión antes de que arrancara la terminal de la derecha.
 
 *Qué pasa.* ① En S3, cada vendedor registra un dispositivo nuevo y abre sesión
 desde él menos de 1 s después. Es el caso más difícil para el Verificador,
@@ -208,13 +208,13 @@ porque el registro acaba de hacerse. ② El Verificador lee ese registro, ve que
 la huella coincide y escribe «sin aviso». ③ El tablero sigue en 0 falsas
 alarmas.
 
-*El clip (45 s).* Llegan varias aperturas pegadas al registro, una cada pocos
+*El clip (50 s).* Llegan aperturas pegadas al registro, una cada 10 a 20
 segundos. Cada una produce a la derecha una línea «huella coincide», y en todo el
 clip no sale ningún SMS.
 
 ![E01 en vivo, S3, anotada: 1 las aperturas pegadas al registro, 2 las huellas que coinciden sin aviso, 3 cero falsas alarmas](assets/resultados/testigos/asr1-pegado.png)
 
-<details><summary>▶ Ver el clip (45 s)</summary>
+<details><summary>▶ Ver el clip (50 s)</summary>
 <video controls preload="none" width="100%" src="assets/resultados/clips/asr1-pegado.mp4"></video>
 </details>
 
@@ -715,7 +715,9 @@ Cada uno dice de dónde sale, cuándo se resuelve y qué lo cambiaría.
 ## Anexo A: el respaldo de cada fase
 
 Aquí van las tomas en vivo sin anotar de S1 a S3, D2, D3 y D5, para quien
-quiera ver la pantalla completa de cada una.
+quiera ver la pantalla completa de cada una. También van las tomas de cierre de
+las siete fases de decisión: el resultado de la consulta SQL encima del tablero
+de toda la ventana de la fase.
 Cada bloque se abre con un clic, y cada imagen se amplía con su botón
 «Ampliar».
 
@@ -730,8 +732,24 @@ arrancara la terminal. No
 sale ningún SMS, y el tablero sigue en 0 falsas alarmas.</p>
 <p><img src="assets/resultados/evidencias/asr1-cambio-vivo.png" alt="E01 en vivo, S2: arriba, ocho cambios legítimos de dispositivo y siete huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas"></p>
 <p><strong>S3, aperturas pegadas al registro.</strong> Es la toma de la Figura 4,
-sin las marcas, de la ejecución de las 16:08.</p>
+sin las marcas, de la repetición de S3 de las 20:58.</p>
 <p><img src="assets/resultados/evidencias/asr1-pegado-vivo.png" alt="E01 en vivo, S3: arriba, aperturas a menos de 1 s del registro y huellas que coinciden, sin SMS; abajo, el tablero con 0 falsas alarmas"></p>
+</details>
+
+<details><summary>E01 · las tomas de cierre de S1, S2 y S3</summary>
+<p>En cada toma, arriba está el veredicto que calculó la consulta SQL al cerrar
+la fase, y abajo, el tablero de E01 de toda la ventana de la fase. Los dos
+deben decir lo mismo.</p>
+<p><strong>S1.</strong> 50 de 50 intrusos con aviso a tiempo, y ningún aviso en
+3 721 sesiones legítimas. En el tablero, cada punto de «Demora de cada aviso» es
+un intruso, y todos están en ≤ 140 ms.</p>
+<p><img src="assets/resultados/evidencias/lote-e01-s1.png" alt="E01 al cierre, S1: arriba, el veredicto con 50 de 50 intrusos con aviso a tiempo; abajo, el tablero de E01 sobre la ventana de S1"></p>
+<p><strong>S2.</strong> Ningún aviso en los 100 cambios legítimos ni en las
+2 640 sesiones legítimas de fondo.</p>
+<p><img src="assets/resultados/evidencias/lote-e01-s2.png" alt="E01 al cierre, S2: arriba, el veredicto con 0 avisos en 100 cambios legítimos; abajo, el tablero de E01 sobre la ventana de S2"></p>
+<p><strong>S3.</strong> Ningún aviso en las 20 aperturas pegadas al registro ni
+en las 720 sesiones legítimas de fondo.</p>
+<p><img src="assets/resultados/evidencias/lote-e01-s3.png" alt="E01 al cierre, S3: arriba, el veredicto con 0 avisos en 20 aperturas pegadas al registro; abajo, el tablero de E01 sobre la ventana de S3"></p>
 </details>
 
 <details><summary>E02 · las tomas en vivo de D2, D3 y D5</summary>
@@ -747,19 +765,50 @@ que siguen dentro de su ventana de 5 minutos.</p>
 <p><img src="assets/resultados/evidencias/asr4-repetida-vivo.png" alt="E02 en vivo, D5: arriba, siete entregas repetidas a facturación y la etapa que no repite el efecto; abajo, el tablero con 6 entregas descartadas y 0 efectos dobles"></p>
 </details>
 
+<details><summary>E02 · las tomas de cierre de D1, D2, D3 y D5</summary>
+<p>En cada toma, arriba está el veredicto que calculó la consulta SQL al cerrar
+la fase, y abajo, el tablero de E02 de toda la ventana de la fase. Los dos
+deben decir lo mismo.</p>
+<p><strong>D1.</strong> En 30 minutos sin fallas, ninguna etapa se declaró
+detenida y ningún pedido sano se informó como atascado. Todos los contadores de
+fallas del tablero quedaron en cero. Los 5 808 pares de pedido y etapa con un solo
+efecto incluyen los pedidos que cerraron en el minuto de gracia.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d1.png" alt="E02 al cierre, D1: arriba, el veredicto sin falsas alarmas; abajo, el tablero de E02 sobre la ventana de D1"></p>
+<p><strong>D2.</strong> Se cumplieron los cinco criterios de D2. Son estos: todo pedido
+detenido en la cola en ≤ 30 s, ninguna falsa alarma, cada pedido una sola vez
+en la cola, un solo efecto por etapa y la causa en cada mensaje. El tablero cuenta
+15 caídas, 291 pedidos detenidos y los mismos 291 en la cola a tiempo, sin
+pedidos perdidos ni duplicados. Las 16 entregas retomadas son las que el
+bróker devolvió a la etapa al reiniciarse. Los 461 «mensajes sin pedido
+detenido» son de pedidos que se recuperaron solos, como explica el análisis de
+la idempotencia.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d2.png" alt="E02 al cierre, D2: arriba, el veredicto con 291 de 291 pedidos en la cola y todos con su causa; abajo, el tablero de E02 sobre la ventana de D2"></p>
+<p><strong>D3.</strong> Los 15 pedidos congelados llegaron a la cola en ≤ 30 s,
+una sola vez y con la causa <code>PEDIDO_ATASCADO</code>. Los 15 pedidos que
+el punto de salud informó como atascados fueron los 15 congelados: ninguno fue
+una falsa alarma.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d3.png" alt="E02 al cierre, D3: arriba, el veredicto con 15 de 15 pedidos congelados en la cola; abajo, el tablero de E02 sobre la ventana de D3"></p>
+<p><strong>D5.</strong> Las 60 entregas repetidas, 20 por etapa, se detectaron
+todas, y ningún pedido quedó con un efecto doble.</p>
+<p><img src="assets/resultados/evidencias/lote-e02-d5.png" alt="E02 al cierre, D5: arriba, el veredicto con 60 de 60 entregas repetidas sin efecto doble; abajo, el tablero de E02 sobre la ventana de D5"></p>
+</details>
+
 
 ## Anexo B: el veredicto de cada ejecución
 
 Cada ejecución dejó un `veredicto.txt`, la salida de la consulta SQL que cruza la
 tabla de eventos caso por caso. Trae la validez de la ejecución, los criterios con
 sus casos y su veredicto, y el detalle de cada caso. Cada archivo cubre solo su
-fase, así que los criterios de las otras fases aparecen como «NO APLICA».
+fase, así que los criterios de las otras fases aparecen como «NO APLICA». Las
+tomas de cierre del anexo A muestran el veredicto de cada fase de decisión
+junto a su tablero.
 
 | Fase | Qué probó | Resultado | Veredicto |
 |---|---|---|---|
 | E01 · S1 | 50 aperturas desde un dispositivo no registrado, a la tasa normal | 50 avisos a tiempo; el más lento tardó 140 ms | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e01-s1-20261012-191106/veredicto.txt) |
 | E01 · S2 | 100 cambios legítimos de dispositivo, con la sesión abierta entre 6 y 60 s después del registro | 0 avisos | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e01-s2-20261012-191106/veredicto.txt) |
 | E01 · S3 | 20 aperturas a menos de 1 s del registro del dispositivo nuevo | 0 avisos | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e01-s3-20261012-191106/veredicto.txt) |
+| E01 · S3, repetición de las 20:58 | Las 20 aperturas de S3, repetidas para la toma de la Figura 4 | 0 avisos | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e01-s3-20261012-205833/veredicto.txt) |
 | E01 · S4, 7 de octubre | 30 aperturas desde un dispositivo no registrado, a 1, 3 y 5 veces la tasa normal | La demora no creció; el más lento tardó 38 ms | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e01-s4-20261007-181235/veredicto.txt) |
 | E02 · D1 | 30 min de carga normal sin fallas | 0 falsas alarmas | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e02-d1-20261012-190706/veredicto.txt) |
 | E02 · D2 | 15 caídas de 45 s, 5 por etapa | 291 de 291 detenidos a tiempo y con su causa; 16 entregas retomadas sin efecto doble | [veredicto.txt](https://github.com/MATI-MBIT/arqsoft-reto-2/blob/main/analisis/resultados/e02-d2-20261012-190706/veredicto.txt) |
