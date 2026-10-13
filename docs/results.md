@@ -135,6 +135,76 @@ Las horas de los logs están en UTC y las del tablero, en la hora de Bogotá.
 Para la evidencia en vivo se agregó a cinco micros una línea de log por hecho,
 que no altera lo que se mide.
 
+### Qué se ejecutó, cuánto duró y en qué orden
+
+**Lo que decide las dos hipótesis cupo en 1 h 21 min; la exploración de D4
+ocupó una noche entera.**
+
+Esta página cita 22 ejecuciones. Una ejecución es una fila del plan,
+`load/plan.tsv`, y el orquestador la corre siempre con los mismos pasos.
+Primero prepara las etapas, reinicia las tablas y vacía las colas de su
+experimento. Luego calienta, mide la fase y deja un minuto de gracia para las
+salidas tardías. Al final calcula el veredicto con la consulta SQL.
+
+Las 22 salen de cuatro tandas: el ciclo de decisión del 12 de octubre, la
+repetición de S3 esa misma noche, el ciclo del 7 de octubre con la primera
+versión de H2 y la noche de D4, del 8 al 9 de octubre. Siete son de decisión, y
+todas son del 12 de octubre: E02 arrancó a las 19:07 y E01, a las 19:11.
+
+En la Tabla A, la medición es la ventana que entra al veredicto. La duración
+total añade a la medición la preparación, el calentamiento, el minuto de gracia y el cálculo del
+veredicto.
+
+**Tabla A. Las siete ejecuciones de decisión del 12 de octubre.**
+
+| Ejecución | Qué valida | Estímulo | Medición | Total | Horario |
+|---|---|---|---|---|---|
+| E02 · D1 | ASR-3: ≤ 1 falsa alarma por hora sin fallas | 30 min de carga normal, 1 865 pedidos | 30 min | 33 min | 19:07–19:40 |
+| E02 · D2 | ASR-3 y ASR-4: los pedidos de una etapa caída, en la cola en ≤ 30 s, una sola vez y con su causa | 15 caídas de 45 s, 5 por etapa | 19 min | 23 min | 19:40–20:03 |
+| E02 · D3 | ASR-3 y ASR-4: el pedido congelado en una etapa viva, en la cola en ≤ 30 s y con su causa | 15 congelamientos, uno cada 30 s, 5 por etapa | 8 min | 11 min | 20:03–20:14 |
+| E02 · D5 | ASR-4: la entrega repetida no repite el efecto de la etapa | 60 entregas repetidas, una cada 5 s, 20 por etapa | 5 min | 8 min | 20:14–20:22 |
+| E01 · S1 | ASR-1: aviso en ≤ 2 s por la sesión desde un dispositivo no registrado | 50 intrusos (aperturas desde un dispositivo no registrado) entre 3 721 sesiones legítimas | 31 min | 37 min | 19:11–19:48 |
+| E01 · S2 | ASR-1: ≤ 1 aviso por cada 100 cambios legítimos de dispositivo | 100 cambios, con la sesión abierta de 6 a 60 s después del registro | 22 min | 28 min | 19:48–20:16 |
+| E01 · S3 | ASR-1: ningún aviso, aunque la sesión se abra menos de 1 s después del registro | 20 aperturas pegadas al registro | 6 min | 12 min | 20:16–20:28 |
+
+E02 tomó 1 h 15 min y E01, 1 h 17 min. Como corrieron a la vez, el ciclo de
+decisión completo fue de 19:07 a 20:28. La Figura A muestra ese plan en el
+tiempo, junto con la repetición de S3.
+
+**Figura A. El plan de ejecución del 12 de octubre.** Cada barra es una ejecución, desde
+que el orquestador la prepara hasta que calcula su veredicto. Los dos
+experimentos corren en paralelo, y cada uno encadena sus fases en orden. La
+última barra de E01 es la repetición de S3, media hora después.
+
+```mermaid
+gantt
+    dateFormat HH:mm
+    axisFormat %H:%M
+    section E02
+    D1 sin fallas       :19:07, 33m
+    D2 etapas caídas    :19:40, 23m
+    D3 pedidos congelados :20:03, 11m
+    D5 entregas repetidas :20:14, 8m
+    section E01
+    S1 intrusos         :19:11, 37m
+    S2 cambios legítimos :19:48, 28m
+    S3 aperturas pegadas :20:16, 12m
+    S3 repetición       :20:58, 12m
+```
+
+Las otras 15 ejecuciones no deciden las hipótesis, pero la página se apoya en ellas. La
+repetición de S3 solo aporta la toma en vivo de la Figura 4. Las demás son de
+fases exploratorias o de la primera versión de H2.
+
+**Tabla B. Las ejecuciones que se citan y no deciden.**
+
+| Ejecución | Fecha y horario | Qué valida | Medición | Total |
+|---|---|---|---|---|
+| E01 · S3, repetición | 12 de octubre, 20:58–21:10 | Las mismas condiciones de S3, para la toma en vivo de la Figura 4 | 6 min | 12 min |
+| E01 · S4 | 7 de octubre, 19:30–20:06 | Exploratoria: a qué tasa de aperturas se atrasa el aviso; 30 intrusos a 1, 3 y 5 veces la tasa normal | 30 min | 36 min |
+| E02 · D3 de la primera versión | 7 de octubre, 21:57–22:34 | Si el sondeo de solo vida ve 30 pedidos congelados (no vio ninguno, y por eso H2 se refinó) | 30 min | 36 min |
+| E02 · D4, 12 ejecuciones | 8 y 9 de octubre, 21:05–06:11 | Exploratoria: el menor N sin falsas alarmas, con cada combinación de T y N; cada una, 20 min sin fallas y 15 caídas | 39 min cada una | Unos 45 min cada una; 9 h 6 min en total |
+
 ---
 
 ## E01 — ASR-1: aviso por la sesión desde un dispositivo no registrado
