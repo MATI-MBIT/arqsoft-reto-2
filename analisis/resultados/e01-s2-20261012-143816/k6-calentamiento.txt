@@ -1,0 +1,1 @@
+./load/experimento.sh: line 151: k6: command not found

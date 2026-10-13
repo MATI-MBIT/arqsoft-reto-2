@@ -1,0 +1,1 @@
+./load/experimento.sh: line 145: exec: k6: not found
