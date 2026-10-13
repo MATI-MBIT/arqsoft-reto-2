@@ -259,3 +259,33 @@ y `12-DG-CMP-005.png`); se ve cuando el wiki publica el PNG. Títulos nuevos:
 E01 «… con el Verificador de dispositivo» y E02 «Validar la detección del
 pedido detenido con el Monitor de la cadena y su envío a la Dead-Letter-Queue».
 
+
+---
+
+## Estado de la réplica al 2026-10-13
+
+Se sincronizaron los cambios del 12 de octubre: la versión final de los ASR,
+las hipótesis en plantilla y los resultados con U = 5 s.
+
+| Sección | Qué cambió |
+|---|---|
+| Escenarios de calidad | ASR-1 (QS-001, HU-01) y ASR-4 (QS-004, HU-14) pasan de `High` a `Critical`. Helix no tiene «Muy alta»: su escala es `No priority`, `Low`, `Medium`, `High`, `Critical` |
+| E01 · `Planning` | H1 en la plantilla «Creemos que / para / dará como resultado / lo cual se validará cuando». El diseño y los recursos dicen «ejecución», no «corrida» |
+| E02 · `Planning` | Título nuevo («Validar que el pedido detenido llegue a la Dead-Letter-Queue sin efectos duplicados, con el Monitor de la cadena y etapas idempotentes»), H2 refinada con U = 5 s, tácticas con el receptor idempotente de ADR-005, fases D1, D2, D3, D5 y D4, seis condiciones y recursos con las etapas idempotentes. Escenarios enlazados: `availability_recovery — HU-14` (ASR-4), que es el que prueba H2, y `availability_detection — HU-03` (ASR-3), el paso previo |
+| E01 y E02 · `Results & analysis` | Cargados por primera vez: `Results`, `Analysis of results`, `Conclusion` y `Architectural Decision`, resumidos de `results.md`. `External report` apunta a `results.html`. `Evidence` lleva las gráficas de margen, los casos testigo, el clip de E01 y un `veredicto.txt` de cada uno |
+| Veredicto de E01 y E02 | `Confirmed` |
+| Historial | Versión «v4 - Versión final de los ASR, H2 refinada y resultados con U = 5 s» |
+
+### Lo que se aprendió del editor
+
+- **El editor no guarda imágenes.** Un `![…](url)` importado queda como un
+  párrafo vacío, y así estaban desde el 2026-10-06 los diagramas de
+  `Experiment Design`. Ahora el nombre del diagrama (DG-CMP-004, DG-CMP-005) es
+  un enlace al PNG publicado en el wiki.
+- **El panel de `Import Markdown` necesita un clic real para abrirse**, pero
+  una vez abierto el cuadro se puede llenar por script (asignar `value` y
+  disparar `input`) y el botón `Insert` responde a un `click()` por script.
+- **Las casillas del selector de escenarios** son botones, no `input`: se marcan
+  con un clic sobre el botón de la fila.
+- **La prioridad del escenario** es el tercer `select` del formulario del
+  escenario, y se guarda con `Save`.
