@@ -355,7 +355,7 @@ pedido, P6-8, y a los 37 s el ciclo se repite. En los primeros segundos se obser
 <video controls preload="none" width="100%" src="assets/resultados/clips/asr4-congelado.mp4"></video>
 </details>
 
-**Figura 9. Comportamiento ante fallas catastróficas de infraestructura: Detección de etapa caída y disposición masiva de pedidos afectados (D2).**
+**Figura 9. Comportamiento ante fallas catastróficas: Detección de etapa caída y disposición masiva de pedidos afectados (D2).**
 
 *Cómo leerla.* La pantalla se lee como la de la Figura 8. Abajo a la derecha,
 la consola de RabbitMQ cuenta los mensajes de la Dead-Letter-Queue.
