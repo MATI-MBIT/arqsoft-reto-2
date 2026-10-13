@@ -304,7 +304,7 @@ esta sección.
 #### H2 — Llevar el pedido detenido a la Dead-Letter-Queue sin efectos duplicados
 
 **Creemos que** un Monitor de la cadena que lee del punto de salud de cada
-etapa los pedidos atascados por más de U = 15 s, y etapas idempotentes, **para** un
+etapa los pedidos atascados por más de U = 5 s, y etapas idempotentes, **para** un
 pedido detenido en una etapa ([ASR-4](quality-attributes.md)), **dará como
 resultado** que el pedido llegue a la Dead-Letter-Queue sin efectos duplicados,
 **lo cual se validará cuando** los pedidos de D2 y D3 lleguen una sola vez a la

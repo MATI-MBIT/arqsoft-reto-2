@@ -21,7 +21,7 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE=(docker compose -f "$ROOT/deploy/docker-compose.yml")
-PLAN="$ROOT/load/plan.tsv"
+PLAN="${PLAN:-$ROOT/load/plan.tsv}"   # otro plan, para repetir una sola fila
 STAMP="${STAMP:-$(date +%Y%m%d-%H%M%S)}"   # el e2e lo fija para encontrar los resultados
 RESULTADOS="$ROOT/analisis/resultados"
 RESUMEN="$RESULTADOS/resumen-$STAMP.tsv"

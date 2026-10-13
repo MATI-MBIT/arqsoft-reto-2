@@ -1,0 +1,29 @@
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 1377    1.03336/s
+    checks_succeeded...: 100.00% 1377 out of 1377
+    checks_failed......: 0.00%   0 out of 1377
+
+    ✓ pedido confirmado
+
+    HTTP
+    http_req_duration..............: med=1.43ms p(95)=3.88ms p(99)=5.95ms max=74.34ms
+      { expected_response:true }...: med=1.43ms p(95)=3.88ms p(99)=5.95ms max=74.34ms
+    http_req_failed................: 0.00%  0 out of 14658
+    http_reqs......................: 14658  10.999991/s
+
+    EXECUTION
+    iteration_duration.............: med=1.66ms p(95)=4.21ms p(99)=6.4ms  max=74.63ms
+    iterations.....................: 14658  10.999991/s
+    vus............................: 0      min=0          max=1 
+    vus_max........................: 20     min=20         max=20
+
+    NETWORK
+    data_received..................: 4.4 MB 3.3 kB/s
+    data_sent......................: 1.6 MB 1.2 kB/s
+
+
+
+time="2026-10-12T20:02:44-05:00" level=error msg="test run was aborted because k6 received a 'interrupt' signal"

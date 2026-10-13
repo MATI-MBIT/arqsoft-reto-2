@@ -1,0 +1,2 @@
+tablero  http://localhost:3000/d/e02?from=1791852032153&to=1791853364724
+kiosco   http://localhost:3000/d/e02?from=1791852032153&to=1791853364724&kiosk

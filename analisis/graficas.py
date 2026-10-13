@@ -10,8 +10,8 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 DESTINO = RAIZ / "docs" / "assets" / "resultados" / "graficas"
-E01 = "20261012-160847"
-E02 = "20261012-160845"
+E01 = "20261012-191106"
+E02 = "20261012-190706"
 
 # Paleta de referencia (skill dataviz), tema claro del wiki. Una sola serie por
 # gráfica: las filas se nombran con texto, no con color.

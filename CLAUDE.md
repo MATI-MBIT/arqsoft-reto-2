@@ -91,7 +91,7 @@ otra. `docs/experiments.md` tiene una sección de montaje común y luego E01
 (seguridad, ASR-1) y E02 (disponibilidad). En Helix son dos
 experimentos, cada uno legible solo.
 
-El 2026-10-12 Nicolás fijó la versión final de los ASR: los umbrales no cambian, y ASR-1 y ASR-4 pasan a prioridad **Muy alta** (ASR-2 y ASR-3 quedan en Alta). Los títulos de las hipótesis son «H1 — Detectar el dispositivo no registrado» y «H2 — Llevar el pedido detenido a la Dead-Letter-Queue sin efectos duplicados»: H2 no reanuda, porque nadie consume la cola; el umbral U sigue en 15 s. También fijó dos cosas. Las hipótesis siguen la plantilla
+El 2026-10-12 Nicolás fijó la versión final de los ASR: los umbrales no cambian, y ASR-1 y ASR-4 pasan a prioridad **Muy alta** (ASR-2 y ASR-3 quedan en Alta). Los títulos de las hipótesis son «H1 — Detectar el dispositivo no registrado» y «H2 — Llevar el pedido detenido a la Dead-Letter-Queue sin efectos duplicados»: H2 no reanuda, porque nadie consume la cola. El umbral U es de 5 s (antes 15 s), y por eso S-11 se acortó a una mediana de 1 s y sigma 0,35. También fijó dos cosas. Las hipótesis siguen la plantilla
 «Creemos que / para / dará como resultado / lo cual se validará cuando». Y H2,
 desde que su versión refinada sumó la idempotencia por etapa, prueba **ASR-4**
 (HU-14, cobertura parcial: cero efectos duplicados; la reanudación en ≤ 5 s y la
@@ -135,13 +135,14 @@ Prometheus y Grafana para ver la ejecución, y una tabla de eventos por
 identificador para el veredicto. Equipo de 4 personas; esfuerzo estimado en
 72 horas-persona.
 Resultados (en `docs/results.md`), con el diseño de DG-CMP-004 y DG-CMP-005.
-El 2026-10-12 E01 y E02 corrieron **en paralelo**, de 16:08 a 17:28 (ciclos
-`20261012-160847` y `20261012-160845`), y todo pasa. E01: S1 50 de 50 avisos
-(máximo 52 ms), S2 0 avisos en 100 cambios, S3 0 en 20, 0 falsas alarmas en
-7 081 sesiones → aceptar ADR-007. S4 no se repitió: se cita la del 2026-10-07.
-E02: D1 0 falsas alarmas; D2 329 de 329 en la cola (≤ 6,2 s); D3 15 de 15
-(≤ 17,0 s); D5 60 de 60 sin efecto doble; 344 mensajes con su causa; de la
-señal a la cola, ≤ 111 ms → aceptar ADR-005 con un ajuste y actualizar
+El 2026-10-12 E01 y E02 corrieron **en paralelo** con U = 5 s, de 19:07 a 20:28
+(ciclos `20261012-191106` y `20261012-190706`; E01 arranca 4 min después para
+que las tomas en vivo no coincidan), y todo pasa. E01: S1 50 de 50 avisos
+(máximo 140 ms, el primer intruso; los demás ≤ 33 ms), S2 0 avisos en 100
+cambios, S3 0 en 20, 0 falsas alarmas en 7 081 sesiones → aceptar ADR-007. S4
+no se repitió: se cita la del 2026-10-07. E02: D1 0 falsas alarmas; D2 291 de
+291 en la cola (≤ 6,3 s); D3 15 de 15 (≤ 7,0 s); D5 60 de 60 sin efecto doble;
+306 mensajes con su causa; de la señal a la cola, ≤ 33 ms → aceptar ADR-005 con un ajuste y actualizar
 ADR-004. E02 primera versión (2026-10-07) cayó en D3; D4 (2026-10-08) sigue
 valiendo: menor N = 1, solo para una máquina. `analisis/resultados/` guarda
 solo lo que `results.md` cita.
@@ -150,10 +151,12 @@ solo lo que `results.md` cita.
 clara, en tres capas: (1) la tabla de veredicto con el margen frente a cada
 umbral; (2) por escenario, una gráfica de margen (`analisis/graficas.py`, desde
 la tabla de eventos) y un caso testigo anotado (`analisis/anotar.swift`, números
-en círculo sobre la toma en vivo) con un clip plegado de 15 s; (3) el respaldo
+en círculo sobre la toma en vivo) con un clip plegado de 40 s a 1 min (Nicolás, 2026-10-12: los de 15 s perdían el contexto); (3) el respaldo
 por fase, plegado en el anexo. Los videos largos se quitaron: casi no cambiaban
 frente a la foto. Las tomas se graban con `load/evidencias-captura.sh` (solo
-macOS) durante las ejecuciones de decisión; no abrir Grafana durante D1.
+macOS) durante las ejecuciones de decisión; no abrir Grafana durante D1. Antes
+de grabar, responder cualquier diálogo del sistema que esté abierto: el 2026-10-12
+uno de Chrome («buscar dispositivos en las redes locales») tapó la toma de S3.
 
 ### El prototipo
 
