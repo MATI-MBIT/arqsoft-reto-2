@@ -1,0 +1,20 @@
+Null display is "—".
+
+== Corrida
+           id           | experimento | fase |                                                             variables                                                              |            inicio             |              fin              |    duracion     | valida 
+------------------------+-------------+------+------------------------------------------------------------------------------------------------------------------------------------+-------------------------------+-------------------------------+-----------------+--------
+ e02-d2-20261012-143816 | E02         | D2   | {"N": 3, "T_ms": 2000, "d1_s": 0, "vars": "REPS=30", "caidas": 30, "caida_s": 45, "congelar": 0, "espera_ms": 500, "tasa_base": 2} | 2026-10-12 20:56:47.126149+00 | 2026-10-12 21:39:06.931196+00 | 00:42:19.805047 | t
+
+
+== Validez: el hueco más largo de la carga de fondo (un pedido por segundo)
+ valida | motivo | hueco_maximo_s 
+--------+--------+----------------
+ t      | —      |              —
+
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+psql:/analisis/e02.sql:28: ERROR:  relation "registro.e02_atascos" does not exist
+LINE 1: CREATE TEMP VIEW atascos AS SELECT a.* FROM registro.e02_ata...
+                                                    ^
+CREATE VIEW
