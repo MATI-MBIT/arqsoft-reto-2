@@ -45,7 +45,7 @@ Los experimentos se ejecutaron sobre el prototipo de este repositorio: doce micr
 
 Cada fase de experimentación se precedió de un período de calentamiento excluido del cómputo métrico: 5 minutos para E01 y 2 minutos para E02.
 
-**La validez de las ejecuciones fue estrictamente verificada.** Al finalizar cada corrida, el orquestador evaluó tres precondiciones de integridad: ausencia de huecos superiores a 30 s en la carga de fondo, estabilidad operativa del servidor anfitrión y una tasa de fallas en k6 inferior al 1 %. El incumplimiento de cualquiera de estas condiciones invalidaba el ciclo completo de fases del experimento, forzando su reejecución. El hueco máximo registrado fue de 11,1 s en E01, 8,7 s en E02 y 11,0 s en D4, sin reportar solicitudes fallidas por parte de k6.
+**La validez de las ejecuciones fue estrictamente verificada.** Al finalizar cada ejecución, el orquestador evaluó tres precondiciones de integridad: ausencia de huecos superiores a 30 s en la carga de fondo, estabilidad operativa del servidor anfitrión y una tasa de fallas en k6 inferior al 1 %. El incumplimiento de cualquiera de estas condiciones invalidaba el ciclo completo de fases del experimento, forzando su reejecución. El hueco máximo registrado fue de 11,1 s en E01, 8,7 s en E02 y 11,0 s en D4, sin reportar solicitudes fallidas por parte de k6.
 
 Dado que E02 interrumpe brevemente la generación de pedidos entre fases, el orquestador emitió un pedido de relleno sintético cada vez que transcurrían 10 s sin actividad para preservar la continuidad de la carga de fondo en E01. Esto ocurrió en 41 ocasiones (3 veces entre transiciones de fases de E02 y 38 veces tras la culminación de E02, mientras E01 completaba la fase S3 y su respectivo minuto de gracia). El *minuto de gracia* corresponde al intervalo posterior a la ventana de medición durante el cual el orquestador recolecta eventos rezagados.
 
@@ -59,7 +59,7 @@ Ciertos parámetros operativos requeridos por los modelos experimentales se esta
 | S-12 · umbral U | Clasificación de pedido atascado tras transcurrir > 5 s sin finalizar en una etapa activa | Parámetro fijado por el equipo de arquitectura (versiones previas operaban con 15 s). Con un tiempo de procesamiento máximo observado de 3,3 s en D1, la suma de U, el sondeo de 2 s y una holgura de 500 ms totaliza 7,5 s, cumpliendo con ASR-3 |
 | Fallo de etapa (D2) | Terminación abrupta del proceso mediante la señal `SIGKILL` durante 45 s, seguida de autorrecuperación | El estado transaccional pendiente es devuelto a la cola del agente de mensajes para su reencocolamiento y reanudación posterior |
 
-**La base probatoria se fundamenta en las ejecuciones de decisión** realizadas el 12 de octubre, complementadas por las fases exploratorias S4 y D4 (cuya única excepción es la evidencia visual de la Figura 4, derivada de una corrida de validación de S3). La instrumentación de cada escenario se documenta a través de tres artefactos:
+**La base probatoria se fundamenta en las ejecuciones de decisión** realizadas el 12 de octubre, complementadas por las fases exploratorias S4 y D4 (cuya única excepción es la evidencia visual de la Figura 4, derivada de una ejecución de validación de S3). La instrumentación de cada escenario se documenta a través de tres artefactos:
 
 - **Gráficas de margen:** Representación analítica de la distribución de casos frente al umbral, generada mediante scripts analíticos a partir de la traza de eventos (`analisis/graficas.py`).
 - **Casos de prueba testigo anotados:** Capturas de ejecución en vivo que correlacionan el estímulo del orquestador, los registros (*logs*) de los microservicios, el panel de observabilidad en Grafana y el estado del agente de mensajes, respaldados por clips de video de 50 s.
@@ -119,7 +119,7 @@ Las 15 ejecuciones restantes sustentan el análisis exploratorio y de sensibilid
 | E01 · S3, repetición | 12 de octubre, 20:58–21:10 | Replicación de S3 para evidencia visual (Figura 4) | 6 min | 12 min |
 | E01 · S4 | 7 de octubre, 19:30–20:06 | Sensibilidad al caudal de aperturas (30 intrusos a 1×, 3× y 5× la tasa base) | 30 min | 36 min |
 | E02 · D3 (versión preliminar) | 7 de octubre, 21:57–22:34 | Comportamiento del sondeo de estado binario frente a 30 pedidos congelados | 30 min | 36 min |
-| E02 · D4 (12 corridas) | 8-9 de octubre, 21:05–06:11 | Optimización del parámetro N y T del sondeo sin falsas alarmas (20 min sin fallas + 15 caídas por corrida) | 39 min/c.u. | 9 h 6 min (total) |
+| E02 · D4 (12 corridas) | 8-9 de octubre, 21:05–06:11 | Optimización del parámetro N y T del sondeo sin falsas alarmas (20 min sin fallas + 15 caídas por ejecución) | 39 min/c.u. | 9 h 6 min (total) |
 
 ---
 
@@ -607,7 +607,7 @@ Criterios menores de medición descritos en la especificación que sufrieron aju
 | Referencia temporal en D2 | Inicio de conteo en la inyección de parada de etapa | Inicio condicionado al envío por parte del microservicio de ventas para pedidos rezagados | Evita penalizar artificialmente la métrica con tiempos de espera previos al ingreso del pedido |
 | Duración de fases en D4 | Ciclos íntegros de 1 h sin fallas y 30 caídas por combinación | Reducción a 20 min sin fallas y 15 caídas por combinación | Viabiliza la ejecución del espacio paramétrico en una ventana nocturna |
 | Tasa sintética en S4 | Tasas relativas no acotadas (1×, 3×, 5×) | Normalización a S-10 (2 req/s base) | Establece una cota inferior clara para el punto de saturación |
-| Reejecución de S4 | Incluida en la corrida del 12 de octubre | Reutilización de la corrida del 7 de octubre | Justificada por la equivalencia estricta del código de verificación. Entre las dos ejecuciones solo cambió una línea de log en el Verificador y en el receptor del SMS |
+| Reejecución de S4 | Incluida en la corrida del 12 de octubre | Reutilización de la ejecución del 7 de octubre | Justificada por la equivalencia estricta del código de verificación. Entre las dos ejecuciones solo cambió una línea de log en el Verificador y en el receptor del SMS |
 | Aprovisionamiento de carga en E01 | Generación de tráfico independiente por E01 | Reutilización de la carga de E02 con inyección de eventos de relleno | Evita duplicar el tráfico nominal del Ambiente A. E02 terminó 28 s después de empezar S3, por lo que en casi toda S3 la carga de pedidos bajó a uno cada 10 s; las sesiones de E01, que son lo que S3 mide, siguieron a su tasa |
 | Período de calentamiento en E02 | 5 minutos por ejecución | Ajustado a 2 minutos en el plan operativo | Suficiente para estabilizar el pipeline de microservicios con estados heredados. Lo fija `load/plan.tsv` para E02, y los 2 min no entran a ningún criterio |
 
