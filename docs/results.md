@@ -119,7 +119,7 @@ Las 15 ejecuciones restantes sustentan el análisis exploratorio y de sensibilid
 | E01 · S3, repetición | 12 de octubre, 20:58–21:10 | Replicación de S3 para evidencia visual (Figura 4) | 6 min | 12 min |
 | E01 · S4 | 7 de octubre, 19:30–20:06 | Sensibilidad al caudal de aperturas (30 intrusos a 1×, 3× y 5× la tasa base) | 30 min | 36 min |
 | E02 · D3 (versión preliminar) | 7 de octubre, 21:57–22:34 | Comportamiento del sondeo de estado binario frente a 30 pedidos congelados | 30 min | 36 min |
-| E02 · D4 (12 corridas) | 8-9 de octubre, 21:05–06:11 | Optimización del parámetro N y T del sondeo sin falsas alarmas (20 min sin fallas + 15 caídas por ejecución) | 39 min/c.u. | 9 h 6 min (total) |
+| E02 · D4 (12 ejecuciones) | 8-9 de octubre, 21:05–06:11 | Optimización del parámetro N y T del sondeo sin falsas alarmas (20 min sin fallas + 15 caídas por ejecución) | 39 min/c.u. | 9 h 6 min (total) |
 
 ---
 
@@ -607,7 +607,7 @@ Criterios menores de medición descritos en la especificación que sufrieron aju
 | Referencia temporal en D2 | Inicio de conteo en la inyección de parada de etapa | Inicio condicionado al envío por parte del microservicio de ventas para pedidos rezagados | Evita penalizar artificialmente la métrica con tiempos de espera previos al ingreso del pedido |
 | Duración de fases en D4 | Ciclos íntegros de 1 h sin fallas y 30 caídas por combinación | Reducción a 20 min sin fallas y 15 caídas por combinación | Viabiliza la ejecución del espacio paramétrico en una ventana nocturna |
 | Tasa sintética en S4 | Tasas relativas no acotadas (1×, 3×, 5×) | Normalización a S-10 (2 req/s base) | Establece una cota inferior clara para el punto de saturación |
-| Reejecución de S4 | Incluida en la corrida del 12 de octubre | Reutilización de la ejecución del 7 de octubre | Justificada por la equivalencia estricta del código de verificación. Entre las dos ejecuciones solo cambió una línea de log en el Verificador y en el receptor del SMS |
+| Reejecución de S4 | Incluida en el ciclo del 12 de octubre | Reutilización de la ejecución del 7 de octubre | Justificada por la equivalencia estricta del código de verificación. Entre las dos ejecuciones solo cambió una línea de log en el Verificador y en el receptor del SMS |
 | Aprovisionamiento de carga en E01 | Generación de tráfico independiente por E01 | Reutilización de la carga de E02 con inyección de eventos de relleno | Evita duplicar el tráfico nominal del Ambiente A. E02 terminó 28 s después de empezar S3, por lo que en casi toda S3 la carga de pedidos bajó a uno cada 10 s; las sesiones de E01, que son lo que S3 mide, siguieron a su tasa |
 | Período de calentamiento en E02 | 5 minutos por ejecución | Ajustado a 2 minutos en el plan operativo | Suficiente para estabilizar el pipeline de microservicios con estados heredados. Lo fija `load/plan.tsv` para E02, y los 2 min no entran a ningún criterio |
 
